@@ -22,7 +22,13 @@ brew install premake
 git submodule update --init --recursive
 ```
 
-2. Build C++ code
+2. Install required python libs
+
+```
+python3 -m pip install -r requirements.txt
+```
+
+3. Build C++ code
 
 ```
 cd cpp
