@@ -16,8 +16,6 @@
 // 3. This notice may not be removed or altered from any source distribution.
 //
 
-#include <iostream>
-
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
@@ -29,8 +27,8 @@
 #	include <GL/glu.h>
 #endif
 #include "InputGeom.h"
-#include "Sample.h"
-#include "Sample_TempObstacles.h"
+#include "BaseBuilder.h"
+#include "Navmesh_Builder.h"
 #include "Recast.h"
 #include "DetourAssert.h"
 #include "DetourNavMesh.h"
@@ -202,21 +200,21 @@ struct MeshProcess : public dtTileCacheMeshProcess
 		for (int i = 0; i < params->polyCount; ++i)
 		{
 			if (polyAreas[i] == DT_TILECACHE_WALKABLE_AREA)
-				polyAreas[i] = SAMPLE_POLYAREA_GROUND;
+				polyAreas[i] = BUILDER_POLYAREA_GROUND;
 
-			if (polyAreas[i] == SAMPLE_POLYAREA_GROUND ||
-				polyAreas[i] == SAMPLE_POLYAREA_GRASS ||
-				polyAreas[i] == SAMPLE_POLYAREA_ROAD)
+			if (polyAreas[i] == BUILDER_POLYAREA_GROUND ||
+				polyAreas[i] == BUILDER_POLYAREA_GRASS ||
+				polyAreas[i] == BUILDER_POLYAREA_ROAD)
 			{
-				polyFlags[i] = SAMPLE_POLYFLAGS_WALK;
+				polyFlags[i] = BUILDER_POLYFLAGS_WALK;
 			}
-			else if (polyAreas[i] == SAMPLE_POLYAREA_WATER)
+			else if (polyAreas[i] == BUILDER_POLYAREA_WATER)
 			{
-				polyFlags[i] = SAMPLE_POLYFLAGS_SWIM;
+				polyFlags[i] = BUILDER_POLYFLAGS_SWIM;
 			}
-			else if (polyAreas[i] == SAMPLE_POLYAREA_DOOR)
+			else if (polyAreas[i] == BUILDER_POLYAREA_DOOR)
 			{
-				polyFlags[i] = SAMPLE_POLYFLAGS_WALK | SAMPLE_POLYFLAGS_DOOR;
+				polyFlags[i] = BUILDER_POLYFLAGS_WALK | BUILDER_POLYFLAGS_DOOR;
 			}
 		}
 
@@ -280,7 +278,7 @@ struct RasterizationContext
 	int ntiles;
 };
 
-int Sample_TempObstacles::rasterizeTileLayers(
+int NavmeshBuilder::rasterizeTileLayers(
 							   const int tx, const int ty,
 							   const rcConfig& cfg,
 							   TileCacheData* tiles,
@@ -497,7 +495,7 @@ dtObstacleRef hitTestObstacle(const dtTileCache* tc, const float* sp, const floa
 	return tc->getObstacleRef(obmin);
 }
 	
-Sample_TempObstacles::Sample_TempObstacles() :
+NavmeshBuilder::NavmeshBuilder() :
 	m_keepInterResults(false),
 	m_tileCache(0),
 	m_cacheBuildTimeMs(0),
@@ -517,16 +515,16 @@ Sample_TempObstacles::Sample_TempObstacles() :
 	m_tmproc = new MeshProcess;
 }
 
-Sample_TempObstacles::~Sample_TempObstacles()
+NavmeshBuilder::~NavmeshBuilder()
 {
 	dtFreeNavMesh(m_navMesh);
 	m_navMesh = 0;
 	dtFreeTileCache(m_tileCache);
 }
 
-void Sample_TempObstacles::handleMeshChanged(class InputGeom* geom)
+void NavmeshBuilder::handleMeshChanged(class InputGeom* geom)
 {
-	Sample::handleMeshChanged(geom);
+	Builder::handleMeshChanged(geom);
 
 	dtFreeTileCache(m_tileCache);
 	m_tileCache = 0;
@@ -535,7 +533,7 @@ void Sample_TempObstacles::handleMeshChanged(class InputGeom* geom)
 	m_navMesh = 0;
 }
 
-void Sample_TempObstacles::addTempObstacle(const float* pos)
+void NavmeshBuilder::addTempObstacle(const float* pos)
 {
 	if (!m_tileCache)
 		return;
@@ -545,7 +543,7 @@ void Sample_TempObstacles::addTempObstacle(const float* pos)
 	m_tileCache->addObstacle(p, 1.0f, 2.0f, 0);
 }
 
-void Sample_TempObstacles::removeTempObstacle(const float* sp, const float* sq)
+void NavmeshBuilder::removeTempObstacle(const float* sp, const float* sq)
 {
 	if (!m_tileCache)
 		return;
@@ -553,7 +551,7 @@ void Sample_TempObstacles::removeTempObstacle(const float* sp, const float* sq)
 	m_tileCache->removeObstacle(ref);
 }
 
-void Sample_TempObstacles::clearAllTempObstacles()
+void NavmeshBuilder::clearAllTempObstacles()
 {
 	if (!m_tileCache)
 		return;
@@ -565,7 +563,7 @@ void Sample_TempObstacles::clearAllTempObstacles()
 	}
 }
 
-bool Sample_TempObstacles::handleBuild()
+bool NavmeshBuilder::handleBuild()
 {
 	dtStatus status;
 	
@@ -728,7 +726,7 @@ bool Sample_TempObstacles::handleBuild()
 	return true;
 }
 
-void Sample_TempObstacles::handleUpdate(const float dt)
+void NavmeshBuilder::handleUpdate(const float dt)
 {
 	if (!m_navMesh)
 		return;
@@ -738,7 +736,7 @@ void Sample_TempObstacles::handleUpdate(const float dt)
 	m_tileCache->update(dt, m_navMesh);
 }
 
-void Sample_TempObstacles::getTilePos(const float* pos, int& tx, int& ty)
+void NavmeshBuilder::getTilePos(const float* pos, int& tx, int& ty)
 {
 	if (!m_geom) return;
 	
@@ -767,7 +765,7 @@ struct TileCacheTileHeader
 	int dataSize;
 };
 
-void Sample_TempObstacles::saveAll(const char* path)
+void NavmeshBuilder::saveAll(const char* path)
 {
 	if (!m_tileCache) return;
 	
@@ -807,7 +805,7 @@ void Sample_TempObstacles::saveAll(const char* path)
 	fclose(fp);
 }
 
-void Sample_TempObstacles::loadAll(const char* path)
+void NavmeshBuilder::loadAll(const char* path)
 {
 	FILE* fp = fopen(path, "rb");
 	if (!fp) return;
@@ -898,7 +896,7 @@ void Sample_TempObstacles::loadAll(const char* path)
 	fclose(fp);
 }
 
-void Sample_TempObstacles::handleSettings()
+void NavmeshBuilder::handleSettings()
 {
 	if (m_geom)
 	{

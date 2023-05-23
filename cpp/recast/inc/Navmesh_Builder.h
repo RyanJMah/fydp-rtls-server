@@ -19,13 +19,13 @@
 #ifndef RECASTSAMPLETEMPOBSTACLE_H
 #define RECASTSAMPLETEMPOBSTACLE_H
 
-#include "Sample.h"
+#include "BaseBuilder.h"
 #include "DetourNavMesh.h"
 #include "Recast.h"
 #include "ChunkyTriMesh.h"
 
 
-class Sample_TempObstacles : public Sample
+class NavmeshBuilder : public Builder
 {
 protected:
 	bool m_keepInterResults;
@@ -62,8 +62,8 @@ protected:
 	float m_tileSize;
 	
 public:
-	Sample_TempObstacles();
-	virtual ~Sample_TempObstacles();
+	NavmeshBuilder();
+	virtual ~NavmeshBuilder();
 	
 	virtual void handleSettings();
 	virtual void handleMeshChanged(class InputGeom* geom);
@@ -81,8 +81,8 @@ public:
 
 private:
 	// Explicitly disabled copy constructor and copy assignment operator.
-	Sample_TempObstacles(const Sample_TempObstacles&);
-	Sample_TempObstacles& operator=(const Sample_TempObstacles&);
+	NavmeshBuilder(const NavmeshBuilder&);
+	NavmeshBuilder& operator=(const NavmeshBuilder&);
 
 	int rasterizeTileLayers(const int tx, const int ty, const rcConfig& cfg, struct TileCacheData* tiles, const int maxTiles);
 };

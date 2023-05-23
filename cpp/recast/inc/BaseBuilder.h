@@ -16,40 +16,40 @@
 // 3. This notice may not be removed or altered from any source distribution.
 //
 
-#ifndef RECASTSAMPLE_H
-#define RECASTSAMPLE_H
+#ifndef RECASTBUILDER_H
+#define RECASTBUILDER_H
 
 #include "Recast.h"
 
 /// These are just sample areas to use consistent values across the samples.
 /// The use should specify these base on his needs.
-enum SamplePolyAreas
+enum BuilderPolyAreas
 {
-	SAMPLE_POLYAREA_GROUND,
-	SAMPLE_POLYAREA_WATER,
-	SAMPLE_POLYAREA_ROAD,
-	SAMPLE_POLYAREA_DOOR,
-	SAMPLE_POLYAREA_GRASS,
-	SAMPLE_POLYAREA_JUMP
+	BUILDER_POLYAREA_GROUND,
+	BUILDER_POLYAREA_WATER,
+	BUILDER_POLYAREA_ROAD,
+	BUILDER_POLYAREA_DOOR,
+	BUILDER_POLYAREA_GRASS,
+	BUILDER_POLYAREA_JUMP
 };
-enum SamplePolyFlags
+enum BuilderPolyFlags
 {
-	SAMPLE_POLYFLAGS_WALK		= 0x01,		// Ability to walk (ground, grass, road)
-	SAMPLE_POLYFLAGS_SWIM		= 0x02,		// Ability to swim (water).
-	SAMPLE_POLYFLAGS_DOOR		= 0x04,		// Ability to move through doors.
-	SAMPLE_POLYFLAGS_JUMP		= 0x08,		// Ability to jump.
-	SAMPLE_POLYFLAGS_DISABLED	= 0x10,		// Disabled polygon
-	SAMPLE_POLYFLAGS_ALL		= 0xffff	// All abilities.
-};
-
-enum SamplePartitionType
-{
-	SAMPLE_PARTITION_WATERSHED,
-	SAMPLE_PARTITION_MONOTONE,
-	SAMPLE_PARTITION_LAYERS
+	BUILDER_POLYFLAGS_WALK		= 0x01,		// Ability to walk (ground, grass, road)
+	BUILDER_POLYFLAGS_SWIM		= 0x02,		// Ability to swim (water).
+	BUILDER_POLYFLAGS_DOOR		= 0x04,		// Ability to move through doors.
+	BUILDER_POLYFLAGS_JUMP		= 0x08,		// Ability to jump.
+	BUILDER_POLYFLAGS_DISABLED	= 0x10,		// Disabled polygon
+	BUILDER_POLYFLAGS_ALL		= 0xffff	// All abilities.
 };
 
-class Sample
+enum BuilderPartitionType
+{
+	BUILDER_PARTITION_WATERSHED,
+	BUILDER_PARTITION_MONOTONE,
+	BUILDER_PARTITION_LAYERS
+};
+
+class Builder
 {
 protected:
 	class InputGeom* m_geom;
@@ -82,8 +82,8 @@ protected:
 	void saveAll(const char* path, const dtNavMesh* mesh);
 
 public:
-	Sample();
-	virtual ~Sample();
+	Builder();
+	virtual ~Builder();
 	
 	void setContext(rcContext* ctx) { m_ctx = ctx; }
 	
@@ -106,9 +106,9 @@ public:
 
 private:
 	// Explicitly disabled copy constructor and copy assignment operator.
-	Sample(const Sample&);
-	Sample& operator=(const Sample&);
+	Builder(const Builder&);
+	Builder& operator=(const Builder&);
 };
 
 
-#endif // RECASTSAMPLE_H
+#endif // RECASTBUILDER_H

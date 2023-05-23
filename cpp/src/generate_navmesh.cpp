@@ -1,6 +1,6 @@
 #include "Recast.h"
 #include "InputGeom.h"
-#include "Sample_TempObstacles.h"
+#include "Navmesh_Builder.h"
 #include "generate_navmesh.hpp"
 
 bool generate_navmesh(const char* in_file, const char* out_file)
@@ -10,7 +10,7 @@ bool generate_navmesh(const char* in_file, const char* out_file)
     bool ret_code = true;
 
     InputGeom* input_geom = new InputGeom();
-    Sample_TempObstacles* navmesh_builder = new Sample_TempObstacles();
+    NavmeshBuilder* navmesh_builder = new NavmeshBuilder();
 
     if ( !input_geom->load( &ctx, in_file ) )
     {

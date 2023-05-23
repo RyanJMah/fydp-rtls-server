@@ -60,7 +60,7 @@ struct BuildSettings
 	float detailSampleDist;
 	// Detail sample max error in voxel heights.
 	float detailSampleMaxError;
-	// Partition type, see SamplePartitionType
+	// Partition type, see BuilderPartitionType
 	int partitionType;
 	// Bounds of the area to mesh
 	float navMeshBMin[3];

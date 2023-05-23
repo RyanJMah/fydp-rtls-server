@@ -26,7 +26,7 @@
 #include "ChunkyTriMesh.h"
 #include "MeshLoaderObj.h"
 #include "DetourNavMesh.h"
-#include "Sample.h"
+#include "Navmesh_Builder.h"
 
 static bool intersectSegmentTriangle(const float* sp, const float* sq,
 									 const float* a, const float* b, const float* c,

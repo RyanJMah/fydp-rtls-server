@@ -18,7 +18,7 @@
 
 #include <math.h>
 #include <stdio.h>
-#include "Sample.h"
+#include "BaseBuilder.h"
 #include "InputGeom.h"
 #include "Recast.h"
 #include "DetourNavMesh.h"
@@ -29,7 +29,7 @@
 #	define snprintf _snprintf
 #endif
 
-Sample::Sample() :
+Builder::Builder() :
 	m_geom(0),
 	m_navMesh(0),
 	m_navQuery(0),
@@ -44,14 +44,14 @@ Sample::Sample() :
 	m_crowd = dtAllocCrowd();
 }
 
-Sample::~Sample()
+Builder::~Builder()
 {
 	dtFreeNavMeshQuery(m_navQuery);
 	dtFreeNavMesh(m_navMesh);
 	dtFreeCrowd(m_crowd);
 }
 
-void Sample::handleMeshChanged(InputGeom* geom)
+void Builder::handleMeshChanged(InputGeom* geom)
 {
 	m_geom = geom;
 
@@ -75,7 +75,7 @@ void Sample::handleMeshChanged(InputGeom* geom)
 	}
 }
 
-void Sample::collectSettings(BuildSettings& settings)
+void Builder::collectSettings(BuildSettings& settings)
 {
 	settings.cellSize = m_cellSize;
 	settings.cellHeight = m_cellHeight;
@@ -93,7 +93,7 @@ void Sample::collectSettings(BuildSettings& settings)
 	settings.partitionType = m_partitionType;
 }
 
-void Sample::resetCommonSettings()
+void Builder::resetCommonSettings()
 {
 	m_cellSize = 0.3f;
 	m_cellHeight = 0.2f;
@@ -108,10 +108,10 @@ void Sample::resetCommonSettings()
 	m_vertsPerPoly = 6.0f;
 	m_detailSampleDist = 6.0f;
 	m_detailSampleMaxError = 1.0f;
-	m_partitionType = SAMPLE_PARTITION_WATERSHED;
+	m_partitionType = BUILDER_PARTITION_WATERSHED;
 }
 
-bool Sample::handleBuild()
+bool Builder::handleBuild()
 {
 	return true;
 }
@@ -133,7 +133,7 @@ struct NavMeshTileHeader
 	int dataSize;
 };
 
-dtNavMesh* Sample::loadAll(const char* path)
+dtNavMesh* Builder::loadAll(const char* path)
 {
 	FILE* fp = fopen(path, "rb");
 	if (!fp) return 0;
@@ -203,7 +203,7 @@ dtNavMesh* Sample::loadAll(const char* path)
 	return mesh;
 }
 
-void Sample::saveAll(const char* path, const dtNavMesh* mesh)
+void Builder::saveAll(const char* path, const dtNavMesh* mesh)
 {
 	if (!mesh) return;
 
@@ -243,7 +243,7 @@ void Sample::saveAll(const char* path, const dtNavMesh* mesh)
 	
 }
 
-void Sample::save(const char* path)
+void Builder::save(const char* path)
 {
 	saveAll(path, m_navMesh);
 }
