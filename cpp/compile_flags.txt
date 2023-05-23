@@ -1,4 +1,0 @@
--I./inc
--I/opt/homebrew/include
--I../recastnavigation/Recast/Include
--I../recastnavigation/Detour/Include
