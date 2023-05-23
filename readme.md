@@ -1,5 +1,7 @@
 ### Prerequisites
 
+TODO: I wrote the makefile for macos, need to port to linux probably later
+
 1. Install SDL2 (needed for recast navigation demo)
 
 ```

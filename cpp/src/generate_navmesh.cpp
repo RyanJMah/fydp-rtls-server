@@ -3,7 +3,7 @@
 #include "Navmesh_Builder.h"
 #include "generate_navmesh.hpp"
 
-bool generate_navmesh(const char* in_file, const char* out_file)
+bool generate_navmesh(std::string in_file, std::string out_file)
 {
     rcContext ctx;
 
@@ -12,7 +12,7 @@ bool generate_navmesh(const char* in_file, const char* out_file)
     InputGeom* input_geom = new InputGeom();
     NavmeshBuilder* navmesh_builder = new NavmeshBuilder();
 
-    if ( !input_geom->load( &ctx, in_file ) )
+    if ( !input_geom->load( &ctx, in_file.c_str() ) )
     {
         ret_code = false;
         goto exit;
@@ -29,7 +29,7 @@ bool generate_navmesh(const char* in_file, const char* out_file)
         goto exit;
     }
 
-    navmesh_builder->save( out_file );
+    navmesh_builder->save( out_file.c_str() );
 
 exit:
     delete input_geom;

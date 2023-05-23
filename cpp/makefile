@@ -1,11 +1,13 @@
 TARGET     = main
-SHARED_LIB = lib-pathfinding.so
+SHARED_LIB = lib_pathfinding
 BUILD_DIR  = build
+
+SHARED_LIB_EXT := $(shell python3-config --extension-suffix)
 
 DEBUG = 1
 OPT = -O3
 
-CPP = g++
+CPP = g++ -std=c++11
 CC = gcc
 CP = objcopy
 SZ = size
@@ -23,8 +25,11 @@ CPP_INCLUDES += -I../recastnavigation/Recast/Include
 CPP_INCLUDES += -I../recastnavigation/Detour/Include
 CPP_INCLUDES += -I../recastnavigation/DetourCrowd/Include
 CPP_INCLUDES += -I../recastnavigation/DetourTileCache/Include
+CPP_INCLUDES += $(shell python3 -m pybind11 --includes)
 
-CPP_FLAGS = $(CPP_INCLUDES) $(OPT) -Wall -MMD -MP -MF"$(@:%.o=%.d)"
+CPP_DEFINES += -D PY_MODULE_NAME=$(SHARED_LIB)
+
+CPP_FLAGS = $(CPP_INCLUDES) $(OPT) -Wall -fPIC -MMD -MP -MF"$(@:%.o=%.d)"
 
 ifeq ($(DEBUG), 1)
 	CPP_FLAGS += -ggdb
@@ -38,6 +43,8 @@ STATIC_LIBS += ../recastnavigation/build/Detour/libDetour.a
 STATIC_LIBS += ../recastnavigation/build/DetourCrowd/libDetourCrowd.a
 STATIC_LIBS += ../recastnavigation/build/DetourTileCache/libDetourTileCache.a
 
+LD_FLAGS := $(shell python3-config --ldflags --embed)
+
 OBJECTS = $(addprefix $(BUILD_DIR)/,$(notdir $(CPP_SOURCES:.cpp=.o)))
 vpath %.cpp $(sort $(dir $(CPP_SOURCES)))
 
@@ -45,7 +52,7 @@ OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(C_SOURCES:.c=.o)))
 vpath %.c $(sort $(dir $(C_SOURCES)))
 
 .PHONY: all
-all: $(BUILD_DIR)/$(TARGET) $(BUILD_DIR)/$(SHARED_LIB)
+all: $(BUILD_DIR)/$(TARGET) $(BUILD_DIR)/$(SHARED_LIB)$(SHARED_LIB_EXT)
 
 .PHONY: run
 run: all
@@ -64,15 +71,15 @@ $(BUILD_DIR)/%.o: %.c | $(BUILD_DIR)
 	$(CC) -c $(CPP_FLAGS) $< -o $@
 
 $(BUILD_DIR)/$(TARGET): $(OBJECTS) $(STATIC_LIBS)
-	@echo "\nlinking c++ executable...\n"
-	$(CPP) $(OBJECTS) $(STATIC_LIBS) -o $@
+	@echo "\nlinking c++ executable $@\n"
+	$(CPP) -shared $(LD_FLAGS) $(OBJECTS) $(STATIC_LIBS) -o $@
 	@echo ""
 	@$(SZ) $@
 	@echo ""
 
-$(BUILD_DIR)/$(SHARED_LIB): $(OBJECTS) $(STATIC_LIBS)
-	@echo "linking shared library for python...\n"
-	$(CPP) -fPIC -shared $(OBJECTS) $(STATIC_LIBS) -o $@
+$(BUILD_DIR)/$(SHARED_LIB)$(SHARED_LIB_EXT): $(OBJECTS) $(STATIC_LIBS)
+	@echo "linking shared library $@\n"
+	$(CPP) -shared $(LD_FLAGS) $(OBJECTS) $(STATIC_LIBS) -o $@
 	@echo ""
 	@$(SZ) $@
 	@echo ""

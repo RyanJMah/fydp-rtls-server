@@ -1,4 +1,10 @@
 #pragma once
 
-bool generate_navmesh(const char* in_file, const char* out_file);
+#include <string>
+
+extern "C" {
+
+bool generate_navmesh(std::string in_file, std::string out_file);
+
+}
 
