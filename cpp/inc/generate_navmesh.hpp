@@ -1,9 +1,4 @@
 #pragma once
 
-bool GenerateNavMesh(
-        const float* vertices,
-        const int    num_vertices,
-        const int*   triangles,
-        const int    num_triangles,
-        const char*  outputPath );
+bool generate_navmesh(const char* in_file, const char* out_file);
 

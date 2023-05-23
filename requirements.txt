@@ -1,0 +1,8 @@
+markdown-it-py==2.2.0
+mdurl==0.1.2
+meshio==5.3.4
+numpy==1.24.3
+Pillow==9.5.0
+pydelatin==0.2.7
+Pygments==2.15.1
+rich==13.3.5
