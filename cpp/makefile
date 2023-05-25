@@ -8,9 +8,9 @@ DEBUG = 1
 OPT = -O3
 
 CPP = g++ -std=c++11
-CC = gcc
-CP = objcopy
-SZ = size
+CC  = gcc
+CP  = objcopy
+SZ  = size
 
 CPP_SOURCES += $(wildcard src/*.cpp)
 CPP_SOURCES += $(wildcard recast/src/*.cpp)
@@ -38,12 +38,20 @@ endif
 RECAST_DIR = ../recastnavigation
 RECAST_BUILD_DIR = $(RECAST_DIR)/build
 
-STATIC_LIBS += ../recastnavigation/build/Recast/libRecast.a
-STATIC_LIBS += ../recastnavigation/build/Detour/libDetour.a
-STATIC_LIBS += ../recastnavigation/build/DetourCrowd/libDetourCrowd.a
+RECAST_CPP_FLAGS = "-I/opt/homebrew/include/SDL2 -fPIC"
+
 STATIC_LIBS += ../recastnavigation/build/DetourTileCache/libDetourTileCache.a
+STATIC_LIBS += ../recastnavigation/build/DetourCrowd/libDetourCrowd.a
+STATIC_LIBS += ../recastnavigation/build/Detour/libDetour.a
+STATIC_LIBS += ../recastnavigation/build/Recast/libRecast.a
+
+PYTHON_LIBS := $(shell python3-config --libs)
 
 LD_FLAGS := $(shell python3-config --ldflags --embed)
+LD_FLAGS += -L../recastnavigation/build/DetourTileCache
+LD_FLAGS += -L../recastnavigation/build/DetourCrowd
+LD_FLAGS += -L../recastnavigation/build/Detour
+LD_FLAGS += -L../recastnavigation/build/Recast
 
 OBJECTS = $(addprefix $(BUILD_DIR)/,$(notdir $(CPP_SOURCES:.cpp=.o)))
 vpath %.cpp $(sort $(dir $(CPP_SOURCES)))
@@ -61,7 +69,7 @@ run: all
 
 $(STATIC_LIBS):
 	mkdir -p $(RECAST_BUILD_DIR)
-	cd $(RECAST_BUILD_DIR) && cmake -DCMAKE_CXX_FLAGS=-I/opt/homebrew/include/SDL2 ..
+	cd $(RECAST_BUILD_DIR) && cmake -DCMAKE_CXX_FLAGS=$(RECAST_CPP_FLAGS) ..
 	cd $(RECAST_BUILD_DIR) && make
 
 $(BUILD_DIR)/%.o: %.cpp | $(BUILD_DIR) 
@@ -71,15 +79,15 @@ $(BUILD_DIR)/%.o: %.c | $(BUILD_DIR)
 	$(CC) -c $(CPP_FLAGS) $< -o $@
 
 $(BUILD_DIR)/$(TARGET): $(OBJECTS) $(STATIC_LIBS)
-	@echo "\nlinking c++ executable $@\n"
-	$(CPP) -shared $(LD_FLAGS) $(OBJECTS) $(STATIC_LIBS) -o $@
+	@echo "\nlinking executable $@\n"
+	$(CPP) -shared $(LD_FLAGS) $(OBJECTS) $(STATIC_LIBS) $(PYTHON_LIBS) -o $@
 	@echo ""
 	@$(SZ) $@
 	@echo ""
 
 $(BUILD_DIR)/$(SHARED_LIB)$(SHARED_LIB_EXT): $(OBJECTS) $(STATIC_LIBS)
 	@echo "linking shared library $@\n"
-	$(CPP) -shared $(LD_FLAGS) $(OBJECTS) $(STATIC_LIBS) -o $@
+	$(CPP) -shared $(LD_FLAGS) $(STATIC_LIBS) $(OBJECTS) $(PYTHON_LIBS) -o $@
 	@echo ""
 	@$(SZ) $@
 	@echo ""

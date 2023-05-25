@@ -18,6 +18,7 @@
 
 #include <math.h>
 #include <stdio.h>
+#include <string.h>
 #include "BaseBuilder.h"
 #include "InputGeom.h"
 #include "Recast.h"
