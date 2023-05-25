@@ -17,22 +17,23 @@ RUN apt install -y \
     binutils-gold \
     libsdl2-dev
 
-RUN mkdir /cpp
-RUN mkdir /server
+RUN mkdir /app
+RUN mkdir /app/cpp
+RUN mkdir /app/server
 
-WORKDIR /
+WORKDIR /app
 
-COPY ./server /server
-COPY ./requirements.txt /
+COPY ./server /app/server
+COPY ./requirements.txt /app
 
 RUN pip3 install -r requirements.txt
 
-COPY ./cpp /cpp
-COPY ./recastnavigation /recastnavigation
+COPY ./cpp /app/cpp
+COPY ./recastnavigation /app/recastnavigation
 
-WORKDIR /cpp
+WORKDIR /app/cpp
 RUN make clean_all && make
 
-WORKDIR /
+WORKDIR /app
 
-CMD ["python3", "/server/server.py"]
+CMD ["python3", "/app/server/server.py"]

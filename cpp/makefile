@@ -2,6 +2,7 @@ TARGET     = main
 SHARED_LIB = lib_pathfinding
 BUILD_DIR  = build
 
+OS_TYPE := $(shell uname)
 SHARED_LIB_EXT := $(shell python3-config --extension-suffix)
 
 DEBUG = 1
@@ -55,10 +56,13 @@ LD_FLAGS += -L../recastnavigation/build/DetourCrowd
 LD_FLAGS += -L../recastnavigation/build/Detour
 LD_FLAGS += -L../recastnavigation/build/Recast
 
+ifeq ($(OS_TYPE), Linux)
+# need to explicitly tell the compiler to link the static libs into the shared lib in linux
 SHARED_LIB_LD_FLAGS += -Wl,--whole-archive $(RECAST_LIB) -Wl,--no-whole-archive
 SHARED_LIB_LD_FLAGS += -Wl,--whole-archive $(DETOUR_LIB) -Wl,--no-whole-archive
 SHARED_LIB_LD_FLAGS += -Wl,--whole-archive $(DETOUR_CROWD_LIB) -Wl,--no-whole-archive
 SHARED_LIB_LD_FLAGS += -Wl,--whole-archive $(DETOUR_TILE_CACHE_LIB) -Wl,--no-whole-archive
+endif
 
 OBJECTS = $(addprefix $(BUILD_DIR)/,$(notdir $(CPP_SOURCES:.cpp=.o)))
 vpath %.cpp $(sort $(dir $(CPP_SOURCES)))
