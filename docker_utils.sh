@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 IMAGE_NAME="rtls_server_debian_bullseye"
 CONTAINER_NAME="rtls_server"
 
