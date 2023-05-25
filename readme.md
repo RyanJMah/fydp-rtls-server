@@ -1,19 +1,11 @@
 ### Prerequisites
 
-TODO: I wrote the makefile for macos, need to port to linux probably later
-
-1. Install SDL2 (needed for recast navigation demo)
-
-```
+```bash
 # for macos
-brew install sdl2
-```
+brew install sdl2 premake
 
-2. Install premake (needed for recast navigation demo)
-
-```
-# for macos
-brew install premake
+# for debian-based linux
+sudo apt install libsdl2-dev libglm-dev libegl-mesa0
 ```
 
 ### Build
