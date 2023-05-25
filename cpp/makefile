@@ -40,10 +40,12 @@ RECAST_BUILD_DIR = $(RECAST_DIR)/build
 
 RECAST_CPP_FLAGS = "-I/opt/homebrew/include/SDL2 -fPIC"
 
-STATIC_LIBS += ../recastnavigation/build/DetourTileCache/libDetourTileCache.a
-STATIC_LIBS += ../recastnavigation/build/DetourCrowd/libDetourCrowd.a
-STATIC_LIBS += ../recastnavigation/build/Detour/libDetour.a
-STATIC_LIBS += ../recastnavigation/build/Recast/libRecast.a
+RECAST_LIB            = ../recastnavigation/build/Recast/libRecast.a
+DETOUR_LIB            = ../recastnavigation/build/Detour/libDetour.a
+DETOUR_CROWD_LIB      = ../recastnavigation/build/DetourCrowd/libDetourCrowd.a
+DETOUR_TILE_CACHE_LIB = ../recastnavigation/build/DetourTileCache/libDetourTileCache.a
+
+STATIC_LIBS = $(RECAST_LIB) $(DETOUR_LIB) $(DETOUR_CROWD_LIB) $(DETOUR_TILE_CACHE_LIB)
 
 PYTHON_LIBS := $(shell python3-config --libs)
 
@@ -52,6 +54,11 @@ LD_FLAGS += -L../recastnavigation/build/DetourTileCache
 LD_FLAGS += -L../recastnavigation/build/DetourCrowd
 LD_FLAGS += -L../recastnavigation/build/Detour
 LD_FLAGS += -L../recastnavigation/build/Recast
+
+SHARED_LIB_LD_FLAGS += -Wl,--whole-archive $(RECAST_LIB) -Wl,--no-whole-archive
+SHARED_LIB_LD_FLAGS += -Wl,--whole-archive $(DETOUR_LIB) -Wl,--no-whole-archive
+SHARED_LIB_LD_FLAGS += -Wl,--whole-archive $(DETOUR_CROWD_LIB) -Wl,--no-whole-archive
+SHARED_LIB_LD_FLAGS += -Wl,--whole-archive $(DETOUR_TILE_CACHE_LIB) -Wl,--no-whole-archive
 
 OBJECTS = $(addprefix $(BUILD_DIR)/,$(notdir $(CPP_SOURCES:.cpp=.o)))
 vpath %.cpp $(sort $(dir $(CPP_SOURCES)))
@@ -80,14 +87,14 @@ $(BUILD_DIR)/%.o: %.c | $(BUILD_DIR)
 
 $(BUILD_DIR)/$(TARGET): $(OBJECTS) $(STATIC_LIBS)
 	@echo "\nlinking executable $@\n"
-	$(CPP) -shared $(LD_FLAGS) $(OBJECTS) $(STATIC_LIBS) $(PYTHON_LIBS) -o $@
+	$(CPP) -shared $(LD_FLAGS) $(STATIC_LIBS) $(OBJECTS) $(PYTHON_LIBS) -o $@
 	@echo ""
 	@$(SZ) $@
 	@echo ""
 
 $(BUILD_DIR)/$(SHARED_LIB)$(SHARED_LIB_EXT): $(OBJECTS) $(STATIC_LIBS)
 	@echo "linking shared library $@\n"
-	$(CPP) -shared $(LD_FLAGS) $(STATIC_LIBS) $(OBJECTS) $(PYTHON_LIBS) -o $@
+	$(CPP) -shared $(LD_FLAGS) $(SHARED_LIB_LD_FLAGS) $(STATIC_LIBS) $(OBJECTS) $(PYTHON_LIBS) -o $@
 	@echo ""
 	@$(SZ) $@
 	@echo ""
