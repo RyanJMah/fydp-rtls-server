@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM debian:bullseye
 
 RUN apt update -y
 RUN apt install -y \

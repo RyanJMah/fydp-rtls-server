@@ -17,5 +17,7 @@ sudo apt-get update --allow-unauthenticated
 sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
 # configure to use docker without sudo
+set +e
 sudo groupadd docker
 sudo usermod -aG docker $USER
+set -e
