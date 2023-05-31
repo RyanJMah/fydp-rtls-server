@@ -5,7 +5,6 @@ RUN apt install -y \
     make \
     cmake \
     build-essential \
-    clang \
     python3 \
     python3-pip
 
@@ -23,13 +22,13 @@ RUN mkdir -p /app/resources
 
 WORKDIR /app
 
+COPY ./requirements.txt /app
+RUN pip3 install -r requirements.txt
+
 COPY ./resources /app/resources
 COPY ./server /app/server
 COPY ./cpp /app/cpp
 COPY ./recastnavigation /app/recastnavigation
-COPY ./requirements.txt /app
-
-RUN pip3 install -r requirements.txt
 
 WORKDIR /app/cpp
 RUN make clean_all && make

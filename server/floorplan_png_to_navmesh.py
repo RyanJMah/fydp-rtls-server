@@ -1,9 +1,11 @@
 import os
 import meshio
 import numpy as np
-from paths import AppPaths
 from PIL import Image
 from pydelatin import Delatin
+
+from app_paths import AppPaths
+from lib_pathfinding import generate_navmesh
 
 def png_to_heightmap(png_path: str) -> Image:
     img = Image.open(png_path)
@@ -40,8 +42,11 @@ def _main():
     heightmap = png_to_heightmap(png_path)
     mesh = heightmap_to_mesh(heightmap)
 
-    output_path = AppPaths.get_obj("e7-4th-floor.obj")
-    write_mesh_to_obj(mesh, output_path)
+    obj_path = AppPaths.get_obj("e7-4th-floor.obj")
+    write_mesh_to_obj(mesh, obj_path)
+
+    navmesh_path = AppPaths.get_navmesh("e7-4th-floor.nav")
+    generate_navmesh(obj_path, navmesh_path)
 
 if __name__ == "__main__":
     _main()

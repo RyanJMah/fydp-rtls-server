@@ -12,7 +12,7 @@ class AppPaths():
     CPP_DIR = os.path.join(REPO_BASE_DIR, "cpp")
     
     # ./cpp/build
-    CPP_BUILD_DIR = os.path.join(REPO_BASE_DIR, "cpp")
+    CPP_BUILD_DIR = os.path.join(CPP_DIR, "build")
     
     # ./resources
     RESOURCES_DIR = os.path.join(REPO_BASE_DIR, "resources")
