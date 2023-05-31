@@ -4,6 +4,7 @@ compile_commands.json
 build/
 *.nav
 *.obj
+__pycache__/
 
 # Python virtual env files
 venv/
