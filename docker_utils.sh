@@ -38,7 +38,6 @@ fi
 if [[ $1 == "clean" ]]
 then
     clean_docker
-    docker builder prune
     exit 0
 fi
 
