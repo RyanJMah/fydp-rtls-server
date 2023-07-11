@@ -4,7 +4,7 @@ import logging
 LOG_LEVEL = logging.INFO
 # LOG_LEVEL = logging.DEBUG
 
-LOG_FORMAT_STR = "[%(asctime)s] %(levelname)-18s --- %(message)s (%(name)s)"
+LOG_FORMAT_STR = "[%(asctime)s] %(levelname)s --- %(message)s (%(name)s)"
 
 class _Formatter(logging.Formatter):
     """Custom formatter that adds color to log messages based on the log level."""
