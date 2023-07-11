@@ -6,19 +6,21 @@ RUN apt install -y \
     cmake \
     build-essential \
     python3 \
-    python3-pip
-
-# build dependencies
-RUN apt install -y \
+    python3-pip \
     libglm-dev \
     freeglut3 \
     freeglut3-dev \
     binutils-gold \
-    libsdl2-dev
+    libsdl2-dev \
+    mosquitto \
+    supervisor
+
+ADD ./supervisord.conf /etc/supervisor/conf.d/
 
 RUN mkdir -p /app/cpp
 RUN mkdir -p /app/server
 RUN mkdir -p /app/resources
+RUN mkdir -p /app/logs
 
 WORKDIR /app
 
@@ -35,4 +37,4 @@ RUN make clean_all && make
 
 WORKDIR /app
 
-CMD ["python3", "/app/server/server.py"]
+CMD ["supervisord", "-n"]
