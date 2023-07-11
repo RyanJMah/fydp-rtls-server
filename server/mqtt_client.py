@@ -22,8 +22,6 @@ class _TopicHandle():
             if _TopicHandle._is_arg(level):
                 self.arg_positions.append(i)
 
-        print(self.arg_positions)
-        
     @staticmethod
     def _topic_args_to_wildcard(path: str) -> str:
         return re.sub("<(.*?)>", "+", path)

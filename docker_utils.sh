@@ -30,7 +30,7 @@ then
     echo "Commands:"
     echo "    clean      - purge server docker image and container, and remove cache"
     echo "    build      - build server docker image and container"
-    echo "    start      - build image and container, and start the container"
+    echo "    start      - (Re)start the container"
     echo "    stop       - stop the container"
     echo "    shell      - get a shell into the container"
     echo "    logs       - tail the server logs"
@@ -60,7 +60,6 @@ fi
 
 if [[ $1 == "start" ]]
 then
-    build_img_and_container
     docker start $CONTAINER_NAME
     exit 0
 fi
