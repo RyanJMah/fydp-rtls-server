@@ -27,13 +27,15 @@ WORKDIR /app
 COPY ./requirements.txt /app
 RUN pip3 install -r requirements.txt
 
-COPY ./resources /app/resources
-COPY ./server /app/server
 COPY ./cpp /app/cpp
 COPY ./recastnavigation /app/recastnavigation
 
 WORKDIR /app/cpp
 RUN make clean_all && make
+
+COPY ./resources /app/resources
+COPY ./server /app/server
+COPY ./tests /app/tests
 
 WORKDIR /app
 

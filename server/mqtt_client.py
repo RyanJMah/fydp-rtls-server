@@ -99,7 +99,7 @@ class MqttClient():
         self._user_subscribe_callback(self)
 
 
-    def _do_subscribe(self, topic: str, qos=1):
+    def _do_subscribe(self, topic: str, qos=0):
         logger.debug(f"Subscribing to {topic}...")
 
         err_code, mid = self._mqtt.subscribe(topic, qos)
@@ -153,7 +153,7 @@ class MqttClient():
         self._mqtt.connect(host, port=port, keepalive=keepalive)
 
 
-    def subscribe(self, topic: str, callback: Callable, qos=1):
+    def subscribe(self, topic: str, callback: Callable, qos=0):
         """
         Example Callback shown for /gl/anchor/<id>/heartbeat
 
@@ -171,7 +171,7 @@ class MqttClient():
             self._do_subscribe(topic, qos)
 
 
-    def publish(self, topic: str, payload=None, qos=1, retain=False):
+    def publish(self, topic: str, payload=None, qos=0, retain=False):
         logger.debug(f"Publishing to {topic}")
 
         self._mqtt.publish(topic, payload, qos, retain)
@@ -184,41 +184,3 @@ class MqttClient():
     def start_mainloop(self):
         self._mqtt.loop_start()
 
-
-def _test_mqtt_client():
-    import time
-
-    def thing_id_msg_handler(client: MqttClient, msg: MqttMsg, id_: int):
-        logger.info(f"{msg.topic}: received {msg.payload}")
-
-        time.sleep(1)
-
-        if id_ == 1:
-            client.publish("/thing/2/msg", "b")
-
-        elif id_ == 2:
-            client.publish("/thing/deez", "c")
-
-    def thing_deez_handler(client: MqttClient, msg: MqttMsg):
-        logger.info(f"{msg.topic}: received {msg.payload}")
-
-        time.sleep(1)
-
-        client.publish("/thing/1/msg", "a")
-
-
-    client = MqttClient()
-
-    client.connect("localhost", 1883)
-
-    client.subscribe("/thing/<id>/msg", thing_id_msg_handler)
-    client.subscribe("/thing/deez", thing_deez_handler)
-
-    client.start_mainloop()
-
-    time.sleep(0.5)
-
-    client.publish("/thing/1/msg", "a")
-
-    while (1):
-        pass
