@@ -15,12 +15,13 @@ RUN apt install -y \
     mosquitto \
     supervisor
 
-ADD ./supervisord.conf /etc/supervisor/conf.d/
-
 RUN mkdir -p /app/cpp
 RUN mkdir -p /app/server
 RUN mkdir -p /app/resources
 RUN mkdir -p /app/logs
+
+ADD ./supervisord.conf /etc/supervisor/conf.d/
+ADD ./mosquitto.conf /app
 
 WORKDIR /app
 
@@ -38,5 +39,7 @@ COPY ./server /app/server
 COPY ./tests /app/tests
 
 WORKDIR /app
+
+EXPOSE 1883
 
 CMD ["supervisord", "-n"]

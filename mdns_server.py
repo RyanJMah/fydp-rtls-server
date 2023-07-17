@@ -1,12 +1,13 @@
-import logs
-import logging
 import socket
+import logging
 from time import sleep
 from zeroconf import IPVersion, ServiceInfo, Zeroconf
 
+import server.logs
+
 SERVICE_HOSTNAME = "GuidingLight._mqtt._tcp.local."
 
-logger = logs.init_logger(__name__)
+logger = server.logs.init_logger(__name__)
 
 def main():
     logger.setLevel(logging.DEBUG)
