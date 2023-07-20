@@ -11,11 +11,6 @@ class Struct(Structure):
         return ret
 
 class TelemetryData(Struct):
-    _fields_ = [ ("rssi",               c_uint8),
-                 ("status",             c_uint8),
+    _fields_ = [ ("status",             c_uint8),
                  ("timestamp",          c_uint32),
-                 ("distance_mm",        c_int32),
-                 ("iphone_aoa_2pi_q16", c_int16),
-                 ("iphone_aoa_fom",     c_uint8),
-                 ("anchor_aoa_2pi_q16", c_int16),
-                 ("anchor_aoa_fom",     c_uint8) ]
+                 ("distance_mm",        c_int32) ]
