@@ -26,6 +26,9 @@ class AppPaths():
     # ./resources/navmeshes
     NAVMESHES_DIR = os.path.join(RESOURCES_DIR, "navmeshes")
 
+    # ./tests
+    TESTS_DIR = os.path.join(REPO_BASE_DIR, "tests")
+
     @staticmethod
     def get_floorplan(name: str) -> str:
         return os.path.join(AppPaths.FLOORPLANS_DIR, name)

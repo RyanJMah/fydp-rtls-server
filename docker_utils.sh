@@ -22,17 +22,19 @@ function build_img_and_container() {
     set -e
 
     docker build -t $IMAGE_NAME .
-    docker container create -it --name $CONTAINER_NAME $IMAGE_NAME
+    docker container create -p 1883:1883 -it --name $CONTAINER_NAME $IMAGE_NAME
 }
 
 if [[ $1 == "help" ]]
 then
     echo "Commands:"
-    echo "    clean - purge server docker image and container, and remove cache"
-    echo "    build - build server docker image and container"
-    echo "    start - build image and container, and start the container"
-    echo "    stop  - stop the container"
-    echo "    shell - get a shell into the container"
+    echo "    clean      - purge server docker image and container, and remove cache"
+    echo "    build      - build server docker image and container"
+    echo "    start      - (Re)start the container"
+    echo "    stop       - stop the container"
+    echo "    shell      - get a shell into the container"
+    echo "    logs       - tail the server logs"
+    echo "    mqtt_logs  - tail the mqtt broker logs"
 fi
 
 if [[ $1 == "clean" ]]
@@ -58,7 +60,6 @@ fi
 
 if [[ $1 == "start" ]]
 then
-    build_img_and_container
     docker start $CONTAINER_NAME
     exit 0
 fi
@@ -66,4 +67,14 @@ fi
 if [[ $1 == "shell" ]]
 then
     docker exec -it $CONTAINER_NAME bash
+fi
+
+if [[ $1 == "logs" ]]
+then
+    docker exec rtls_server bash -c "tail -f /app/logs/rtls_server.log"
+fi
+
+if [[ $1 == "mqtt_logs" ]]
+then
+    docker exec rtls_server bash -c "tail -f /app/logs/mosquitto.log"
 fi
