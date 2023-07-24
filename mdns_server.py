@@ -15,7 +15,7 @@ def main():
     info = ServiceInfo(
         "_mqtt._tcp.local.",
         SERVICE_HOSTNAME,
-        addresses=[socket.inet_aton("1.2.3.4")],
+        addresses=[socket.gethostbyname(socket.gethostname())],
         port=80,
     )
 

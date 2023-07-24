@@ -1,10 +1,17 @@
 import time
 import threading
+import queue
+import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
 g_x = 0
 g_y = 0
+
+coordinate_q: queue.Queue = queue.Queue()
+
+def push_coordinates(x, y):
+    coordinate_q.put( (x, y) )
 
 # Dummy function to simulate the user's position (replace this with your server data)
 def get_user_position():
@@ -12,7 +19,10 @@ def get_user_position():
 
 # Function to update the position of the dot in the plot
 def update_dot(frame):
-    x, y = get_user_position()  # Get the user's current position
+    x, y = coordinate_q.get()  # Get the user's current position
+
+    # x, y = get_user_position()  # Get the user's current position
+
     dot.set_data(x, y)  # Update the dot's position
     return dot,
 
@@ -28,8 +38,8 @@ t.start()
 
 # Create a figure and axis
 fig, ax = plt.subplots()
-ax.set_xlim(0, 10)  # Set the X-axis limits
-ax.set_ylim(0, 10)    # Set the Y-axis limits
+ax.set_xlim(0, 621)  # Set the X-axis limits
+ax.set_ylim(0, 520)    # Set the Y-axis limits
 
 # Create the dot as a scatter plot
 dot, = ax.plot([], [], 'ro', markersize=8)
@@ -37,4 +47,8 @@ dot, = ax.plot([], [], 'ro', markersize=8)
 # Create the animation
 animation = FuncAnimation(fig, update_dot, frames=range(200), interval=100)
 
-plt.show()
+def run():
+    plt.show()
+
+if __name__ == "__main__":
+    run()

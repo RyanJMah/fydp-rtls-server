@@ -1,21 +1,82 @@
 import sys
 import time
 import logs
+import threading
+import numpy as np
+from typing import List
 from app_mqtt import TelemetryData
 from mqtt_client import MqttClient, MqttMsg
 
 from app_paths import AppPaths
+
 sys.path.append(AppPaths.TESTS_DIR)
+sys.path.append(AppPaths.TESTS_DIR)
+
+from visualize_iphone import run, push_coordinates
 
 logger = logs.init_logger(__name__)
 
+def trilateration(P1, P2, P3, r1, r2, r3):
+    p1 = np.array([0, 0, 0])
+    p2 = np.array([P2[0] - P1[0], P2[1] - P1[1], P2[2] - P1[2]])
+    p3 = np.array([P3[0] - P1[0], P3[1] - P1[1], P3[2] - P1[2]])
+    v1 = p2 - p1
+    v2 = p3 - p1
+
+    Xn = (v1)/np.linalg.norm(v1)
+
+    tmp = np.cross(v1, v2)
+
+    Zn = (tmp)/np.linalg.norm(tmp)
+
+    Yn = np.cross(Xn, Zn)
+
+    i = np.dot(Xn, v2)
+    d = np.dot(Xn, v1)
+    j = np.dot(Yn, v2)
+
+    X = ((r1**2)-(r2**2)+(d**2))/(2*d)
+    Y = (((r1**2)-(r3**2)+(i**2)+(j**2))/(2*j))-((i/j)*(X))
+    Z1 = np.sqrt(max(0, r1**2-X**2-Y**2))
+    Z2 = -Z1
+
+    K1 = P1 + X * Xn + Y * Yn + Z1 * Zn
+    K2 = P1 + X * Xn + Y * Yn + Z2 * Zn
+    return K1,K2
+
+anchor_distances: List[float] = [0, 0, 0]
+
 def anchor_data_handler(client: MqttClient, msg: MqttMsg, id_: int):
+    global anchor_distances
+
     data = TelemetryData.from_buffer_copy(msg.payload)
 
-    logger.info(f"got pub from anchor, id={id_}, {data}")
+    if (data.status == 0):
+        # logger.info(f"got pub from anchor, id={id_}")
+        # logger.info(f"got pub from anchor, id={id_}, {data}")
+
+        anchor_distances[id_] = data.distance_mm / 10
 
 def anchor_heartbat_handler(client: MqttClient, msg: MqttMsg, id_: int):
     logger.info(f"Received heartbeat from anchor {id_}")
+
+def localization_thread():
+    global anchor_distances
+
+    anchor0 = np.array([564, 520, 0])
+    anchor1 = np.array([0, 0, 0])
+    anchor2 = np.array([74, 520, 0])
+
+    while (1):
+        r1, r2, r3 = anchor_distances
+        coords, _ = trilateration(anchor0, anchor1, anchor2, r1, r2, r3)
+        x, y, _ = coords
+
+        logger.info(f"(x, y) = ({x}, {y})")
+
+        push_coordinates(x, y)
+
+        time.sleep(0.1)
 
 def main():
     client = MqttClient()
@@ -25,8 +86,10 @@ def main():
     client.subscribe("/gl/anchor/<id>/heartbeat", anchor_heartbat_handler)
     client.start_mainloop()
 
-    while (1):
-        pass
+    t = threading.Thread(target=localization_thread, daemon=True)
+    t.start()
+
+    run()
 
 if __name__ == "__main__":
     main()
