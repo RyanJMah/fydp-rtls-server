@@ -17,7 +17,32 @@ from visualize_iphone import run, push_coordinates
 
 logger = logs.init_logger(__name__)
 
+class LowPassFilter:
+    """
+    First order low pass filter, discretized via trapazoidal rule,
+    with a sample time of 5.5Hz
+    """
+
+    def __init__(self):
+        self.tau = 0.075
+
+        self.y_n_minus_1 = 0
+        self.u_n_minus_1 = 0
+
+    def exec(self, u):
+        y = ( 1/(11*self.tau + 1) ) * \
+            (u + self.u_n_minus_1 - (1 - 11*self.tau)*self.y_n_minus_1)
+
+        # y = 0.8377*self.u_n_minus_1 + 0.1623*self.y_n_minus_1
+
+        self.y_n_minus_1 = y
+        self.u_n_minus_1 = u
+
+        return y
+
+
 anchor_distances: List[float] = [0.0, 0.0, 0.0]
+anchor_filters: List[LowPassFilter] = [LowPassFilter(), LowPassFilter(), LowPassFilter()]
 
 def trilateration(P1, P2, P3, r1, r2, r3):
     p1 = np.array([0, 0, 0])
@@ -57,10 +82,14 @@ def anchor_data_handler(client: MqttClient, msg: MqttMsg, id_: int):
         print(data.distance_mm / 10)
 
     if (data.status == 0):
-        logger.info(f"got pub from anchor, id={id_}")
+        # logger.info(f"got pub from anchor, id={id_}")
         # logger.info(f"got pub from anchor, id={id_}, {data}")
 
-        anchor_distances[id_] = data.distance_mm / 10
+        filtered_distance = anchor_filters[id_].exec(data.distance_mm / 10)
+        anchor_distances[id_] = filtered_distance
+
+        # logger.error(filtered_distance)
+        # anchor_distances[id_] = data.distance_mm / 10
 
         # avg_window = moving_avg_windows[id_]
 
@@ -94,7 +123,7 @@ def localization_thread():
         coords, _ = trilateration(anchor0, anchor1, anchor2, r0, r1, r2)
         x, y, _ = coords
 
-        logger.info(f"(x, y) = ({x}, {y})")
+        # logger.info(f"(x, y) = ({x}, {y})")
 
         push_coordinates(x, y, r0, r1, r2)
 
