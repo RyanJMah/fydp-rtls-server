@@ -2,6 +2,7 @@ import sys
 import time
 import logs
 import threading
+import queue
 import numpy as np
 from typing import List
 from app_mqtt import TelemetryData
@@ -15,6 +16,11 @@ sys.path.append(AppPaths.TESTS_DIR)
 from visualize_iphone import run, push_coordinates
 
 logger = logs.init_logger(__name__)
+
+moving_avg_size = 3
+moving_avg_windows: List[ List[float] ] = [ [], [], [] ]
+
+anchor_distances: List[float] = [0.0, 0.0, 0.0]
 
 def trilateration(P1, P2, P3, r1, r2, r3):
     p1 = np.array([0, 0, 0])
@@ -44,7 +50,6 @@ def trilateration(P1, P2, P3, r1, r2, r3):
     K2 = P1 + X * Xn + Y * Yn + Z2 * Zn
     return K1,K2
 
-anchor_distances: List[float] = [0, 0, 0]
 
 def anchor_data_handler(client: MqttClient, msg: MqttMsg, id_: int):
     global anchor_distances
@@ -55,7 +60,16 @@ def anchor_data_handler(client: MqttClient, msg: MqttMsg, id_: int):
         # logger.info(f"got pub from anchor, id={id_}")
         # logger.info(f"got pub from anchor, id={id_}, {data}")
 
-        anchor_distances[id_] = data.distance_mm / 10
+        avg_window = moving_avg_windows[id_]
+
+        if len(avg_window) == moving_avg_size:
+            avg_distance = np.mean(avg_window)
+            anchor_distances[id_] = avg_distance    # type: ignore
+
+            avg_window.clear()
+
+        else:
+            avg_window.append(data.distance_mm / 10)
 
 def anchor_heartbat_handler(client: MqttClient, msg: MqttMsg, id_: int):
     logger.info(f"Received heartbeat from anchor {id_}")
@@ -68,8 +82,13 @@ def localization_thread():
     anchor2 = np.array([74, 520, 0])
 
     while (1):
-        r1, r2, r3 = anchor_distances
-        coords, _ = trilateration(anchor0, anchor1, anchor2, r1, r2, r3)
+        r0, r1, r2 = anchor_distances
+
+        # old one was 25
+        r0 += 35
+        r2 += 35
+
+        coords, _ = trilateration(anchor0, anchor1, anchor2, r0, r1, r2)
         x, y, _ = coords
 
         logger.info(f"(x, y) = ({x}, {y})")

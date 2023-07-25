@@ -44,6 +44,22 @@ ax.set_ylim(0, 520)    # Set the Y-axis limits
 # Create the dot as a scatter plot
 dot, = ax.plot([], [], 'ro', markersize=8)
 
+TABLE_X = 230
+TABLE_Y = 112
+
+table_dot0, = ax.plot([], [], 'bo', markersize=8)
+table_dot0.set_data(TABLE_X, TABLE_Y)
+
+table_dot1, = ax.plot([], [], 'bo', markersize=8)
+table_dot1.set_data(TABLE_X + 178, TABLE_Y + 178)
+
+table_dot2, = ax.plot([], [], 'bo', markersize=8)
+table_dot2.set_data(TABLE_X, TABLE_Y + 178)
+
+table_dot3, = ax.plot([], [], 'bo', markersize=8)
+table_dot3.set_data(TABLE_X + 178, TABLE_Y)
+
+
 # Create the animation
 animation = FuncAnimation(fig, update_dot, frames=range(200), interval=100)
 
