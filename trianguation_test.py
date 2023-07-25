@@ -37,9 +37,9 @@ def main():
     # r2 = 2.7*100 + 25
     # r3 = 3.1*100 + 25
 
-    r1 = 640
-    r2 = 350
-    r3 = 160
+    r1 = 290
+    r2 = 290
+    r3 = 450
 
     ans = trilateration(anchor1, anchor2, anchor3, r1, r2, r3)
     print(ans)

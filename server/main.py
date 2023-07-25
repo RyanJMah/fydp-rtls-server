@@ -17,9 +17,6 @@ from visualize_iphone import run, push_coordinates
 
 logger = logs.init_logger(__name__)
 
-moving_avg_size = 3
-moving_avg_windows: List[ List[float] ] = [ [], [], [] ]
-
 anchor_distances: List[float] = [0.0, 0.0, 0.0]
 
 def trilateration(P1, P2, P3, r1, r2, r3):
@@ -56,20 +53,25 @@ def anchor_data_handler(client: MqttClient, msg: MqttMsg, id_: int):
 
     data = TelemetryData.from_buffer_copy(msg.payload)
 
+    if (id_ == 0):
+        print(data.distance_mm / 10)
+
     if (data.status == 0):
-        # logger.info(f"got pub from anchor, id={id_}")
+        logger.info(f"got pub from anchor, id={id_}")
         # logger.info(f"got pub from anchor, id={id_}, {data}")
 
-        avg_window = moving_avg_windows[id_]
+        anchor_distances[id_] = data.distance_mm / 10
 
-        if len(avg_window) == moving_avg_size:
-            avg_distance = np.mean(avg_window)
-            anchor_distances[id_] = avg_distance    # type: ignore
+        # avg_window = moving_avg_windows[id_]
 
-            avg_window.clear()
+        # if len(avg_window) == moving_avg_size:
+        #     avg_distance = np.mean(avg_window)
+        #     anchor_distances[id_] = avg_distance    # type: ignore
 
-        else:
-            avg_window.append(data.distance_mm / 10)
+        #     avg_window.clear()
+
+        # else:
+        #     avg_window.append(data.distance_mm / 10)
 
 def anchor_heartbat_handler(client: MqttClient, msg: MqttMsg, id_: int):
     logger.info(f"Received heartbeat from anchor {id_}")
@@ -77,23 +79,24 @@ def anchor_heartbat_handler(client: MqttClient, msg: MqttMsg, id_: int):
 def localization_thread():
     global anchor_distances
 
-    anchor0 = np.array([564, 520, 0])
-    anchor1 = np.array([0, 0, 0])
-    anchor2 = np.array([74, 520, 0])
+    anchor0 = np.array([0, 0, 0])
+    anchor1 = np.array([74, 520, 0])
+    anchor2 = np.array([564, 520, 0])
 
     while (1):
         r0, r1, r2 = anchor_distances
 
         # old one was 25
-        r0 += 35
-        r2 += 35
+        r0 += 20
+        r1 += 20
+        r2 += 20
 
         coords, _ = trilateration(anchor0, anchor1, anchor2, r0, r1, r2)
         x, y, _ = coords
 
         logger.info(f"(x, y) = ({x}, {y})")
 
-        push_coordinates(x, y)
+        push_coordinates(x, y, r0, r1, r2)
 
         time.sleep(0.1)
 
