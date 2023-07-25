@@ -17,6 +17,10 @@ from visualize_iphone import run, push_coordinates
 
 logger = logs.init_logger(__name__)
 
+ANCHOR_0_COORDINATES = (0, 0)
+ANCHOR_1_COORDINATES = (276, 520)
+ANCHOR_2_COORDINATES = (617, 0)
+
 class LowPassFilter:
     """
     First order low pass filter, discretized via trapazoidal rule,
@@ -108,9 +112,9 @@ def anchor_heartbat_handler(client: MqttClient, msg: MqttMsg, id_: int):
 def localization_thread():
     global anchor_distances
 
-    anchor0 = np.array([0, 0, 0])
-    anchor1 = np.array([74, 520, 0])
-    anchor2 = np.array([564, 520, 0])
+    anchor0 = np.array([*ANCHOR_0_COORDINATES, 0])
+    anchor1 = np.array([*ANCHOR_1_COORDINATES, 0])
+    anchor2 = np.array([*ANCHOR_2_COORDINATES, 0])
 
     while (1):
         r0, r1, r2 = anchor_distances

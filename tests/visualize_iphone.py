@@ -5,6 +5,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
+ANCHOR_0_COORDINATES = (0, 0)
+ANCHOR_1_COORDINATES = (276, 520)
+ANCHOR_2_COORDINATES = (617, 0)
+
 g_x = 0
 g_y = 0
 
@@ -37,8 +41,8 @@ def update_dot_thread():
         g_y += 0.1
         time.sleep(0.2)
 
-t = threading.Thread(target=update_dot_thread, daemon=True)
-t.start()
+# t = threading.Thread(target=update_dot_thread, daemon=True)
+# t.start()
 
 # Create a figure and axis
 fig, ax = plt.subplots()
@@ -65,15 +69,15 @@ table_dot2.set_data(TABLE_X, TABLE_Y + 178)
 table_dot3, = ax.plot([], [], 'bo', markersize=8)
 table_dot3.set_data(TABLE_X + 178, TABLE_Y)
 
-anchor0 = plt.Circle((0, 0), 20, color='b', fill=False)
+anchor0 = plt.Circle(ANCHOR_0_COORDINATES, 20, color='b', fill=False)
 anchor0.set_radius(100)
 ax.add_patch(anchor0)
 
-anchor1 = plt.Circle((74, 520), 20, color='b', fill=False)
+anchor1 = plt.Circle(ANCHOR_1_COORDINATES, 20, color='b', fill=False)
 anchor1.set_radius(100)
 ax.add_patch(anchor1)
 
-anchor2 = plt.Circle((564, 520), 20, color='b', fill=False)
+anchor2 = plt.Circle(ANCHOR_2_COORDINATES, 20, color='b', fill=False)
 anchor2.set_radius(100)
 ax.add_patch(anchor2)
 
