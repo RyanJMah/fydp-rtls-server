@@ -137,8 +137,8 @@ def main():
     client = MqttClient()
 
     client.connect("localhost", 1883)
-    client.subscribe("/gl/anchor/<id>/data", anchor_data_handler)
-    client.subscribe("/gl/anchor/<id>/heartbeat", anchor_heartbat_handler)
+    client.subscribe("gl/anchor/<id>/data", anchor_data_handler)
+    client.subscribe("gl/anchor/<id>/heartbeat", anchor_heartbat_handler)
     client.start_mainloop()
 
     t = threading.Thread(target=localization_thread, daemon=True)
