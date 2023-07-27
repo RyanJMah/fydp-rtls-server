@@ -3,11 +3,10 @@ import time
 import logs
 import threading
 import queue
-import json
 import numpy as np
 from dataclasses import dataclass
 from typing import List
-from app_mqtt import TelemetryData
+from app_mqtt import AnchorTelemetryData, IOS_TelemetryData
 from mqtt_client import MqttClient, MqttMsg
 
 from app_paths import AppPaths
@@ -39,8 +38,6 @@ class LowPassFilter:
     def exec(self, u):
         y = ( 1/(11*self.tau + 1) ) * \
             (u + self.u_n_minus_1 - (1 - 11*self.tau)*self.y_n_minus_1)
-
-        # y = 0.8377*self.u_n_minus_1 + 0.1623*self.y_n_minus_1
 
         self.y_n_minus_1 = y
         self.u_n_minus_1 = u
@@ -91,7 +88,7 @@ def trilateration(P1, P2, P3, r1, r2, r3):
 def anchor_data_handler(client: MqttClient, msg: MqttMsg, aid: int):
     global g_anchors
 
-    data = TelemetryData.from_buffer_copy(msg.payload)
+    data = AnchorTelemetryData.from_buffer_copy(msg.payload)
 
     if (data.status == 0):
         filtered_distance = g_anchors[aid].distance_filter.exec(data.distance_mm / 10)
@@ -100,8 +97,7 @@ def anchor_data_handler(client: MqttClient, msg: MqttMsg, aid: int):
 def ios_data_handler(client: MqttClient, msg: MqttMsg, uid: int, aid:int):
     global g_anchors
 
-    data = json.loads(msg.payload.decode())
-
+    data = IOS_TelemetryData.from_buffer_copy(msg.payload)
     print(data)
 
 
