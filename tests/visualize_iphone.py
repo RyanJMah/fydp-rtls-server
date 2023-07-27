@@ -5,17 +5,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
-ANCHOR_0_COORDINATES = (0, 0)
-ANCHOR_1_COORDINATES = (276, 520)
-ANCHOR_2_COORDINATES = (617, 0)
+ANCHOR_0_COORDINATES = (615, 0, 266)
+ANCHOR_1_COORDINATES = (615, 520, 279)
+ANCHOR_2_COORDINATES = (0, 0, 273)
+ANCHOR_3_COORDINATES = (0, 520, 273)
 
 g_x = 0
 g_y = 0
 
 coordinate_q: queue.Queue = queue.Queue()
 
-def push_coordinates(x, y, r0, r1, r2):
-    coordinate_q.put( (x, y, r0, r1, r2) )
+def push_coordinates(x, y, r0, phi0, r1, phi1, r2, phi2):
+    coordinate_q.put( (x, y, r0, phi0, r1, phi1, r2, phi2) )
 
 # Dummy function to simulate the user's position (replace this with your server data)
 def get_user_position():
@@ -23,19 +24,21 @@ def get_user_position():
 
 # Function to update the position of the dot in the plot
 def update_dot(frame):
-    x, y, r0, r1, r2 = coordinate_q.get()  # Get the user's current position
-
-    # x, y = get_user_position()  # Get the user's current position
+    x, y, r0, phi0, r1, phi1, r2, phi2 = coordinate_q.get()  # Get the user's current position
 
     anchor0.set_radius(r0)
     anchor1.set_radius(r1)
     anchor2.set_radius(r2)
 
-    dot.set_data(x, y)  # Update the dot's position
-    return dot,
+    arrow_radius = 50
+    dx, dy = np.cos(phi0), np.sin(phi0)
+
+    dot1.set_data(x, y)  # Update the dot's position
+    dot2.set_data(x + dx*arrow_radius, y + dy*arrow_radius)  # Update the dot's position
 
 def update_dot_thread():
     global g_x, g_y
+
     while (1):
         g_x += 0.1
         g_y += 0.1
@@ -52,7 +55,8 @@ ax.set_xlim(0, 700)  # Set the X-axis limits
 ax.set_ylim(0, 700)  # Set the X-axis limits
 
 # Create the dot as a scatter plot
-dot, = ax.plot([], [], 'ro', markersize=8)
+dot1, = ax.plot([], [], 'ro', markersize=8)
+dot2, = ax.plot([], [], 'ro', markersize=8)
 
 TABLE_X = 230
 TABLE_Y = 112
@@ -80,6 +84,10 @@ ax.add_patch(anchor1)
 anchor2 = plt.Circle(ANCHOR_2_COORDINATES, 20, color='b', fill=False)
 anchor2.set_radius(100)
 ax.add_patch(anchor2)
+
+anchor3 = plt.Circle(ANCHOR_3_COORDINATES, 20, color='b', fill=False)
+anchor3.set_radius(100)
+ax.add_patch(anchor3)
 
 # Create the animation
 animation = FuncAnimation(fig, update_dot, frames=range(200), interval=100)

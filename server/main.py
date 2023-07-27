@@ -3,7 +3,9 @@ import time
 import logs
 import threading
 import queue
+import json
 import numpy as np
+from dataclasses import dataclass
 from typing import List
 from app_mqtt import TelemetryData
 from mqtt_client import MqttClient, MqttMsg
@@ -17,9 +19,10 @@ from visualize_iphone import run, push_coordinates
 
 logger = logs.init_logger(__name__)
 
-ANCHOR_0_COORDINATES = (0, 0, 270)
-ANCHOR_1_COORDINATES = (276, 520, 172)
-ANCHOR_2_COORDINATES = (617, 0, 304)
+ANCHOR_0_COORDINATES = (615, 0, 266)
+ANCHOR_1_COORDINATES = (615, 520, 279)
+ANCHOR_2_COORDINATES = (0, 0, 273)
+ANCHOR_3_COORDINATES = (0, 520, 273)
 
 class LowPassFilter:
     """
@@ -44,9 +47,17 @@ class LowPassFilter:
 
         return y
 
+class Anchor:
+    def __init__(self):
+        self.distance_cm = 0.0
+        self.iphone_angle_degrees = 0.0
+        self.iphone_angle_valid = False
+        self.los = False
 
-anchor_distances: List[float] = [0.0, 0.0, 0.0]
-anchor_filters: List[LowPassFilter] = [LowPassFilter(), LowPassFilter(), LowPassFilter()]
+        self.distance_filter = LowPassFilter()
+        self.angle_filter    = LowPassFilter()
+
+g_anchors = [Anchor(), Anchor(), Anchor(), Anchor()]
 
 def trilateration(P1, P2, P3, r1, r2, r3):
     p1 = np.array([0, 0, 0])
@@ -77,59 +88,55 @@ def trilateration(P1, P2, P3, r1, r2, r3):
     return K1,K2
 
 
-def anchor_data_handler(client: MqttClient, msg: MqttMsg, id_: int):
-    global anchor_distances
+def anchor_data_handler(client: MqttClient, msg: MqttMsg, aid: int):
+    global g_anchors
 
     data = TelemetryData.from_buffer_copy(msg.payload)
 
-    if (id_ == 0):
-        print(data.distance_mm / 10)
-
     if (data.status == 0):
-        # logger.info(f"got pub from anchor, id={id_}")
-        # logger.info(f"got pub from anchor, id={id_}, {data}")
+        filtered_distance = g_anchors[aid].distance_filter.exec(data.distance_mm / 10)
+        g_anchors[aid].distance_cm = filtered_distance
 
-        filtered_distance = anchor_filters[id_].exec(data.distance_mm / 10)
-        anchor_distances[id_] = filtered_distance
+def ios_data_handler(client: MqttClient, msg: MqttMsg, uid: int, aid:int):
+    global g_anchors
 
-        # logger.error(filtered_distance)
-        # anchor_distances[id_] = data.distance_mm / 10
+    data = json.loads(msg.payload.decode())
 
-        # avg_window = moving_avg_windows[id_]
+    print(data)
 
-        # if len(avg_window) == moving_avg_size:
-        #     avg_distance = np.mean(avg_window)
-        #     anchor_distances[id_] = avg_distance    # type: ignore
-
-        #     avg_window.clear()
-
-        # else:
-        #     avg_window.append(data.distance_mm / 10)
-
-def anchor_heartbat_handler(client: MqttClient, msg: MqttMsg, id_: int):
-    logger.info(f"Received heartbeat from anchor {id_}")
 
 def localization_thread():
-    global anchor_distances
+    global g_anchors
 
-    anchor0 = np.array([*ANCHOR_0_COORDINATES])
-    anchor1 = np.array([*ANCHOR_1_COORDINATES])
-    anchor2 = np.array([*ANCHOR_2_COORDINATES])
+    anchor0_coordinates = np.array([*ANCHOR_0_COORDINATES])
+    anchor1_coordinates = np.array([*ANCHOR_1_COORDINATES])
+    anchor2_coordinates = np.array([*ANCHOR_2_COORDINATES])
+
+    a0, a1, a2, a3 = g_anchors
 
     while (1):
-        r0, r1, r2 = anchor_distances
+        r0, phi0 = a0.distance_cm, a0.iphone_angle_degrees
+        r1, phi1 = a1.distance_cm, a1.iphone_angle_degrees
+        r2, phi2 = a2.distance_cm, a2.iphone_angle_degrees
+        r3, phi3 = a3.distance_cm, a3.iphone_angle_degrees
 
         # old one was 25
-        r0 += 20
-        r1 += 20
-        r2 += 20
+        r0 += 10
+        r1 += 10
+        r2 += 10
+        r3 += 10
 
-        coords, _ = trilateration(anchor0, anchor1, anchor2, r0, r1, r2)
+        coords, _ = trilateration( anchor0_coordinates,
+                                   anchor1_coordinates,
+                                   anchor2_coordinates,
+                                   r0,
+                                   r1,
+                                   r2 )
         x, y, _ = coords
 
         # logger.info(f"(x, y) = ({x}, {y})")
 
-        push_coordinates(x, y, r0, r1, r2)
+        push_coordinates(x, y, r0, phi0, r1, phi1, r2, phi2)
 
         time.sleep(0.1)
 
@@ -137,8 +144,10 @@ def main():
     client = MqttClient()
 
     client.connect("localhost", 1883)
+
     client.subscribe("gl/anchor/<id>/data", anchor_data_handler)
-    client.subscribe("gl/anchor/<id>/heartbeat", anchor_heartbat_handler)
+    client.subscribe("gl/user/<uid>/data/<aid>", ios_data_handler)
+
     client.start_mainloop()
 
     t = threading.Thread(target=localization_thread, daemon=True)
