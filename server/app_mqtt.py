@@ -1,8 +1,6 @@
 from ctypes import Structure, c_uint8, c_uint32, c_int16, c_int32, c_float
 
 class Struct(Structure):
-    _pack_ = 1
-
     def __str__(self):
         ret = "{\n"
 
@@ -18,6 +16,7 @@ class AnchorTelemetryData(Struct):
                  ("distance_mm", c_int32) ]
 
 class IOS_TelemetryData(Struct):
+    _pack_ = 1
     _fields_ = [ ("distance_m",    c_float),
                  ("azimuth_deg",   c_int16),
                  ("elevation_deg", c_int16),

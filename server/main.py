@@ -18,10 +18,10 @@ from visualize_iphone import run, push_coordinates
 
 logger = logs.init_logger(__name__)
 
-ANCHOR_0_COORDINATES = (615, 0, 266)
-ANCHOR_1_COORDINATES = (615, 520, 279)
-ANCHOR_2_COORDINATES = (0, 0, 273)
-ANCHOR_3_COORDINATES = (0, 520, 273)
+ANCHOR_0_COORDINATES = (615, 0, 273)
+ANCHOR_1_COORDINATES = (615, 520, 263)
+ANCHOR_2_COORDINATES = (0, 0, 277)
+ANCHOR_3_COORDINATES = (123, 520, 263)
 
 def trilateration(P1, P2, P3, r1, r2, r3):
     p1 = np.array([0, 0, 0])
@@ -111,10 +111,12 @@ def localization_thread():
     a0, a1, a2, a3 = g_anchors
 
     while (1):
-        r0, phi0 = a0.distance_cm, a0.iphone_angle_degrees
-        r1, phi1 = a1.distance_cm, a1.iphone_angle_degrees
-        r2, phi2 = a2.distance_cm, a2.iphone_angle_degrees
-        r3, phi3 = a3.distance_cm, a3.iphone_angle_degrees
+        r0, phi0 = g_anchors[0].distance_cm, g_anchors[0].iphone_angle_degrees
+        r1, phi1 = g_anchors[1].distance_cm, g_anchors[1].iphone_angle_degrees
+        r2, phi2 = g_anchors[2].distance_cm, g_anchors[2].iphone_angle_degrees
+        r3, phi3 = g_anchors[3].distance_cm, g_anchors[3].iphone_angle_degrees
+
+        print(f"r0 = {r0}, r1 = {r1}, r2 = {r2}, r3 = {r3}")
 
         # old one was 25
         r0 += 10
@@ -142,7 +144,7 @@ def main():
     client.connect("localhost", 1883)
 
     client.subscribe("gl/anchor/<id>/data", anchor_data_handler)
-    client.subscribe("gl/user/<uid>/data/<aid>", ios_data_handler)
+    # client.subscribe("gl/user/<uid>/data/<aid>", ios_data_handler)
 
     client.start_mainloop()
 

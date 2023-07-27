@@ -5,7 +5,6 @@ import threading
 import queue
 import numpy as np
 from typing import List
-from app_mqtt import TelemetryData
 from mqtt_client import MqttClient, MqttMsg
 
 import random
@@ -24,7 +23,7 @@ def main():
 
     while (1):
         tmp = random.randint(0, 2)
-        client.publish("gl/user/0/pathing", f'{{"direction": \"{table[tmp]}\"}}')
+        client.publish("gl/user/69/pathing", f'{{"direction": \"{table[tmp]}\"}}')
         time.sleep(3)
 
 if __name__ == "__main__":

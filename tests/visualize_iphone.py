@@ -5,10 +5,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
-ANCHOR_0_COORDINATES = (615, 0, 266)
-ANCHOR_1_COORDINATES = (615, 520, 279)
-ANCHOR_2_COORDINATES = (0, 0, 273)
-ANCHOR_3_COORDINATES = (0, 520, 273)
+ANCHOR_0_COORDINATES = (615, 0, 273)
+ANCHOR_1_COORDINATES = (615, 520, 263)
+ANCHOR_2_COORDINATES = (0, 0, 277)
+ANCHOR_3_COORDINATES = (123, 520, 263)
 
 g_x = 0
 g_y = 0
