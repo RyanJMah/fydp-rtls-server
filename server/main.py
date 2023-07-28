@@ -51,6 +51,43 @@ def trilateration(P1, P2, P3, r1, r2, r3):
     K2 = P1 + X * Xn + Y * Yn + Z2 * Zn
     return K1,K2
 
+def getQuad( x_coord, y_coord, anchor_x, anchor_y ):
+
+    dx = anchor_x - x_coord
+    dy = anchor_y - y_coord
+
+    quadrant = 0
+
+    if(dx > 0 and dy > 0):
+        quadrant = 1
+    if(dx < 0 and dy > 0):
+        quadrant = 2
+    if(dx < 0 and dy < 0):
+        quadrant = 3
+    if(dx > 0 and dy < 0):
+        quadrant = 4
+    
+    return quadrant
+
+def getUserAngle( y_coord, anchor_radius, anchor_quad, phone_norm_ang):
+
+    # TODO: Handle NaN anchor_radius
+    # TODO: Handle anchor_radius = 0
+    
+    theta_deg = np.degrees(np.arcsin( (y_coord/anchor_radius) ))
+    phi = 0 # absolute angle 1
+
+    if (anchor_quad == 1):
+        phi = theta_deg + phone_norm_ang
+    elif (anchor_quad == 2):
+        phi = 180 - theta_deg + phone_norm_ang
+    elif (anchor_quad == 3):
+        phi = 180 + theta_deg + phone_norm_ang
+    elif (anchor_quad == 4):
+        phi = 360 - theta_deg + phone_norm_ang
+
+    return phi
+
 class LowPassFilter:
     """
     First order low pass filter, discretized via trapazoidal rule,
@@ -134,6 +171,17 @@ def localization_thread():
                                    r2 )
         x, y, _ = coords
 
+        userAngle_deg = 0
+        if( a0.los ):
+            userAngle_deg = getUserAngle(y, a0.distance_cm, getQuad(x, y, anchor0_coordinates[0], anchor0_coordinates[1]))
+        elif( a1.los ):
+            userAngle_deg = getUserAngle(y, a1.distance_cm, getQuad(x, y, anchor1_coordinates[0], anchor1_coordinates[1]))
+        elif( a2.los ):
+            userAngle_deg = getUserAngle(y, a2.distance_cm, getQuad(x, y, anchor2_coordinates[0], anchor2_coordinates[1]))
+        # elif( a0.los ):
+            # userAngle_deg = getUserAngle(y, a0.distance_cm, getQuad(x, y, anchor3_coordinates[0], anchor0_coordinates[1]))
+        
+
         # logger.info(f"(x, y) = ({x}, {y})")
 
         los0 = g_anchors[0].iphone_angle_valid
@@ -146,7 +194,8 @@ def localization_thread():
                          r2, phi2,
                          los0,
                          los1,
-                         los2 )
+                         los2,
+                          userAngle_deg)
 
         time.sleep(0.1)
 
