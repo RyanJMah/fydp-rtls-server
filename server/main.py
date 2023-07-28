@@ -212,10 +212,10 @@ class User:
         self.phi = 0.0
         self.phi_filter = LowPassFilter(5)
 
-        self.los_anchors: List[int] = []
-
 g_anchors = [Anchor(), Anchor(), Anchor(), Anchor()]
 g_user = User()
+
+g_mqtt_client = MqttClient()
 
 def anchor_data_handler(client: MqttClient, msg: MqttMsg, aid: int):
     # global g_anchors
@@ -462,6 +462,9 @@ def localization_thread():
 
         # userAngle_deg = g_user.phi_filter.exec(userAngle_deg)
 
+        g_user.x = kf_x
+        g_user.y = kf_y
+
         push_coordinates( kf_x, kf_y, userAngle_deg,
                           r0, phi0,
                           r1, phi1,
@@ -474,18 +477,63 @@ def localization_thread():
 
         time.sleep(0.1)
 
+
+PATH_DOT_TOLERANCE = 40
+PATH_DOT1 = [138, 138]
+PATH_DOT2 = [437, 79]
+PATH_DOT3 = [436, 308]
+
+def hardcoded_directions():
+    global g_user
+
+    dots = {
+        0: [9999999, 99999999999],
+        1: PATH_DOT1,
+        2: PATH_DOT2,
+        3: PATH_DOT3
+    }
+
+    curr_dot = 0
+
+    start_time = time.time()
+    while (1):
+        # publish every 0.5 seconds
+        if (time.time() - start_time) >= 0.5:
+            if curr_dot == 0:
+                g_mqtt_client.publish("gl/user/69/pathing", "{\"direction\": \"go to first dot\"}")
+
+            if curr_dot == 1:
+                g_mqtt_client.publish("gl/user/69/pathing", "{\"direction\": \"straight\"}")
+
+            elif curr_dot == 2:
+                g_mqtt_client.publish("gl/user/69/pathing", "{\"direction\": \"left\"}")
+
+            start_time = time.time()
+
+        # check if user has reached a dot
+        distance_from_dot = np.sqrt( (g_user.x - dots[ curr_dot+1 ][0])**2 + (g_user.y - dots[ curr_dot+1 ][1])**2 )
+
+        if distance_from_dot <= PATH_DOT_TOLERANCE:
+            logger.info(f"Reached dot {curr_dot}")
+            curr_dot += 1
+
+        time.sleep(0.1)
+        
+
+
 def main():
-    client = MqttClient()
+    g_mqtt_client.connect("localhost", 1883)
 
-    client.connect("localhost", 1883)
+    g_mqtt_client.subscribe("gl/anchor/<id>/data", anchor_data_handler)
+    g_mqtt_client.subscribe("gl/user/<uid>/data/<aid>", ios_data_handler)
 
-    client.subscribe("gl/anchor/<id>/data", anchor_data_handler)
-    client.subscribe("gl/user/<uid>/data/<aid>", ios_data_handler)
+    g_mqtt_client.start_mainloop()
 
-    client.start_mainloop()
+    t1 = threading.Thread(target=localization_thread, daemon=True)
+    t1.start()
 
-    t = threading.Thread(target=localization_thread, daemon=True)
-    t.start()
+    t2 = threading.Thread(target=hardcoded_directions, daemon=True)
+    t2.start()
 
     run()
 

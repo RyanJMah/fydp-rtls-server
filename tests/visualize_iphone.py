@@ -102,20 +102,30 @@ ax.set_ylim(0, 700)  # Set the X-axis limits
 dot1, = ax.plot([], [], 'ro', markersize=8)
 # dot2, = ax.plot([], [], 'ro', markersize=8)
 
-TABLE_X = 230
-TABLE_Y = 112
-
+# bottom left
 table_dot0, = ax.plot([], [], 'bo', markersize=8)
-table_dot0.set_data(TABLE_X, TABLE_Y)
+table_dot0.set_data(216, 164)
 
 table_dot1, = ax.plot([], [], 'bo', markersize=8)
-table_dot1.set_data(TABLE_X + 178, TABLE_Y + 178)
+table_dot1.set_data(385, 168)
 
 table_dot2, = ax.plot([], [], 'bo', markersize=8)
-table_dot2.set_data(TABLE_X, TABLE_Y + 178)
+table_dot2.set_data(216, 229)
 
 table_dot3, = ax.plot([], [], 'bo', markersize=8)
-table_dot3.set_data(TABLE_X + 178, TABLE_Y)
+table_dot3.set_data(385, 232)
+
+
+path_dot1 = plt.Circle([138, 138], 40, color='g', fill=False)
+ax.add_patch(path_dot1)
+
+path_dot2 = plt.Circle([437, 79], 40, color='g', fill=False)
+ax.add_patch(path_dot2)
+
+path_dot2 = plt.Circle([436, 308], 40, color='g', fill=False)
+ax.add_patch(path_dot2)
+
+
 
 anchor0 = plt.Circle(ANCHOR_0_COORDINATES, 20, color='b', fill=False)
 anchor0.set_radius(100)
