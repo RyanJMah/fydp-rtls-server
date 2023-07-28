@@ -201,7 +201,7 @@ class Anchor:
         self.iphone_angle_valid = False
         self.los = False
 
-        self.distance_filter = LowPassFilter(0.15)
+        self.distance_filter = LowPassFilter(0.125)
         self.angle_filter    = LowPassFilter(1)
 
 class User:
