@@ -27,13 +27,28 @@ ANCHOR_1_COORDINATES = (615, 520, 263)
 ANCHOR_2_COORDINATES = (0, 0, 277)
 ANCHOR_3_COORDINATES = (123, 520, 263)
 
+ANCHOR_COORDINATES = [
+    ANCHOR_0_COORDINATES,
+    ANCHOR_1_COORDINATES,
+    ANCHOR_2_COORDINATES,
+    ANCHOR_3_COORDINATES
+]
+
 A = np.zeros((9,9))
 H = np.zeros((3,9))
 _kf = kf(A, H, 0)
 A, B, H, Q, R, P_0, x_0 = initConstAcc()
 _kf.assignSystemParameters(A, B, H, Q, R, P_0, x_0)
 
-def trilateration(P1, P2, P3, r1, r2, r3):
+def trilateration(a1, a2, a3, r1, r2, r3):
+    P1 = ANCHOR_COORDINATES[a1]
+    P2 = ANCHOR_COORDINATES[a2]
+    P3 = ANCHOR_COORDINATES[a3]
+
+    # r1 += 10
+    # r2 += 10
+    # r3 += 10
+
     p1 = np.array([0, 0, 0])
     p2 = np.array([P2[0] - P1[0], P2[1] - P1[1], P2[2] - P1[2]])
     p3 = np.array([P3[0] - P1[0], P3[1] - P1[1], P3[2] - P1[2]])
@@ -145,15 +160,18 @@ def getUserAngle(x_coord, y_coord, phone_norm_ang, anchor_x, anchor_y, anchor_qu
 
     return phi
 
-def rollingMean(newData):
-    global u
-    u = np.array([u[1],u[2],u[3],u[4],newData])
-    return np.mean(u)
+def rollingSTD(std_dv, newData):
+    std_dv = np.array([std_dv[1],std_dv[2],std_dv[3],std_dv[4],newData]) # tune number of entries
+    return [std_dv, np.std(std_dv)]
 
-def rollingSTD(newData):
-    global std_dv
-    std_dv = np.array([std_dv[1],std_dv[2],std_dv[3],std_dv[4],newData]);
-    return np.std(std_dv)
+def outlierRejection(std_dv, newData, prevSTD):
+    stdCheck = rollingSTD(std_dv, newData)
+
+    if (stdCheck[1] > prevSTD * 2): #tune this factor
+        return std_dv
+    
+    return stdCheck[0]
+
 
 class LowPassFilter:
     """
@@ -257,63 +275,63 @@ def select_anchors_for_trilateration():
 
     #################################################
     # DEFAULT VALUES
-    trilat_a1 = ANCHOR_1_COORDINATES
+    trilat_a1 = 1
     trilat_r1 = r[1]
 
-    trilat_a2 = ANCHOR_3_COORDINATES
+    trilat_a2 = 3
     trilat_r2 = r[3]
 
-    trilat_a3 = ANCHOR_2_COORDINATES
+    trilat_a3 = 2
     trilat_r3 = r[2]
     #################################################
 
-    num_los = len([l for l in [los0, los1, los2, los3] if l])
+    # num_los = len([l for l in [los0, los1, los2, los3] if l])
 
-    if num_los > 1:
-        best_anchor = np.argmin(phi)
+    # if num_los > 1:
+    #     best_anchor = np.argmin(np.abs(phi))
 
-        for i in range(len(los)):
-            if i != best_anchor:
-                los[i] = False
+    #     for i in range(len(los)):
+    #         if i != best_anchor:
+    #             los[i] = False
 
     if los[0]:
-        trilat_a1 = ANCHOR_2_COORDINATES
+        trilat_a1 = 2
         trilat_r1 = r[2]
 
-        trilat_a2 = ANCHOR_0_COORDINATES
+        trilat_a2 = 0
         trilat_r2 = r[0]
 
-        trilat_a3 = ANCHOR_1_COORDINATES
+        trilat_a3 = 1
         trilat_r3 = r[1]
 
     elif los[1]:
-        trilat_a1 = ANCHOR_0_COORDINATES
+        trilat_a1 = 0
         trilat_r1 = r[0]
 
-        trilat_a2 = ANCHOR_1_COORDINATES
+        trilat_a2 = 1
         trilat_r2 = r[1]
 
-        trilat_a3 = ANCHOR_2_COORDINATES
+        trilat_a3 = 2
         trilat_r3 = r[2]
 
     elif los[2]:
-        trilat_a1 = ANCHOR_3_COORDINATES
+        trilat_a1 = 3
         trilat_r1 = r[3]
 
-        trilat_a2 = ANCHOR_2_COORDINATES
+        trilat_a2 = 2
         trilat_r2 = r[2]
 
-        trilat_a3 = ANCHOR_0_COORDINATES
+        trilat_a3 = 0
         trilat_r3 = r[0]
 
     elif los[3]:
-        trilat_a1 = ANCHOR_1_COORDINATES
+        trilat_a1 = 1
         trilat_r1 = r[1]
 
-        trilat_a2 = ANCHOR_3_COORDINATES
+        trilat_a2 = 3
         trilat_r2 = r[3]
 
-        trilat_a3 = ANCHOR_2_COORDINATES
+        trilat_a3 = 2
         trilat_r3 = r[2]
 
     return ( trilat_a1, trilat_a2, trilat_a3, \
@@ -337,7 +355,13 @@ def localization_thread():
         r2, phi2 = g_anchors[2].distance_cm, g_anchors[2].iphone_angle_degrees
         r3, phi3 = g_anchors[3].distance_cm, g_anchors[3].iphone_angle_degrees
 
-        trilat_input = select_anchors_for_trilateration()
+        los0 = g_anchors[0].iphone_angle_valid
+        los1 = g_anchors[1].iphone_angle_valid
+        los2 = g_anchors[2].iphone_angle_valid
+        los3 = g_anchors[3].iphone_angle_valid
+
+        trilat_input    = select_anchors_for_trilateration()
+        critical_anchor = trilat_input[1]
 
         coords, _ = trilateration(*trilat_input)
         x, y, z = coords
@@ -351,6 +375,9 @@ def localization_thread():
         _kf.performKalmanFilter(np.array(meas), 0)
         kf_x = _kf.x_m[0]
         kf_y = _kf.x_m[1]
+
+        # kf_x = x
+        # kf_y = y
         '''
         *** DO NOT TOUCH ***
         '''
@@ -431,10 +458,8 @@ def localization_thread():
                           r1, phi1,
                           r2, phi2,
                           r3, phi3,
-                          los0,
-                          los1,
-                          los2,
-                          los3 )
+                          los0, los1, los2, los3,
+                          critical_anchor )
 
         time.sleep(0.1)
 

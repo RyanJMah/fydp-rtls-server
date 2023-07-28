@@ -20,13 +20,15 @@ def push_coordinates( x, y, theta,
                       r1, phi1,
                       r2, phi2,
                       r3, phi3,
-                      los0, los1, los2, los3 ):
+                      los0, los1, los2, los3,
+                      critical_anchor ):
     coordinate_q.put(( x, y, theta,
                       r0, phi0,
                       r1, phi1,
                       r2, phi2,
                       r3, phi3,
-                      los0, los1, los2, los3 ))
+                      los0, los1, los2, los3,
+                      critical_anchor ))
 
 # Dummy function to simulate the user's position (replace this with your server data)
 def get_user_position():
@@ -39,36 +41,42 @@ def update_dot(frame):
     r1, phi1, \
     r2, phi2, \
     r3, phi3, \
-    los0, los1, los2, los3 = coordinate_q.get()  # Get the user's current position
+    los0, los1, los2, los3, \
+    critical_anchor = coordinate_q.get()  # Get the user's current position
 
     anchor0.set_radius(r0)
     anchor1.set_radius(r1)
     anchor2.set_radius(r2)
     anchor3.set_radius(r3)
 
-    if los0:
-        anchor0.set_color('g')
-    else:
-        anchor0.set_color('r')
+    # if los0:
+    #     anchor0.set_color('g')
+    # else:
+    #     anchor0.set_color('r')
 
-    if los1:
-        anchor1.set_color('g')
-    else:
-        anchor1.set_color('r')
+    # if los1:
+    #     anchor1.set_color('g')
+    # else:
+    #     anchor1.set_color('r')
 
-    if los2:
-        anchor2.set_color('g')
-    else:
-        anchor2.set_color('r')
+    # if los2:
+    #     anchor2.set_color('g')
+    # else:
+    #     anchor2.set_color('r')
 
-    if los3:
-        anchor3.set_color('g')
-    else:
-        anchor3.set_color('r')
+    # if los3:
+    #     anchor3.set_color('g')
+    # else:
+    #     anchor3.set_color('r')
 
-    arrow_radius = 50
-    dx = arrow_radius * np.cos(theta)
-    dy = arrow_radius * np.sin(theta)
+    for i, a in enumerate([anchor0, anchor1, anchor2, anchor3]):
+        if i == critical_anchor:
+            a.set_fill('g')
+            a.set_alpha(0.3)
+        else:
+            a.set_fill(False)
+            a.set_alpha(1)
+
 
     dot1.set_data(x, y)  # Update the dot's position
 
