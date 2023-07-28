@@ -19,16 +19,14 @@ def push_coordinates( x, y, theta,
                       r0, phi0,
                       r1, phi1,
                       r2, phi2,
-                      los0,
-                      los1,
-                      los2 ):
+                      r3, phi3,
+                      los0, los1, los2, los3 ):
     coordinate_q.put(( x, y, theta,
                       r0, phi0,
                       r1, phi1,
                       r2, phi2,
-                      los0,
-                      los1,
-                      los2 ))
+                      r3, phi3,
+                      los0, los1, los2, los3 ))
 
 # Dummy function to simulate the user's position (replace this with your server data)
 def get_user_position():
@@ -36,11 +34,17 @@ def get_user_position():
 
 # Function to update the position of the dot in the plot
 def update_dot(frame):
-    x, y, theta, r0, phi0, r1, phi1, r2, phi2, los0, los1, los2 = coordinate_q.get()  # Get the user's current position
+    x, y, theta, \
+    r0, phi0, \
+    r1, phi1, \
+    r2, phi2, \
+    r3, phi3, \
+    los0, los1, los2, los3 = coordinate_q.get()  # Get the user's current position
 
     anchor0.set_radius(r0)
     anchor1.set_radius(r1)
     anchor2.set_radius(r2)
+    anchor3.set_radius(r3)
 
     if los0:
         anchor0.set_color('g')
@@ -57,11 +61,16 @@ def update_dot(frame):
     else:
         anchor2.set_color('r')
 
+    if los3:
+        anchor3.set_color('g')
+    else:
+        anchor3.set_color('r')
+
     arrow_radius = 50
-    dx, dy = np.cos(theta), np.sin(theta)
+    dx = arrow_radius * np.cos(theta)
+    dy = arrow_radius * np.sin(theta)
 
     dot1.set_data(x, y)  # Update the dot's position
-    dot2.set_data(x + dx*arrow_radius, y + dy*arrow_radius)  # Update the dot's position
 
 def update_dot_thread():
     global g_x, g_y
@@ -83,7 +92,7 @@ ax.set_ylim(0, 700)  # Set the X-axis limits
 
 # Create the dot as a scatter plot
 dot1, = ax.plot([], [], 'ro', markersize=8)
-dot2, = ax.plot([], [], 'ro', markersize=8)
+# dot2, = ax.plot([], [], 'ro', markersize=8)
 
 TABLE_X = 230
 TABLE_Y = 112
