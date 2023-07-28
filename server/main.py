@@ -12,7 +12,7 @@ from mqtt_client import MqttClient, MqttMsg
 from app_paths import AppPaths
 
 from KalmanFilter import KalmanFilter as kf
-# from kalman_helpers import initConstVelocityKF as initConstVel
+from kalman_helpers import initConstVelocityKF as initConstVel
 from kalman_helpers import initConstAccelerationKF as initConstAcc
 
 sys.path.append(AppPaths.TESTS_DIR)
@@ -34,10 +34,10 @@ ANCHOR_COORDINATES = [
     ANCHOR_3_COORDINATES
 ]
 
-A = np.zeros((9,9))
-H = np.zeros((3,9))
+A = np.zeros((6,6))
+H = np.zeros((3,6))
 _kf = kf(A, H, 0)
-A, B, H, Q, R, P_0, x_0 = initConstAcc()
+A, B, H, Q, R, P_0, x_0 = initConstVel()
 _kf.assignSystemParameters(A, B, H, Q, R, P_0, x_0)
 
 def trilateration(a1, a2, a3, r1, r2, r3):
@@ -168,9 +168,9 @@ def outlierRejection(std_dv, newData, prevSTD):
     stdCheck = rollingSTD(std_dv, newData)
 
     if (stdCheck[1] > prevSTD * 2): #tune this factor
-        return std_dv
+        return [std_dv,prevSTD]
     
-    return stdCheck[0]
+    return stdCheck
 
 
 class LowPassFilter:
@@ -201,7 +201,7 @@ class Anchor:
         self.iphone_angle_valid = False
         self.los = False
 
-        self.distance_filter = LowPassFilter(0.075)
+        self.distance_filter = LowPassFilter(0.15)
         self.angle_filter    = LowPassFilter(1)
 
 class User:
@@ -218,13 +218,14 @@ g_anchors = [Anchor(), Anchor(), Anchor(), Anchor()]
 g_user = User()
 
 def anchor_data_handler(client: MqttClient, msg: MqttMsg, aid: int):
-    global g_anchors
+    # global g_anchors
 
-    data = AnchorTelemetryData.from_buffer_copy(msg.payload)
+    # data = AnchorTelemetryData.from_buffer_copy(msg.payload)
 
-    if (data.status == 0):
-        filtered_distance = g_anchors[aid].distance_filter.exec(data.distance_mm / 10)
-        g_anchors[aid].distance_cm = filtered_distance
+    # if (data.status == 0):
+    #     filtered_distance = g_anchors[aid].distance_filter.exec(data.distance_mm / 10)
+    #     g_anchors[aid].distance_cm = filtered_distance
+    pass
 
 def ios_data_handler(client: MqttClient, msg: MqttMsg, uid: int, aid:int):
     global g_anchors
@@ -235,6 +236,9 @@ def ios_data_handler(client: MqttClient, msg: MqttMsg, uid: int, aid:int):
 
     filtered_angle = g_anchors[aid].angle_filter.exec(data.azimuth_deg)
     g_anchors[aid].iphone_angle_degrees = filtered_angle
+
+    filtered_distance = g_anchors[aid].distance_filter.exec(data.distance_m * 100)
+    g_anchors[aid].distance_cm = filtered_distance
 
 
 # determine which anchors to use for trilateration based on LOS conditions
@@ -285,14 +289,14 @@ def select_anchors_for_trilateration():
     trilat_r3 = r[2]
     #################################################
 
-    # num_los = len([l for l in [los0, los1, los2, los3] if l])
+    num_los = len([l for l in [los0, los1, los2, los3] if l])
 
-    # if num_los > 1:
-    #     best_anchor = np.argmin(np.abs(phi))
+    if num_los > 1:
+        best_anchor = np.argmin(np.abs(phi))
 
-    #     for i in range(len(los)):
-    #         if i != best_anchor:
-    #             los[i] = False
+        for i in range(len(los)):
+            if i != best_anchor:
+                los[i] = False
 
     if los[0]:
         trilat_a1 = 2
@@ -349,6 +353,9 @@ def localization_thread():
     
     a0, a1, a2, a3 = g_anchors
 
+    prev_critical_anchor = 0
+    critical_anchor = 0
+
     while (1):
         r0, phi0 = g_anchors[0].distance_cm, g_anchors[0].iphone_angle_degrees
         r1, phi1 = g_anchors[1].distance_cm, g_anchors[1].iphone_angle_degrees
@@ -364,6 +371,8 @@ def localization_thread():
         critical_anchor = trilat_input[1]
 
         coords, _ = trilateration(*trilat_input)
+    
+        # coords, _ = trilateration(0, 1, 3, r0, r1, r3)
         x, y, z = coords
         
         '''
@@ -443,7 +452,7 @@ def localization_thread():
                                           anchor3_coordinates[1],
                                           quadrant )
 
-        logger.warning(f"User angle: {userAngle_deg}")
+        # logger.warning(f"User angle: {userAngle_deg}")
         # logger.warning(f"Quandrant: {quadrant}")
         # logger.warning(f"r0 = {r0}, r1 = {r1}, r2 = {r2}")
         # logger.warning(f"phi0 = {phi0}, phi1 = {phi1}, phi2 = {phi2}, phi3 = ")
@@ -460,6 +469,8 @@ def localization_thread():
                           r3, phi3,
                           los0, los1, los2, los3,
                           critical_anchor )
+
+        prev_critical_anchor = critical_anchor
 
         time.sleep(0.1)
 
