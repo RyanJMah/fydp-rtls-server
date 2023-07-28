@@ -96,7 +96,7 @@ fig, ax = plt.subplots()
 # ax.set_xlim(0, 621)  # Set the X-axis limits
 # ax.set_ylim(0, 520)    # Set the Y-axis limits
 ax.set_xlim(0, 700)  # Set the X-axis limits
-ax.set_ylim(0, 700)  # Set the X-axis limits
+ax.set_ylim(0, 800)  # Set the X-axis limits
 
 # Create the dot as a scatter plot
 dot1, = ax.plot([], [], 'ro', markersize=8)
@@ -142,6 +142,8 @@ ax.add_patch(anchor2)
 anchor3 = plt.Circle(ANCHOR_3_COORDINATES, 20, color='b', fill=False)
 anchor3.set_radius(100)
 ax.add_patch(anchor3)
+
+ax.set_aspect("auto")
 
 # Create the animation
 animation = FuncAnimation(fig, update_dot, frames=range(200), interval=100)
