@@ -15,14 +15,14 @@ g_y = 0
 
 coordinate_q: queue.Queue = queue.Queue()
 
-def push_coordinates( x, y,
-                     r0, phi0,
-                     r1, phi1,
-                     r2, phi2,
-                     los0,
-                     los1,
-                     los2 ):
-    coordinate_q.put(( x, y,
+def push_coordinates( x, y, theta,
+                      r0, phi0,
+                      r1, phi1,
+                      r2, phi2,
+                      los0,
+                      los1,
+                      los2 ):
+    coordinate_q.put(( x, y, theta,
                       r0, phi0,
                       r1, phi1,
                       r2, phi2,
@@ -36,7 +36,7 @@ def get_user_position():
 
 # Function to update the position of the dot in the plot
 def update_dot(frame):
-    x, y, r0, phi0, r1, phi1, r2, phi2, los0, los1, los2 = coordinate_q.get()  # Get the user's current position
+    x, y, theta, r0, phi0, r1, phi1, r2, phi2, los0, los1, los2 = coordinate_q.get()  # Get the user's current position
 
     anchor0.set_radius(r0)
     anchor1.set_radius(r1)
@@ -58,7 +58,7 @@ def update_dot(frame):
         anchor2.set_color('r')
 
     arrow_radius = 50
-    dx, dy = np.cos(phi0), np.sin(phi0)
+    dx, dy = np.cos(theta), np.sin(theta)
 
     dot1.set_data(x, y)  # Update the dot's position
     dot2.set_data(x + dx*arrow_radius, y + dy*arrow_radius)  # Update the dot's position

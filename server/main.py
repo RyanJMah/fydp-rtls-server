@@ -52,7 +52,6 @@ def trilateration(P1, P2, P3, r1, r2, r3):
     return K1,K2
 
 def getQuad( x_coord, y_coord, anchor_x, anchor_y ):
-
     dx = anchor_x - x_coord
     dy = anchor_y - y_coord
 
@@ -69,13 +68,40 @@ def getQuad( x_coord, y_coord, anchor_x, anchor_y ):
     
     return quadrant
 
-def getUserAngle( y_coord, anchor_radius, anchor_quad, phone_norm_ang):
+def getQuadandRadius( x_coord, y_coord, anchor_x, anchor_y ):
+    dx = anchor_x - x_coord
+    dy = anchor_y - y_coord
+
+    quadrant = 0
+    radius = np.sqrt(dx**2 + dy**2)
+
+    if(dx > 0 and dy > 0):
+        quadrant = 1
+    if(dx < 0 and dy > 0):
+        quadrant = 2
+    if(dx < 0 and dy < 0):
+        quadrant = 3
+    if(dx > 0 and dy < 0):
+        quadrant = 4
+
+    quad_dist = [quadrant, radius]
+    
+    return quad_dist
+
+def getUserAngle( y_coord, anchor_y, anchor_radius, anchor_quad, phone_norm_ang):
 
     # TODO: Handle NaN anchor_radius
     # TODO: Handle anchor_radius = 0
+
+    print(f"y_coord = {y_coord}")
+    print(f"anchor_radius = {anchor_radius}")
+    print(f"anchor_quad = {anchor_quad}")
     
+    y_coord = np.abs(y_coord - anchor_y)
     theta_deg = np.degrees(np.arcsin( (y_coord/anchor_radius) ))
     phi = 0 # absolute angle 1
+
+    print(f"y_coord/anchor_radius = {y_coord/anchor_radius}")
 
     if (anchor_quad == 1):
         phi = theta_deg + phone_norm_ang
@@ -88,7 +114,7 @@ def getUserAngle( y_coord, anchor_radius, anchor_quad, phone_norm_ang):
 
     return phi
 
-class LowPassFilter:
+class DistanceLowPassFilter:
     """
     First order low pass filter, discretized via trapazoidal rule,
     with a sample time of 5.5Hz
@@ -109,6 +135,28 @@ class LowPassFilter:
 
         return y
 
+class AngleLowPassFilter:
+    """
+    First order low pass filter, discretized via trapazoidal rule,
+    with a sample time of 5.5Hz
+    """
+
+    def __init__(self):
+        self.tau = 0.075
+
+        self.y_n_minus_1 = 0
+        self.u_n_minus_1 = 0
+
+    def exec(self, u):
+        y = ( 1/(11*self.tau + 1) ) * \
+            (u + self.u_n_minus_1 - (1 - 11*self.tau)*self.y_n_minus_1)
+
+        self.y_n_minus_1 = y
+        self.u_n_minus_1 = u
+
+        return y
+
+
 class Anchor:
     def __init__(self):
         self.distance_cm = 0.0
@@ -116,11 +164,19 @@ class Anchor:
         self.iphone_angle_valid = False
         self.los = False
 
-        self.distance_filter = LowPassFilter()
-        self.angle_filter    = LowPassFilter()
+        self.distance_filter = DistanceLowPassFilter()
+        self.angle_filter    = AngleLowPassFilter()
 
+class User:
+    def __init__(self):
+        self.x   = 0.0
+        self.y   = 0.0
+        self.phi = 0.0
+
+        self.los_anchors: List[int] = []
 
 g_anchors = [Anchor(), Anchor(), Anchor(), Anchor()]
+g_user = User()
 
 def anchor_data_handler(client: MqttClient, msg: MqttMsg, aid: int):
     global g_anchors
@@ -136,17 +192,21 @@ def ios_data_handler(client: MqttClient, msg: MqttMsg, uid: int, aid:int):
 
     data = IOS_TelemetryData.from_buffer_copy(msg.payload)
 
-    g_anchors[aid].iphone_angle_degrees = data.azimuth_deg
     g_anchors[aid].iphone_angle_valid = data.los
+
+    filtered_angle = g_anchors[aid].angle_filter.exec(data.azimuth_deg)
+    g_anchors[aid].iphone_angle_degrees = filtered_angle
 
 
 def localization_thread():
     global g_anchors
+    global g_user
 
     anchor0_coordinates = np.array([*ANCHOR_0_COORDINATES])
     anchor1_coordinates = np.array([*ANCHOR_1_COORDINATES])
     anchor2_coordinates = np.array([*ANCHOR_2_COORDINATES])
-
+    anchor3_coordinates = np.array([*ANCHOR_3_COORDINATES])
+    
     a0, a1, a2, a3 = g_anchors
 
     while (1):
@@ -155,13 +215,11 @@ def localization_thread():
         r2, phi2 = g_anchors[2].distance_cm, g_anchors[2].iphone_angle_degrees
         r3, phi3 = g_anchors[3].distance_cm, g_anchors[3].iphone_angle_degrees
 
-        print(f"r0 = {r0}, r1 = {r1}, r2 = {r2}, r3 = {r3}")
-
         # old one was 25
-        r0 += 10
-        r1 += 10
-        r2 += 10
-        r3 += 10
+        # r0 += 10
+        # r1 += 10
+        # r2 += 10
+        # r3 += 10
 
         coords, _ = trilateration( anchor0_coordinates,
                                    anchor1_coordinates,
@@ -172,15 +230,44 @@ def localization_thread():
         x, y, _ = coords
 
         userAngle_deg = 0
-        if( a0.los ):
-            userAngle_deg = getUserAngle(y, a0.distance_cm, getQuad(x, y, anchor0_coordinates[0], anchor0_coordinates[1]))
-        elif( a1.los ):
-            userAngle_deg = getUserAngle(y, a1.distance_cm, getQuad(x, y, anchor1_coordinates[0], anchor1_coordinates[1]))
-        elif( a2.los ):
-            userAngle_deg = getUserAngle(y, a2.distance_cm, getQuad(x, y, anchor2_coordinates[0], anchor2_coordinates[1]))
-        # elif( a0.los ):
-            # userAngle_deg = getUserAngle(y, a0.distance_cm, getQuad(x, y, anchor3_coordinates[0], anchor0_coordinates[1]))
-        
+        quadrant = 0
+        if( a0.iphone_angle_valid ):
+            quadrant = getQuad( x, y,
+                                anchor0_coordinates[0],
+                                anchor0_coordinates[1] )
+
+            userAngle_deg = getUserAngle( y,
+                                          anchor0_coordinates[1],
+                                          a0.distance_cm,
+                                          quadrant,
+                                          a0.iphone_angle_degrees )
+
+        elif( a1.iphone_angle_valid ):
+            quadrant = getQuad( x, y,
+                                anchor1_coordinates[0],
+                                anchor1_coordinates[1] )
+
+            userAngle_deg = getUserAngle( y,
+                                          anchor1_coordinates[1],
+                                          a1.distance_cm,
+                                          quadrant,
+                                          a1.iphone_angle_degrees )
+        elif( a2.iphone_angle_valid ):
+            quadrant = getQuad( x, y,
+                                anchor2_coordinates[0],
+                                anchor2_coordinates[1] )
+
+            userAngle_deg = getUserAngle( y,
+                                          anchor2_coordinates[1],
+                                          a2.distance_cm,
+                                          quadrant,
+                                          a2.iphone_angle_degrees )
+
+        logger.warning(f"User angle: {userAngle_deg}")
+        logger.warning(f"Quandrant: {quadrant}")
+        logger.warning(f"r0 = {r0}, r1 = {r1}, r2 = {r2}")
+        logger.warning(f"phi0 = {phi0}, phi1 = {phi1}, phi2 = {phi2}, phi3 = ")
+        print()
 
         # logger.info(f"(x, y) = ({x}, {y})")
 
@@ -188,14 +275,14 @@ def localization_thread():
         los1 = g_anchors[1].iphone_angle_valid
         los2 = g_anchors[2].iphone_angle_valid
 
-        push_coordinates( x, y,
-                         r0, phi0,
-                         r1, phi1,
-                         r2, phi2,
-                         los0,
-                         los1,
-                         los2,
-                          userAngle_deg)
+        push_coordinates( x, y, userAngle_deg,
+                          r0, phi0,
+                          r1, phi1,
+                          r2, phi2,
+                          los0,
+                          los1,
+                          los2 )
+
 
         time.sleep(0.1)
 
