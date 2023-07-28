@@ -98,7 +98,9 @@ def ios_data_handler(client: MqttClient, msg: MqttMsg, uid: int, aid:int):
     global g_anchors
 
     data = IOS_TelemetryData.from_buffer_copy(msg.payload)
-    print(data)
+
+    g_anchors[aid].iphone_angle_degrees = data.azimuth_deg
+    g_anchors[aid].iphone_angle_valid = data.los
 
 
 def localization_thread():
@@ -134,7 +136,17 @@ def localization_thread():
 
         # logger.info(f"(x, y) = ({x}, {y})")
 
-        push_coordinates(x, y, r0, phi0, r1, phi1, r2, phi2)
+        los0 = g_anchors[0].iphone_angle_valid
+        los1 = g_anchors[1].iphone_angle_valid
+        los2 = g_anchors[2].iphone_angle_valid
+
+        push_coordinates( x, y,
+                         r0, phi0,
+                         r1, phi1,
+                         r2, phi2,
+                         los0,
+                         los1,
+                         los2 )
 
         time.sleep(0.1)
 
@@ -144,7 +156,7 @@ def main():
     client.connect("localhost", 1883)
 
     client.subscribe("gl/anchor/<id>/data", anchor_data_handler)
-    # client.subscribe("gl/user/<uid>/data/<aid>", ios_data_handler)
+    client.subscribe("gl/user/<uid>/data/<aid>", ios_data_handler)
 
     client.start_mainloop()
 

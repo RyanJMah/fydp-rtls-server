@@ -15,8 +15,20 @@ g_y = 0
 
 coordinate_q: queue.Queue = queue.Queue()
 
-def push_coordinates(x, y, r0, phi0, r1, phi1, r2, phi2):
-    coordinate_q.put( (x, y, r0, phi0, r1, phi1, r2, phi2) )
+def push_coordinates( x, y,
+                     r0, phi0,
+                     r1, phi1,
+                     r2, phi2,
+                     los0,
+                     los1,
+                     los2 ):
+    coordinate_q.put(( x, y,
+                      r0, phi0,
+                      r1, phi1,
+                      r2, phi2,
+                      los0,
+                      los1,
+                      los2 ))
 
 # Dummy function to simulate the user's position (replace this with your server data)
 def get_user_position():
@@ -24,11 +36,26 @@ def get_user_position():
 
 # Function to update the position of the dot in the plot
 def update_dot(frame):
-    x, y, r0, phi0, r1, phi1, r2, phi2 = coordinate_q.get()  # Get the user's current position
+    x, y, r0, phi0, r1, phi1, r2, phi2, los0, los1, los2 = coordinate_q.get()  # Get the user's current position
 
     anchor0.set_radius(r0)
     anchor1.set_radius(r1)
     anchor2.set_radius(r2)
+
+    if los0:
+        anchor0.set_color('g')
+    else:
+        anchor0.set_color('r')
+
+    if los1:
+        anchor1.set_color('g')
+    else:
+        anchor1.set_color('r')
+
+    if los2:
+        anchor2.set_color('g')
+    else:
+        anchor2.set_color('r')
 
     arrow_radius = 50
     dx, dy = np.cos(phi0), np.sin(phi0)
