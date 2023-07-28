@@ -12,8 +12,8 @@ from mqtt_client import MqttClient, MqttMsg
 from app_paths import AppPaths
 
 from KalmanFilter import KalmanFilter as kf
-from kalman_helpers import initConstVelocityKF as initConstVel
-# from kalman_helpers import initConstAccelerationKF as initConstAcc
+# from kalman_helpers import initConstVelocityKF as initConstVel
+from kalman_helpers import initConstAccelerationKF as initConstAcc
 
 sys.path.append(AppPaths.TESTS_DIR)
 sys.path.append(AppPaths.TESTS_DIR)
@@ -26,6 +26,12 @@ ANCHOR_0_COORDINATES = (615, 0, 273)
 ANCHOR_1_COORDINATES = (615, 520, 263)
 ANCHOR_2_COORDINATES = (0, 0, 277)
 ANCHOR_3_COORDINATES = (123, 520, 263)
+
+A = np.zeros((9,9))
+H = np.zeros((3,9))
+_kf = kf(A, H, 0)
+A, B, H, Q, R, P_0, x_0 = initConstAcc()
+_kf.assignSystemParameters(A, B, H, Q, R, P_0, x_0)
 
 def trilateration(P1, P2, P3, r1, r2, r3):
     p1 = np.array([0, 0, 0])
@@ -228,62 +234,87 @@ def select_anchors_for_trilateration():
     los2 = g_anchors[2].iphone_angle_valid
     los3 = g_anchors[3].iphone_angle_valid
 
-    r0 = g_anchors[0].distance_cm
-    r1 = g_anchors[1].distance_cm
-    r2 = g_anchors[2].distance_cm
-    r3 = g_anchors[3].distance_cm
+    los = [
+        g_anchors[0].iphone_angle_valid,
+        g_anchors[1].iphone_angle_valid,
+        g_anchors[2].iphone_angle_valid,
+        g_anchors[3].iphone_angle_valid
+    ]
+
+    r = [
+        g_anchors[0].distance_cm,
+        g_anchors[1].distance_cm,
+        g_anchors[2].distance_cm,
+        g_anchors[3].distance_cm
+    ]
+
+    phi = [
+        g_anchors[0].iphone_angle_degrees,
+        g_anchors[1].iphone_angle_degrees,
+        g_anchors[2].iphone_angle_degrees,
+        g_anchors[3].iphone_angle_degrees
+    ]
 
     #################################################
     # DEFAULT VALUES
     trilat_a1 = ANCHOR_1_COORDINATES
-    trilat_r1 = r1
+    trilat_r1 = r[1]
 
     trilat_a2 = ANCHOR_3_COORDINATES
-    trilat_r2 = r3
+    trilat_r2 = r[3]
 
     trilat_a3 = ANCHOR_2_COORDINATES
-    trilat_r3 = r2
+    trilat_r3 = r[2]
     #################################################
 
-    if g_anchors[0].los:
+    num_los = len([l for l in [los0, los1, los2, los3] if l])
+
+    if num_los > 1:
+        best_anchor = np.argmin(phi)
+
+        for i in range(len(los)):
+            if i != best_anchor:
+                los[i] = False
+
+    if los[0]:
         trilat_a1 = ANCHOR_2_COORDINATES
-        trilat_r1 = r2
+        trilat_r1 = r[2]
 
         trilat_a2 = ANCHOR_0_COORDINATES
-        trilat_r2 = r0
+        trilat_r2 = r[0]
 
         trilat_a3 = ANCHOR_1_COORDINATES
-        trilat_r3 = r1
+        trilat_r3 = r[1]
 
-    elif g_anchors[1].los:
+    elif los[1]:
         trilat_a1 = ANCHOR_0_COORDINATES
-        trilat_r1 = r0
+        trilat_r1 = r[0]
 
         trilat_a2 = ANCHOR_1_COORDINATES
-        trilat_r2 = r1
+        trilat_r2 = r[1]
 
         trilat_a3 = ANCHOR_2_COORDINATES
-        trilat_r3 = r2
+        trilat_r3 = r[2]
 
-    elif g_anchors[2].los:
+    elif los[2]:
         trilat_a1 = ANCHOR_3_COORDINATES
-        trilat_r1 = r3
+        trilat_r1 = r[3]
 
         trilat_a2 = ANCHOR_2_COORDINATES
-        trilat_r2 = r2
+        trilat_r2 = r[2]
 
         trilat_a3 = ANCHOR_0_COORDINATES
-        trilat_r3 = r0
+        trilat_r3 = r[0]
 
-    elif g_anchors[3].los:
+    elif los[3]:
         trilat_a1 = ANCHOR_1_COORDINATES
-        trilat_r1 = r1
+        trilat_r1 = r[1]
 
         trilat_a2 = ANCHOR_3_COORDINATES
-        trilat_r2 = r3
+        trilat_r2 = r[3]
 
         trilat_a3 = ANCHOR_2_COORDINATES
-        trilat_r3 = r2
+        trilat_r3 = r[2]
 
     return ( trilat_a1, trilat_a2, trilat_a3, \
              trilat_r1, trilat_r2, trilat_r3 )
@@ -291,6 +322,7 @@ def select_anchors_for_trilateration():
 def localization_thread():
     global g_anchors
     global g_user
+    global _kf
 
     anchor0_coordinates = np.array([*ANCHOR_0_COORDINATES])
     anchor1_coordinates = np.array([*ANCHOR_1_COORDINATES])
@@ -305,11 +337,6 @@ def localization_thread():
         r2, phi2 = g_anchors[2].distance_cm, g_anchors[2].iphone_angle_degrees
         r3, phi3 = g_anchors[3].distance_cm, g_anchors[3].iphone_angle_degrees
 
-        los0 = g_anchors[0].iphone_angle_valid
-        los1 = g_anchors[1].iphone_angle_valid
-        los2 = g_anchors[2].iphone_angle_valid
-        los3 = g_anchors[3].iphone_angle_valid
-
         trilat_input = select_anchors_for_trilateration()
 
         coords, _ = trilateration(*trilat_input)
@@ -319,13 +346,6 @@ def localization_thread():
         *** DO NOT TOUCH ***
             KALMAN FILTER
         '''
-        A = np.zeros((9,9))
-        H = np.zeros((3,9))
-        _kf = kf(A, H, 0)
-
-        A, B, H, Q, R, P_0, x_0 = initConstVel()
-        _kf.assignSystemParameters(A, B, H, Q, R, P_0, x_0)
-
         meas = np.array([x, y, z])
         meas.shape = (len(meas), 1)
         _kf.performKalmanFilter(np.array(meas), 0)

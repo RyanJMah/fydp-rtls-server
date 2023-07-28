@@ -66,7 +66,7 @@ def initConstVelocityKF():
 # Constant acceleration Motion Model for UWB-based Positioning in KF 
 def initConstAccelerationKF():
     
-    dt = 0.1   # system update rate (10Hz)
+    dt = 0.18   # system update rate (5Hz)
     
     # variance of the measurement noise, supposing the error is 15 cm (0.15 * 0.15) on X- & Y-axes
     # Tune the values based on your set-up and the demanded performance
