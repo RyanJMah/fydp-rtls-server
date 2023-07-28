@@ -201,7 +201,7 @@ class Anchor:
         self.iphone_angle_valid = False
         self.los = False
 
-        self.distance_filter = LowPassFilter(0.125)
+        self.distance_filter = LowPassFilter(0.14)
         self.angle_filter    = LowPassFilter(1)
 
 class User:
@@ -478,7 +478,7 @@ def localization_thread():
         time.sleep(0.1)
 
 
-PATH_DOT_TOLERANCE = 40
+PATH_DOT_TOLERANCE = 50
 PATH_DOT1 = [138, 138]
 PATH_DOT2 = [437, 79]
 PATH_DOT3 = [436, 308]

@@ -116,13 +116,13 @@ table_dot3, = ax.plot([], [], 'bo', markersize=8)
 table_dot3.set_data(385, 232)
 
 
-path_dot1 = plt.Circle([138, 138], 40, color='g', fill=False)
+path_dot1 = plt.Circle([138, 138], 50, color='g', fill=False)
 ax.add_patch(path_dot1)
 
-path_dot2 = plt.Circle([437, 79], 40, color='g', fill=False)
+path_dot2 = plt.Circle([437, 79], 50, color='g', fill=False)
 ax.add_patch(path_dot2)
 
-path_dot2 = plt.Circle([436, 308], 40, color='g', fill=False)
+path_dot2 = plt.Circle([436, 308], 50, color='g', fill=False)
 ax.add_patch(path_dot2)
 
 
