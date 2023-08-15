@@ -14,7 +14,7 @@ from app_mqtt import AnchorTelemetryData, IOS_TelemetryData
 logger = logs.init_logger(__name__)
 
 g_csv_file    : Any         = None
-g_start_time  : float       = 0.0
+g_start_time  : float       = time.time()
 g_write_queue : queue.Queue = queue.Queue()
 
 # Filename format: telem_capture_YYYY-MM-DD_HH:MM:SS.csv

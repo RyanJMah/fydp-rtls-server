@@ -1,3 +1,4 @@
+click==8.1.6
 ifaddr==0.2.0
 markdown-it-py==2.2.0
 mdurl==0.1.2
