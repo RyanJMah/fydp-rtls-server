@@ -4,16 +4,16 @@ import sys
 class AppPaths():
     # ./server
     SERVER_DIR = os.path.dirname(os.path.abspath(__file__))
-    
+
     # ./
     REPO_BASE_DIR = os.path.dirname(SERVER_DIR)
-    
+
     # ./cpp
     CPP_DIR = os.path.join(REPO_BASE_DIR, "cpp")
-    
+
     # ./cpp/build
     CPP_BUILD_DIR = os.path.join(CPP_DIR, "build")
-    
+
     # ./resources
     RESOURCES_DIR = os.path.join(REPO_BASE_DIR, "resources")
 
@@ -28,6 +28,9 @@ class AppPaths():
 
     # ./tests
     TESTS_DIR = os.path.join(REPO_BASE_DIR, "tests")
+
+    # ./tools
+    TOOLS_DIR = os.path.join(REPO_BASE_DIR, "tools")
 
     @staticmethod
     def get_floorplan(name: str) -> str:
