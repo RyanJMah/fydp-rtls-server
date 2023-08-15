@@ -107,14 +107,16 @@ def main():
 def exit_handler():
     global g_csv_file
 
-    # flush the queue
-    while not g_write_queue.empty():
-        row = g_write_queue.get()
-        csv_writer.writerow(row)
+    try:
+        # flush the queue
+        while not g_write_queue.empty():
+            row = g_write_queue.get()
+            csv_writer.writerow(row)
 
-    # close the file
-    if g_csv_file:
-        g_csv_file.close()
+    finally:
+        # close the file
+        if g_csv_file:
+            g_csv_file.close()
 
 if __name__ == '__main__':
     atexit.register(exit_handler)
