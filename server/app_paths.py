@@ -32,6 +32,9 @@ class AppPaths():
     # ./tools
     TOOLS_DIR = os.path.join(REPO_BASE_DIR, "tools")
 
+    # ./server/gl_conf.json
+    GL_CONF_FILE = os.path.join(SERVER_DIR, "gl_conf.json")
+
     @staticmethod
     def get_floorplan(name: str) -> str:
         return os.path.join(AppPaths.FLOORPLANS_DIR, name)

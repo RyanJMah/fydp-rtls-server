@@ -1,5 +1,11 @@
 from ctypes import Structure, c_uint8, c_uint32, c_int16, c_int32, c_float
 
+BROKER_ADDRESS = "localhost"
+BROKER_PORT    = 1883
+
+ANCHOR_DATA_TOPIC = "gl/anchor/<id>/data"
+IOS_DATA_TOPIC    = "gl/ios/<id>/data/<aid>"
+
 class Struct(Structure):
     def __str__(self):
         ret = "{\n"
