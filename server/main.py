@@ -15,8 +15,7 @@ from KalmanFilter import KalmanFilter as kf
 from kalman_helpers import initConstVelocityKF as initConstVel
 from kalman_helpers import initConstAccelerationKF as initConstAcc
 
-sys.path.append(AppPaths.TESTS_DIR)
-sys.path.append(AppPaths.TESTS_DIR)
+sys.path.append(AppPaths.TOOLS_DIR)
 
 from visualize_iphone import run, push_coordinates
 
