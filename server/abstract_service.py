@@ -1,18 +1,25 @@
-import threading
-import queue
-from typing import Any
+import multiprocessing as mp
+from typing import TypeAlias, Optional
 from abc import ABC, abstractmethod
 
 class AbstractService(ABC):
-    def __init__(self, in_queue: queue.Queue, out_queue: queue.Queue):
-        self._thread   = threading.Thread(target=self.mainloop, daemon=True)
+    def __init__(self, in_conn, out_conn):
+        self.in_conn = in_conn
+        self.out_conn = out_conn
 
-        self.in_queue  = in_queue
-        self.out_queue = out_queue
+        self._process = mp.Process( target=self.main,
+                                    args=(self.in_conn, self.out_conn,),
+                                    daemon=True )
 
     def start(self):
-        self._thread.start()
+        self._process.start()
+
+    def join(self):
+        self._process.join()
+
+    def kill(self):
+        self._process.kill()
 
     @abstractmethod
-    def mainloop(self):
+    def main(self, in_conn, out_conn):
         pass

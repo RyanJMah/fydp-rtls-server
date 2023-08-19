@@ -1,9 +1,14 @@
 import time
+import socket
+import pickle
 import threading
 import queue
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+
+import includes
+from localization_service import LocalizationService_DebugData
 
 ANCHOR_0_COORDINATES = (615, 0, 273)
 ANCHOR_1_COORDINATES = (615, 520, 263)
@@ -13,22 +18,26 @@ ANCHOR_3_COORDINATES = (123, 520, 263)
 g_x = 0
 g_y = 0
 
-coordinate_q: queue.Queue = queue.Queue()
+# coordinate_q: queue.Queue = queue.Queue()
 
-def push_coordinates( x, y, theta,
-                      r0, phi0,
-                      r1, phi1,
-                      r2, phi2,
-                      r3, phi3,
-                      los0, los1, los2, los3,
-                      critical_anchor ):
-    coordinate_q.put(( x, y, theta,
-                      r0, phi0,
-                      r1, phi1,
-                      r2, phi2,
-                      r3, phi3,
-                      los0, los1, los2, los3,
-                      critical_anchor ))
+# def push_coordinates( x, y, theta,
+#                       r0, phi0,
+#                       r1, phi1,
+#                       r2, phi2,
+#                       r3, phi3,
+#                       los0, los1, los2, los3,
+#                       critical_anchor ):
+#     coordinate_q.put(( x, y, theta,
+#                       r0, phi0,
+#                       r1, phi1,
+#                       r2, phi2,
+#                       r3, phi3,
+#                       los0, los1, los2, los3,
+#                       critical_anchor ))
+
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+sock.connect( ("192.168.2.41", 6969) )
+print('Connected to server')
 
 # Dummy function to simulate the user's position (replace this with your server data)
 def get_user_position():
@@ -36,13 +45,40 @@ def get_user_position():
 
 # Function to update the position of the dot in the plot
 def update_dot(frame):
-    x, y, theta, \
-    r0, phi0, \
-    r1, phi1, \
-    r2, phi2, \
-    r3, phi3, \
-    los0, los1, los2, los3, \
-    critical_anchor = coordinate_q.get()  # Get the user's current position
+    # x, y, theta, \
+    # r0, phi0, \
+    # r1, phi1, \
+    # r2, phi2, \
+    # r3, phi3, \
+    # los0, los1, los2, los3, \
+    # critical_anchor = coordinate_q.get()  # Get the user's current position
+
+    data = sock.recv(4096)
+    data = pickle.loads(data)
+
+    x = data.x
+    y = data.y
+    z = data.z
+    theta = data.angle_deg
+
+    r0 = data.r0
+    r1 = data.r1
+    r2 = data.r2
+    r3 = data.r3
+
+    phi0 = data.phi0
+    phi1 = data.phi1
+    phi2 = data.phi2
+    phi3 = data.phi3
+
+    los0 = data.los0
+    los1 = data.los1
+    los2 = data.los2
+    los3 = data.los3
+
+    critical_anchor = data.critical_anchor
+    
+
 
     anchor0.set_radius(r0)
     anchor1.set_radius(r1)
