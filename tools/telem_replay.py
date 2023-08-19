@@ -3,6 +3,7 @@ import time
 import click
 import csv
 from typing import Any, List, Dict
+from ctypes import c_float
 
 import includes
 import logs
@@ -70,12 +71,12 @@ def cli(csv_path: str, uid: int, verbose: bool) -> None:
             mqtt_client.publish( f"gl/anchor/{row['aid']}/data", bytes(data) )
 
         elif row["type"] == "ios":
-            data = IOS_TelemetryData( row["distance_m"],
-                                      row["azimuth_deg"],
-                                      row["elevation_deg"],
-                                      row["los"] )
+            data = IOS_TelemetryData( c_float(row["distance_m"]),
+                                      int(row["azimuth_deg"]),
+                                      int(row["elevation_deg"]),
+                                      int(row["los"]) )
 
-            mqtt_client.publish( f"gl/ios/{row['aid']}/data/{uid}", bytes(data) )
+            mqtt_client.publish( f"gl/user/{uid}/data/{row['aid']}", bytes(data) )
 
         else:
             logger.error(f"unknown telemetry type: {row['type']}")

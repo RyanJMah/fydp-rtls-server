@@ -21,10 +21,15 @@ from visualize_iphone import run, push_coordinates
 
 logger = logs.init_logger(__name__)
 
-ANCHOR_0_COORDINATES = (615, 0, 273)
-ANCHOR_1_COORDINATES = (615, 520, 263)
-ANCHOR_2_COORDINATES = (0, 0, 277)
-ANCHOR_3_COORDINATES = (123, 520, 263)
+# ANCHOR_0_COORDINATES = (615, 0, 273)
+# ANCHOR_1_COORDINATES = (615, 520, 263)
+# ANCHOR_2_COORDINATES = (0, 0, 277)
+# ANCHOR_3_COORDINATES = (123, 520, 263)
+
+ANCHOR_0_COORDINATES = (615, 0, 276)
+ANCHOR_1_COORDINATES = (615, 520, 258)
+ANCHOR_2_COORDINATES = (0, 0, 254)
+ANCHOR_3_COORDINATES = (129, 520, 273)
 
 ANCHOR_COORDINATES = [
     ANCHOR_0_COORDINATES,
@@ -531,8 +536,8 @@ def main():
     t1 = threading.Thread(target=localization_thread, daemon=True)
     t1.start()
 
-    t2 = threading.Thread(target=hardcoded_directions, daemon=True)
-    t2.start()
+    # t2 = threading.Thread(target=hardcoded_directions, daemon=True)
+    # t2.start()
 
     run()
 
