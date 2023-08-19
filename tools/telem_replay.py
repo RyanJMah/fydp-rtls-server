@@ -1,7 +1,11 @@
+import os
 import sys
 import time
 import click
 import csv
+import keyboard
+import threading
+import multiprocessing as mp
 from typing import Any, List, Dict
 from ctypes import c_float
 
@@ -11,6 +15,9 @@ from mqtt_client import MqttClient, MqttMsg
 from app_mqtt import AnchorTelemetryData, IOS_TelemetryData
 
 logger = logs.init_logger(__name__)
+
+g_pause = threading.Event()
+g_timestamp = 0.0
 
 def _make_row_dict(row: List[str]) -> Dict[str, Any]:
     return {
@@ -24,11 +31,48 @@ def _make_row_dict(row: List[str]) -> Dict[str, Any]:
         "los"           : bool  (row[7]) if row[7] else None
     }
 
+def keyboard_listener_thread():
+    global g_pause
+    global g_timestamp
+
+    pause_time = 0.0
+
+    while (1):
+        if keyboard.is_pressed("space"):
+            # toggle pause with spacebar
+
+            if g_pause.is_set():
+                g_timestamp += time.time() - pause_time
+                g_pause.clear()
+
+            else:
+                pause_time = time.time()
+                g_pause.set()
+
+            # debounce
+            time.sleep(0.2)
+
+def print_timestamp_process(pipe):
+    while (1):
+        timestamp = pipe.recv()
+
+        # print timestamp to 3 decimal places
+        print(f"\r{timestamp:.3f}", end="")
+
+
 @click.command()
 @click.argument('csv_path', type=click.Path(exists=True))
 @click.option('--uid', type=int, default=0, help='The UID of the iOS device to replay telemetry for.')
-@click.option('--verbose', is_flag=True, help='Enable verbose logging.')
-def cli(csv_path: str, uid: int, verbose: bool) -> None:
+@click.option("--allow-pausing", is_flag=True, help="Allow pausing the replay with the spacebar, requires root.")
+def cli(csv_path: str, uid: int, allow_pausing: bool) -> None:
+    global g_pause
+    global g_timestamp
+
+    # check for root if pausing is enabled
+    if allow_pausing and (os.geteuid() != 0):
+        logger.error("pausing requires root!")
+        sys.exit(1)
+
     csv_data: List[ Dict[str, Any] ]
 
     with open(csv_path, 'r') as csv_file:
@@ -49,15 +93,28 @@ def cli(csv_path: str, uid: int, verbose: bool) -> None:
 
     logger.info("replaying telemetry data now...")
 
-    start_time = time.time()
+    # start processes and threads
+    if allow_pausing:
+        threading.Thread(target=keyboard_listener_thread, daemon=True).start()
+
+    parent_conn, child_conn = mp.Pipe()
+
+    p1 = mp.Process(target=print_timestamp_process, args=(child_conn,), daemon=True)
+    p1.start()
+
+    g_timestamp = time.time()
 
     for row in csv_data:
+        # pause if spacebar is pressed
+        while g_pause.is_set():
+            time.sleep(0.1)
+
         # wait until it's time to send the message
-        while (time.time() - start_time) < float(row["timestamp"]):
+        while (time.time() - g_timestamp) < float(row["timestamp"]):
             pass
 
-        if verbose:
-            logger.info(f"replaying {row}")
+        # send timestamp to the print process
+        parent_conn.send( row["timestamp"] )
 
         # send the message
         if row["type"] == "anchor":
@@ -82,7 +139,10 @@ def cli(csv_path: str, uid: int, verbose: bool) -> None:
             logger.error(f"unknown telemetry type: {row['type']}")
             continue
 
-    logger.info("done replaying telemetry data!")
+    # print_timestamp_process.kill()
+
+    print()
+    logger.info("Finished replaying telemetry data!")
 
 def main():
     cli()
