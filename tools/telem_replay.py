@@ -17,6 +17,7 @@ from app_mqtt import AnchorTelemetryData, IOS_TelemetryData
 logger = logs.init_logger(__name__)
 
 g_pause = threading.Event()
+g_timestamp = 0.0
 
 def _make_row_dict(row: List[str]) -> Dict[str, Any]:
     return {
@@ -32,15 +33,20 @@ def _make_row_dict(row: List[str]) -> Dict[str, Any]:
 
 def keyboard_listener_thread():
     global g_pause
+    global g_timestamp
+
+    pause_time = 0.0
 
     while (1):
         if keyboard.is_pressed("space"):
             # toggle pause with spacebar
 
             if g_pause.is_set():
+                g_timestamp += time.time() - pause_time
                 g_pause.clear()
 
             else:
+                pause_time = time.time()
                 g_pause.set()
 
             # debounce
@@ -59,6 +65,9 @@ def print_timestamp_process(pipe):
 @click.option('--uid', type=int, default=0, help='The UID of the iOS device to replay telemetry for.')
 @click.option("--allow-pausing", is_flag=True, help="Allow pausing the replay with the spacebar, requires root.")
 def cli(csv_path: str, uid: int, allow_pausing: bool) -> None:
+    global g_pause
+    global g_timestamp
+
     # check for root if pausing is enabled
     if allow_pausing and (os.geteuid() != 0):
         logger.error("pausing requires root!")
@@ -93,7 +102,7 @@ def cli(csv_path: str, uid: int, allow_pausing: bool) -> None:
     p1 = mp.Process(target=print_timestamp_process, args=(child_conn,), daemon=True)
     p1.start()
 
-    start_time = time.time()
+    g_timestamp = time.time()
 
     for row in csv_data:
         # pause if spacebar is pressed
@@ -101,7 +110,7 @@ def cli(csv_path: str, uid: int, allow_pausing: bool) -> None:
             time.sleep(0.1)
 
         # wait until it's time to send the message
-        while (time.time() - start_time) < float(row["timestamp"]):
+        while (time.time() - g_timestamp) < float(row["timestamp"]):
             pass
 
         # send timestamp to the print process
