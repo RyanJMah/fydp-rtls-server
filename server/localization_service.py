@@ -85,12 +85,14 @@ class LocalizationService(AbstractService):
 
 
     def init_kalman_filter(self):
-        A = np.zeros((6,6))
-        H = np.zeros((3,6))
+        A = np.zeros((9,9))
+        H = np.zeros((3,9))
 
         self.kf = kf(A, H, 0)
 
-        A, B, H, Q, R, P_0, x_0 = initConstVel()
+        # A, B, H, Q, R, P_0, x_0 = initConstVel()
+        A, B, H, Q, R, P_0, x_0 = initConstAcc()
+
         self.kf.assignSystemParameters(A, B, H, Q, R, P_0, x_0)
 
 
