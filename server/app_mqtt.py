@@ -1,7 +1,7 @@
 from ctypes import Structure, c_uint8, c_uint32, c_int16, c_int32, c_float
 
-ANCHOR_DATA_TOPIC = "gl/anchor/<id>/data"
-IOS_DATA_TOPIC    = "gl/ios/<id>/data/<aid>"
+ANCHOR_DATA_TOPIC = "gl/anchor/<aid>/data"
+IOS_DATA_TOPIC    = "gl/user/<uid>/data/<aid>"
 
 class Struct(Structure):
     def __str__(self):

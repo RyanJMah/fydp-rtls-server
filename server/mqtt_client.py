@@ -35,7 +35,7 @@ class _TopicHandle():
 
     def run(self, client: "MqttClient", received_msg: MqttMsg):
         # get the arguments from the received_topic
-        topic_levels = received_msg.topic.split("/")
+        topic_levels = received_msg.topic.split("/")    # type: ignore
 
         args = []
         for pos in self.arg_positions:
@@ -60,7 +60,7 @@ class MqttClient():
         self._user_disconnect_callback = lambda *args: None
         self._user_subscribe_callback  = lambda *args: None
 
-        self._sub_topic_handles: Dict[str, "_TopicHandle"] = {}
+        self._sub_topic_handles: Dict[str, "_TopicHandle"] = {}     # type: ignore
         self._sub_mids = {}
 
         self._is_connected = Event()

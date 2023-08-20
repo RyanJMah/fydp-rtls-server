@@ -1,9 +1,9 @@
 import multiprocessing as mp
-from typing import TypeAlias, Optional
+from typing import Any
 from abc import ABC, abstractmethod
 
 class AbstractService(ABC):
-    def __init__(self, in_conn, out_conn):
+    def __init__(self, in_conn: Any, out_conn: Any):
         self.in_conn = in_conn
         self.out_conn = out_conn
 

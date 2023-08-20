@@ -3,7 +3,7 @@ import socket
 import pickle
 import numpy as np
 import threading
-from typing import Optional
+from typing import Optional, List, Dict, Any
 from dataclasses import dataclass
 
 import logs
@@ -73,6 +73,16 @@ class LocalizationService_OutData:
 
 
 class LocalizationService(AbstractService):
+    def __init__(self, in_conn: Any, out_conn: Any):
+        super().__init__(in_conn, out_conn)
+
+        self.kf: Any = None
+        self.ANCHOR_COORDINATES: Optional[ Dict[int, Any] ] = None
+
+        self.anchor: List[_AnchorState] = []
+        self.user: Dict[int, _UserState] = {}
+
+
     def init_kalman_filter(self):
         A = np.zeros((6,6))
         H = np.zeros((3,6))
@@ -234,7 +244,7 @@ class LocalizationService(AbstractService):
         while (1):
             data = self.in_conn.recv()
 
-            self.anchor[data.aid].r   = data.distance_m
+            self.anchor[data.aid].r   = data.distance_cm
             self.anchor[data.aid].phi = data.angle_deg
             self.anchor[data.aid].los = data.los
 

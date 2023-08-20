@@ -1,6 +1,6 @@
 import time
 import queue
-from typing import Optional
+from typing import Optional, List, Any
 from dataclasses import dataclass
 
 import logs
@@ -39,6 +39,13 @@ class DIS_OutData:
 
 
 class DataIngestionService(AbstractService):
+    def __init__(self, in_conn: Any, out_conn: Any):
+        super().__init__(in_conn, out_conn)
+
+        self.mqtt_client: Optional[MqttClient] = None
+        self.anchor_filters: List[_AnchorFilters] = []
+
+
     def init_filters(self):
         self.anchor_filters = [ _AnchorFilters() for _ in range(GL_CONF.num_anchors) ]
 
@@ -50,8 +57,6 @@ class DataIngestionService(AbstractService):
 
         self.mqtt_client.subscribe(ANCHOR_DATA_TOPIC, self.anchor_data_handler)
         self.mqtt_client.subscribe(IOS_DATA_TOPIC, self.ios_data_handler)
-
-        self.mqtt_client.start_mainloop()
 
 
     def anchor_data_handler(self, client: MqttClient, msg: MqttMsg, aid: int):
@@ -71,11 +76,11 @@ class DataIngestionService(AbstractService):
             return
 
         filtered_distance = self.anchor_filters[aid].distance_filter.exec(data.distance_m)
-        filtered_angle    = self.anchor_filters[aid].angle_filter.exec(data.angle)
+        filtered_angle    = self.anchor_filters[aid].angle_filter.exec(data.azimuth_deg)
 
         out_data = DIS_OutData( aid         = aid,
                                 uid         = uid,
-                                distance_cm = filtered_distance / 100,
+                                distance_cm = filtered_distance * 100,
                                 angle_deg   = filtered_angle,
                                 los         = data.los )
 
@@ -89,6 +94,9 @@ class DataIngestionService(AbstractService):
         self.init_filters()
         self.init_mqtt()
 
-        while (1):
-            time.sleep(60)
+        self.mqtt_client.run_mainloop()
+
+        # assert(self.mqtt_client is not None)
+
+        # self.mqtt_client.run_mainloop()
 
