@@ -28,7 +28,7 @@
         }
     ],
     "loc_debug_endpoint": {
-        "host": "localhost",
+        "host": "0.0.0.0",
         "port": 6969,
         "enabled": true
     }

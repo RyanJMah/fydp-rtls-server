@@ -16,7 +16,7 @@ import includes
 from localization_service import LocalizationService_DebugData
 from gl_conf import GL_CONF
 
-ENDPOINT_HOST = GL_CONF.loc_debug_endpoint.host
+ENDPOINT_HOST = "localhost"
 ENDPOINT_PORT = GL_CONF.loc_debug_endpoint.port
 
 ANCHOR_0_COORDINATES = GL_CONF.anchors[0].get_coords()

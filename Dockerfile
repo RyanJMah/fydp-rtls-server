@@ -43,5 +43,6 @@ COPY ./tests /app/tests
 WORKDIR /app
 
 EXPOSE 1883
+EXPOSE 6969
 
 CMD ["supervisord", "-n"]
