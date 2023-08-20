@@ -259,8 +259,10 @@ class LocalizationService(AbstractService):
         # this is so we can restart the program without waiting for the socket to timeout
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-        sock.bind( (DEBUG_ENDPOINT_ADDRESS, DEBUG_ENDPOINT_PORT) )
+        sock.bind( (GL_CONF.loc_debug_endpoint.host, GL_CONF.loc_debug_endpoint.port) )
         sock.listen()
+
+        logger.info("Debug endpoint listening on %s:%d" % (GL_CONF.loc_debug_endpoint.host, GL_CONF.loc_debug_endpoint.port))
 
         conn, addr = sock.accept()
         with conn:
@@ -300,7 +302,7 @@ class LocalizationService(AbstractService):
 
         threading.Thread(target=self.ingest_data_thread, daemon=True).start()
 
-        if GL_CONF.loc_debug_endpoint:
+        if GL_CONF.loc_debug_endpoint.enabled:
             threading.Thread(target=self.debug_endpoint_thread, daemon=True).start()
 
         while (1):

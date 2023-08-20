@@ -21,6 +21,20 @@ class AnchorConf:
         return (self.x, self.y, self.z)
 
 @dataclass
+class LocalizationService_DebugEndpoint_Conf:
+    host: str
+    port: int
+    enabled: bool
+
+    @classmethod
+    def from_dict(cls, d: Dict[Any, Any]):
+        return cls(
+            host    = d["host"],
+            port    = d["port"],
+            enabled = d["enabled"],
+        )
+
+@dataclass
 class GuidingLiteConf:
     broker_address: str
     broker_port: int
@@ -28,7 +42,7 @@ class GuidingLiteConf:
     anchors: Dict[int, AnchorConf]
     num_anchors: int
 
-    loc_debug_endpoint: bool
+    loc_debug_endpoint: LocalizationService_DebugEndpoint_Conf
     
     @staticmethod
     def anchors_from_dict(d: Dict[Any, Any]):
@@ -43,5 +57,5 @@ GL_CONF = GuidingLiteConf(
     broker_port        = _gl_conf["broker_port"],
     num_anchors        = len(_gl_conf["anchors"]),
     anchors            = GuidingLiteConf.anchors_from_dict(_gl_conf),
-    loc_debug_endpoint = _gl_conf["localization_service_debug_endpoint_enabled"],
+    loc_debug_endpoint = LocalizationService_DebugEndpoint_Conf.from_dict(_gl_conf["loc_debug_endpoint"])
 )

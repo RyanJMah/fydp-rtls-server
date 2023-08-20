@@ -27,5 +27,9 @@
             "z": 273
         }
     ],
-    "localization_service_debug_endpoint_enabled": true
+    "loc_debug_endpoint": {
+        "host": "localhost",
+        "port": 6969,
+        "enabled": true
+    }
 }

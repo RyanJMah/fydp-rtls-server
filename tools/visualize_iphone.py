@@ -1,4 +1,5 @@
 import time
+import sys
 import socket
 import pickle
 import threading
@@ -13,52 +14,53 @@ warnings.filterwarnings("ignore")   # this suppresses all warnings, this is bad,
 
 import includes
 from localization_service import LocalizationService_DebugData
+from gl_conf import GL_CONF
 
-ANCHOR_0_COORDINATES = (615, 0, 273)
-ANCHOR_1_COORDINATES = (615, 520, 263)
-ANCHOR_2_COORDINATES = (0, 0, 277)
-ANCHOR_3_COORDINATES = (123, 520, 263)
+ENDPOINT_HOST = GL_CONF.loc_debug_endpoint.host
+ENDPOINT_PORT = GL_CONF.loc_debug_endpoint.port
 
-g_x = 0
-g_y = 0
+ANCHOR_0_COORDINATES = GL_CONF.anchors[0].get_coords()
+ANCHOR_1_COORDINATES = GL_CONF.anchors[1].get_coords()
+ANCHOR_2_COORDINATES = GL_CONF.anchors[2].get_coords()
+ANCHOR_3_COORDINATES = GL_CONF.anchors[3].get_coords()
 
-# coordinate_q: queue.Queue = queue.Queue()
+# ANCHOR_0_COORDINATES = (615, 0, 273)
+# ANCHOR_1_COORDINATES = (615, 520, 263)
+# ANCHOR_2_COORDINATES = (0, 0, 277)
+# ANCHOR_3_COORDINATES = (123, 520, 263)
 
-# def push_coordinates( x, y, theta,
-#                       r0, phi0,
-#                       r1, phi1,
-#                       r2, phi2,
-#                       r3, phi3,
-#                       los0, los1, los2, los3,
-#                       critical_anchor ):
-#     coordinate_q.put(( x, y, theta,
-#                       r0, phi0,
-#                       r1, phi1,
-#                       r2, phi2,
-#                       r3, phi3,
-#                       los0, los1, los2, los3,
-#                       critical_anchor ))
+def connect_to_server():
+    while (1):
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-sock.connect( ("192.168.2.41", 6969) )
-print('Connected to server')
+            s.connect( (ENDPOINT_HOST, ENDPOINT_PORT) )
+            print('Connected to server')
 
-# Dummy function to simulate the user's position (replace this with your server data)
-def get_user_position():
-    return g_x, g_y
+            return s
+
+        except:
+            print('Failed to connect to server, retrying...')
+            time.sleep(1)
+
+
+sock = connect_to_server()
 
 # Function to update the position of the dot in the plot
 def update_dot(frame):
-    # x, y, theta, \
-    # r0, phi0, \
-    # r1, phi1, \
-    # r2, phi2, \
-    # r3, phi3, \
-    # los0, los1, los2, los3, \
-    # critical_anchor = coordinate_q.get()  # Get the user's current position
+    global sock
 
     data = sock.recv(4096)
-    data = pickle.loads(data)
+
+    if len(data) == 0:
+        print('Server disconnected, reconnecting...')
+        sock = connect_to_server()
+
+    try:
+        data = pickle.loads(data)
+    except Exception as e:
+        print(f"WARNING: dropped packet, failed to unpickle data...")
+        return
 
     x = data.x
     y = data.y
@@ -118,16 +120,6 @@ def update_dot(frame):
 
     dot1.set_data(x, y)  # Update the dot's position
 
-def update_dot_thread():
-    global g_x, g_y
-
-    while (1):
-        g_x += 0.1
-        g_y += 0.1
-        time.sleep(0.2)
-
-# t = threading.Thread(target=update_dot_thread, daemon=True)
-# t.start()
 
 # Create a figure and axis
 fig, ax = plt.subplots()

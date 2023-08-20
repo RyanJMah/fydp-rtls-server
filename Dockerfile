@@ -21,7 +21,6 @@ RUN mkdir -p /app/resources
 RUN mkdir -p /app/logs
 
 ADD ./supervisord.conf /etc/supervisor/conf.d/
-ADD ./mosquitto.conf /app
 
 WORKDIR /app
 
@@ -33,6 +32,9 @@ COPY ./recastnavigation /app/recastnavigation
 
 WORKDIR /app/cpp
 RUN make clean_all && make
+
+ADD ./mosquitto.conf /app
+ADD ./gl_conf.json /app
 
 COPY ./resources /app/resources
 COPY ./server /app/server
