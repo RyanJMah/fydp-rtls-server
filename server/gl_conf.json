@@ -26,5 +26,6 @@
             "y": 520,
             "z": 273
         }
-    ]
+    ],
+    "localization_service_debug_endpoint_enabled": true
 }

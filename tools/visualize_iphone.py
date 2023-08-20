@@ -7,6 +7,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
+# suppress the matplotlib warning
+import warnings
+warnings.filterwarnings("ignore")   # this suppresses all warnings, this is bad, who cares!
+
 import includes
 from localization_service import LocalizationService_DebugData
 
@@ -77,8 +81,6 @@ def update_dot(frame):
     los3 = data.los3
 
     critical_anchor = data.critical_anchor
-    
-
 
     anchor0.set_radius(r0)
     anchor1.set_radius(r1)

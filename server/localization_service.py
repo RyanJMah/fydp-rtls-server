@@ -3,6 +3,7 @@ import socket
 import pickle
 import numpy as np
 import threading
+import atexit
 from typing import Optional, List, Dict, Any
 from dataclasses import dataclass
 
@@ -91,6 +92,7 @@ class LocalizationService(AbstractService):
 
         A, B, H, Q, R, P_0, x_0 = initConstVel()
         self.kf.assignSystemParameters(A, B, H, Q, R, P_0, x_0)
+
 
     def initialize(self):
         self.ANCHOR_COORDINATES = { i: a.get_coords() for i, a in GL_CONF.anchors.items() }
@@ -252,6 +254,9 @@ class LocalizationService(AbstractService):
     def debug_endpoint_thread(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
+        # this is so we can restart the program without waiting for the socket to timeout
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
         sock.bind( (DEBUG_ENDPOINT_ADDRESS, DEBUG_ENDPOINT_PORT) )
         sock.listen()
 
@@ -292,7 +297,9 @@ class LocalizationService(AbstractService):
         self.initialize()
 
         threading.Thread(target=self.ingest_data_thread, daemon=True).start()
-        threading.Thread(target=self.debug_endpoint_thread, daemon=True).start()
+
+        if GL_CONF.loc_debug_endpoint:
+            threading.Thread(target=self.debug_endpoint_thread, daemon=True).start()
 
         while (1):
             trilat_input    = self.select_anchors_for_trilateration()
@@ -317,8 +324,8 @@ class LocalizationService(AbstractService):
             self.user[HARDCODED_UID].angle_deg = -1
             self.user[HARDCODED_UID].critical_anchor = critical_anchor
 
-            out_data = LocalizationService_OutData( HARDCODED_UID, kf_x, kf_y, kf_z, -1 )
-            out_conn.send(out_data)
+            # out_data = LocalizationService_OutData( HARDCODED_UID, kf_x, kf_y, kf_z, -1 )
+            # out_conn.send(out_data)
 
             time.sleep(0.1)
 

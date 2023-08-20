@@ -27,6 +27,8 @@ class GuidingLiteConf:
 
     anchors: Dict[int, AnchorConf]
     num_anchors: int
+
+    loc_debug_endpoint: bool
     
     @staticmethod
     def anchors_from_dict(d: Dict[Any, Any]):
@@ -37,8 +39,9 @@ with open(AppPaths.GL_CONF_FILE, "r") as f:
     _gl_conf = json.load(f)
 
 GL_CONF = GuidingLiteConf(
-    broker_address = _gl_conf["broker_address"],
-    broker_port    = _gl_conf["broker_port"],
-    num_anchors    = len(_gl_conf["anchors"]),
-    anchors        = GuidingLiteConf.anchors_from_dict(_gl_conf)
+    broker_address     = _gl_conf["broker_address"],
+    broker_port        = _gl_conf["broker_port"],
+    num_anchors        = len(_gl_conf["anchors"]),
+    anchors            = GuidingLiteConf.anchors_from_dict(_gl_conf),
+    loc_debug_endpoint = _gl_conf["localization_service_debug_endpoint_enabled"],
 )
