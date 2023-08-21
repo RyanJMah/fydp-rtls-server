@@ -8,9 +8,10 @@ from numpy.linalg import inv   # pinv may be more generic
 
 class KalmanFilter():
 
-    def __init__ (self, A = None, H = None, obj_id=None):        
+    def __init__ (self, A=None, H=None, obj_id=None):        
         if(A is None or obj_id is None):
             raise ValueError("State Model(A), Transition (H) Matric, and object ID must be provided in object creation!")            
+
         self.n_states = A.shape[1]      # no. of column vectors in A (length of the state vector)
 #         self.m_outputs = H.shape[0]   # no. of row vectors in H (lenght of the meas. vector)
         
