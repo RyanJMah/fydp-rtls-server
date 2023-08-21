@@ -5,6 +5,7 @@ build/
 *.nav
 *.obj
 __pycache__/
+*.log
 
 # Python virtual env files
 venv/

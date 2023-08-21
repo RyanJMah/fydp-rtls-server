@@ -1,7 +1,7 @@
 import time
 import queue
-from typing import Optional, List, Any
-from dataclasses import dataclass
+from typing import Optional, List, Dict, Any
+from dataclasses import dataclass, field
 
 import logs
 from app_mqtt import (
@@ -30,27 +30,37 @@ class _AnchorFilters:
 
 
 @dataclass
+class AnchorRangingState:
+    distance_cm       : float = 0.0
+    angle_deg         : float = 0.0
+    los               : bool  = False
+    last_updated_time : float = 0.0
+
+    @property
+    def r(self):
+        return self.distance_cm
+
+    @property
+    def phi(self):
+        return self.angle_deg
+
+@dataclass
 class DIS_OutData:
-    aid         : int
-    uid         : int
-    distance_cm : float
-    angle_deg   : float
-    los         : bool
+    anchors: Dict[int, AnchorRangingState] = field( default_factory = lambda: {i: AnchorRangingState() for i in range(GL_CONF.num_anchors)} )
 
 
 class DataIngestionService(AbstractService):
-    def __init__(self, in_conn: Any, out_conn: Any):
-        super().__init__(in_conn, out_conn)
+    def initialize(self):
+        # The update period for UWB TWR is (approximately) a normal distribution with a mean of 5.5Hz
+        self.nominal_uwb_update_period_secs = 1.0 / 5.5
 
-        self.mqtt_client: Optional[MqttClient] = None
-        self.anchor_filters: List[_AnchorFilters] = []
-
-
-    def init_filters(self):
+        # init filters
         self.anchor_filters = [ _AnchorFilters() for _ in range(GL_CONF.num_anchors) ]
 
+        # init "global" anchor ranging state, which is periodically sent to localization service
+        self.out_data = DIS_OutData()
 
-    def init_mqtt(self):
+        # init mqtt
         self.mqtt_client = MqttClient()
 
         self.mqtt_client.connect(GL_CONF.broker_address, GL_CONF.broker_port)
@@ -78,25 +88,25 @@ class DataIngestionService(AbstractService):
         filtered_distance = self.anchor_filters[aid].distance_filter.exec(data.distance_m)
         filtered_angle    = self.anchor_filters[aid].angle_filter.exec(data.azimuth_deg)
 
-        out_data = DIS_OutData( aid         = aid,
-                                uid         = uid,
-                                distance_cm = filtered_distance * 100,
-                                angle_deg   = filtered_angle,
-                                los         = data.los )
-
-        self.out_conn.send(out_data)    # type: ignore
+        self.out_data.anchors[aid].distance_cm       = filtered_distance * 100
+        self.out_data.anchors[aid].angle_deg         = filtered_angle
+        self.out_data.anchors[aid].los               = data.los
+        self.out_data.anchors[aid].last_updated_time = time.time()
 
 
     def main(self, in_conn, out_conn):
         assert(in_conn is None)
         assert(out_conn is not None)
 
-        self.init_filters()
-        self.init_mqtt()
+        self.initialize()
 
-        self.mqtt_client.run_mainloop()
+        self.mqtt_client.start_mainloop()
 
-        # assert(self.mqtt_client is not None)
+        timestamp = time.time()
 
-        # self.mqtt_client.run_mainloop()
+        while (1):
+            if (time.time() - timestamp) >= GL_CONF.update_period_secs:
+                timestamp = time.time()
+                out_conn.send( self.out_data )
+
 

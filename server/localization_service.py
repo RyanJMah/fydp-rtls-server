@@ -11,7 +11,7 @@ import logs
 from gl_conf import GL_CONF
 from lpf import LowPassFilter
 from abstract_service import AbstractService
-from data_ingestion_service import DIS_OutData
+from data_ingestion_service import DIS_OutData, AnchorRangingState
 
 from KalmanFilter import KalmanFilter as kf
 from kalman_helpers import initConstVelocityKF as initConstVel
@@ -26,64 +26,39 @@ DEBUG_ENDPOINT_ADDRESS = "0.0.0.0"
 DEBUG_ENDPOINT_PORT    = 6969
 
 @dataclass
-class _AnchorState:
-    r: float
-    phi: float
-    los: bool
-
-@dataclass
-class _UserState:
-    x: float
-    y: float
-    z: float
-    angle_deg: float
-    critical_anchor: int
-
-@dataclass
 class LocalizationService_DebugData:
-    x: float
-    y: float
-    z: float
-    angle_deg: float
+    x         : float = 0.0
+    y         : float = 0.0
+    z         : float = 0.0
+    angle_deg : float = 0.0
 
-    r0: float
-    r1: float
-    r2: float
-    r3: float
+    r0: float = 0.0
+    r1: float = 0.0
+    r2: float = 0.0
+    r3: float = 0.0
 
-    phi0: float
-    phi1: float
-    phi2: float
-    phi3: float
+    phi0: float = 0.0
+    phi1: float = 0.0
+    phi2: float = 0.0
+    phi3: float = 0.0
 
-    los0: bool
-    los1: bool
-    los2: bool
-    los3: bool
+    los0: bool = False
+    los1: bool = False
+    los2: bool = False
+    los3: bool = False
 
-    critical_anchor: int
+    critical_anchor: int = 0
 
 
 @dataclass
 class LocalizationService_OutData:
-    uid       : int
-    x         : float
-    y         : float
-    z         : float
-    angle_deg : float
+    x         : float = 0.0
+    y         : float = 0.0
+    z         : float = 0.0
+    angle_deg : float = 0.0
 
 
 class LocalizationService(AbstractService):
-    def __init__(self, in_conn: Any, out_conn: Any):
-        super().__init__(in_conn, out_conn)
-
-        self.kf: Any = None
-        self.ANCHOR_COORDINATES: Optional[ Dict[int, Any] ] = None
-
-        self.anchor: List[_AnchorState] = []
-        self.user: Dict[int, _UserState] = {}
-
-
     def init_kalman_filter(self):
         A = np.zeros((9,9))
         H = np.zeros((3,9))
@@ -97,18 +72,22 @@ class LocalizationService(AbstractService):
 
 
     def initialize(self):
-        self.ANCHOR_COORDINATES = { i: a.get_coords() for i, a in GL_CONF.anchors.items() }
+        # init "global" user location, which is periodically sent to pathfinding service
+        self.out_data = LocalizationService_OutData()
 
-        self.anchor = [ _AnchorState(0, 0, False) for _ in range(GL_CONF.num_anchors) ]
-        self.user   = { HARDCODED_UID: _UserState(0, 0, 0, 0, 0) }
+        # init "global" debug data, for the debug endpoint
+        self.debug_data = LocalizationService_DebugData()
+
+        # event that fires when new data is available, used to signal to debug endpoint
+        self.new_data_evt = threading.Event()
 
         self.init_kalman_filter()
 
 
     def trilateration(self, a1, a2, a3, r1, r2, r3):
-        P1 = self.ANCHOR_COORDINATES[a1]
-        P2 = self.ANCHOR_COORDINATES[a2]
-        P3 = self.ANCHOR_COORDINATES[a3]
+        P1 = GL_CONF.anchor_coords[a1]
+        P2 = GL_CONF.anchor_coords[a2]
+        P3 = GL_CONF.anchor_coords[a3]
 
         # r1 += 10
         # r2 += 10
@@ -143,37 +122,37 @@ class LocalizationService(AbstractService):
 
 
     # determine which anchors to use for trilateration based on LOS conditions
-    def select_anchors_for_trilateration(self):
+    def select_anchors_for_trilateration(self, anchors: Dict[int, AnchorRangingState]):
         # (anchor3)            (anchor1)
         #                               
         #                               
         #                               
         # (anchor2)            (anchor0)
 
-        los0 = self.anchor[0].los
-        los1 = self.anchor[1].los
-        los2 = self.anchor[2].los
-        los3 = self.anchor[3].los
+        los0 = anchors[0].los
+        los1 = anchors[1].los
+        los2 = anchors[2].los
+        los3 = anchors[3].los
 
         los = [
-            self.anchor[0].los,
-            self.anchor[1].los,
-            self.anchor[2].los,
-            self.anchor[3].los
+            anchors[0].los,
+            anchors[1].los,
+            anchors[2].los,
+            anchors[3].los
         ]
 
         r = [
-            self.anchor[0].r,
-            self.anchor[1].r,
-            self.anchor[2].r,
-            self.anchor[3].r
+            anchors[0].r,
+            anchors[1].r,
+            anchors[2].r,
+            anchors[3].r
         ]
 
         phi = [
-            self.anchor[0].phi,
-            self.anchor[1].phi,
-            self.anchor[2].phi,
-            self.anchor[3].phi
+            anchors[0].phi,
+            anchors[1].phi,
+            anchors[2].phi,
+            anchors[3].phi
         ]
 
         #################################################
@@ -241,18 +220,6 @@ class LocalizationService(AbstractService):
                  trilat_r1, trilat_r2, trilat_r3 )
 
 
-    # this shouldn't exist, but it was how we did it before, idk
-    # how not doing it like this will affect things, and I'm
-    # just refactoring rn so...
-    def ingest_data_thread(self):
-        while (1):
-            data = self.in_conn.recv()
-
-            self.anchor[data.aid].r   = data.distance_cm
-            self.anchor[data.aid].phi = data.angle_deg
-            self.anchor[data.aid].los = data.los
-
-
     def debug_endpoint_thread(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -269,30 +236,13 @@ class LocalizationService(AbstractService):
             logger.info("client connected to debug endpoint...")
 
             while (1):
-                r0, phi0 = self.anchor[0].r, self.anchor[0].phi
-                r1, phi1 = self.anchor[1].r, self.anchor[1].phi
-                r2, phi2 = self.anchor[2].r, self.anchor[2].phi
-                r3, phi3 = self.anchor[3].r, self.anchor[3].phi
+                # self.new_data_evt.wait()
+                # self.new_data_evt.clear()
+                # logger.error("got data")
 
-                los0 = self.anchor[0].los
-                los1 = self.anchor[1].los
-                los2 = self.anchor[2].los
-                los3 = self.anchor[3].los
+                conn.send( pickle.dumps(self.debug_data) )
+                time.sleep(GL_CONF.update_period_secs)
 
-                x               = self.user[HARDCODED_UID].x
-                y               = self.user[HARDCODED_UID].y
-                z               = self.user[HARDCODED_UID].z
-                angle_deg       = self.user[HARDCODED_UID].angle_deg
-                critical_anchor = self.user[HARDCODED_UID].critical_anchor
-
-                debug_data = LocalizationService_DebugData( x, y, z, angle_deg, \
-                                                            r0, r1, r2, r3, \
-                                                            phi0, phi1, phi2, phi3, \
-                                                            los0, los1, los2, los3, \
-                                                            critical_anchor )
-                conn.send( pickle.dumps(debug_data) )
-
-                time.sleep(0.1)
 
     def main(self, in_conn, out_conn):
         assert(in_conn is not None)
@@ -300,13 +250,16 @@ class LocalizationService(AbstractService):
 
         self.initialize()
 
-        threading.Thread(target=self.ingest_data_thread, daemon=True).start()
-
         if GL_CONF.loc_debug_endpoint.enabled:
             threading.Thread(target=self.debug_endpoint_thread, daemon=True).start()
 
         while (1):
-            trilat_input    = self.select_anchors_for_trilateration()
+            # Blocking call
+            anchor_data: DIS_OutData = self.in_conn.recv()     # type: ignore
+
+            anchors = anchor_data.anchors
+
+            trilat_input    = self.select_anchors_for_trilateration( anchors )
             critical_anchor = trilat_input[1]
 
             coords, _ = self.trilateration( *trilat_input )
@@ -322,14 +275,37 @@ class LocalizationService(AbstractService):
             kf_y = self.kf.x_m[1]
             kf_z = self.kf.x_m[2]
 
-            self.user[HARDCODED_UID].x = kf_x
-            self.user[HARDCODED_UID].y = kf_y
-            self.user[HARDCODED_UID].z = kf_z
-            self.user[HARDCODED_UID].angle_deg = -1
-            self.user[HARDCODED_UID].critical_anchor = critical_anchor
+            # Copy data to output variable
+            self.out_data.x         = kf_x
+            self.out_data.y         = kf_y
+            self.out_data.z         = kf_z
+            self.out_data.angle_deg = -1    # TODO
 
-            # out_data = LocalizationService_OutData( HARDCODED_UID, kf_x, kf_y, kf_z, -1 )
-            # out_conn.send(out_data)
+            # Send data to pathfinding service
+            # out_conn.send( self.out_data )
 
-            time.sleep(0.1)
+            # Copy data to debug variable
+            self.debug_data.x         = kf_x
+            self.debug_data.y         = kf_y
+            self.debug_data.z         = kf_z
+            self.debug_data.angle_deg = -1    # TODO
+
+            self.debug_data.r0   = anchors[0].r
+            self.debug_data.r1   = anchors[1].r
+            self.debug_data.r2   = anchors[2].r
+            self.debug_data.r3   = anchors[3].r
+            self.debug_data.phi0 = anchors[0].phi
+            self.debug_data.phi1 = anchors[1].phi
+            self.debug_data.phi2 = anchors[2].phi
+            self.debug_data.phi3 = anchors[3].phi
+            self.debug_data.los0 = anchors[0].los
+            self.debug_data.los1 = anchors[1].los
+            self.debug_data.los2 = anchors[2].los
+            self.debug_data.los3 = anchors[3].los
+
+            self.debug_data.critical_anchor = critical_anchor
+
+            # Signal debug endpoint thread to send data
+            self.new_data_evt.set()
+
 

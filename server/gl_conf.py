@@ -1,6 +1,6 @@
 import json
-from dataclasses import dataclass
-from typing import List, Dict, Any
+from dataclasses import dataclass, field
+from typing import List, Dict, Tuple, Any
 from app_paths import AppPaths
 
 @dataclass
@@ -40,10 +40,18 @@ class GuidingLiteConf:
     broker_port: int
 
     anchors: Dict[int, AnchorConf]
-    num_anchors: int
 
     loc_debug_endpoint: LocalizationService_DebugEndpoint_Conf
+
+    update_period_secs: float
+
+    num_anchors: int = field(init=False)
+    anchor_coords: Dict[ int, Tuple[float, float, float] ] = field(default_factory=dict)
     
+    def __post_init__(self):
+        self.num_anchors   = len(self.anchors)
+        self.anchor_coords = { i: a.get_coords() for i, a in self.anchors.items() }
+
     @staticmethod
     def anchors_from_dict(d: Dict[Any, Any]):
         return { a["id"]: AnchorConf.from_dict(a) for a in d["anchors"] }
@@ -55,7 +63,7 @@ with open(AppPaths.GL_CONF_FILE, "r") as f:
 GL_CONF = GuidingLiteConf(
     broker_address     = _gl_conf["broker_address"],
     broker_port        = _gl_conf["broker_port"],
-    num_anchors        = len(_gl_conf["anchors"]),
+    update_period_secs = 1 / _gl_conf["global_update_frequency_Hz"],
     anchors            = GuidingLiteConf.anchors_from_dict(_gl_conf),
     loc_debug_endpoint = LocalizationService_DebugEndpoint_Conf.from_dict(_gl_conf["loc_debug_endpoint"])
 )

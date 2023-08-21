@@ -3,11 +3,11 @@
 # The helper functions regarding motion models for Kalman filter implementation
 import numpy as np 
 
+from gl_conf import GL_CONF
 
 # Initialize the Constant Velocity model for UWB-based Positioning in KF 
 def initConstVelocityKF():
-
-    dt = 0.1    # system update rate (5.5ish Hz)
+    dt = GL_CONF.update_period_secs
     
     # variance of the measurement noise, supposing the error is 15 cm (0.15 * 0.15) on X- & Y-axes
     # Tune the values based on your set-up and the demanded performance
@@ -65,7 +65,7 @@ def initConstVelocityKF():
 
 # Constant acceleration Motion Model for UWB-based Positioning in KF 
 def initConstAccelerationKF():
-    dt = 0.1   # system update rate (5Hz)
+    dt = GL_CONF.update_period_secs
     
     # variance of the measurement noise, supposing the error is 15 cm (0.15 * 0.15) on X- & Y-axes
     # Tune the values based on your set-up and the demanded performance

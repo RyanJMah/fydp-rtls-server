@@ -1,7 +1,6 @@
 class LowPassFilter:
     """
-    First order low pass filter, discretized via trapazoidal rule,
-    with a sample time of 5.5Hz
+    First order low pass filter, discretized via trapazoidal rule with a sampling rate of 5.5Hz
     """
 
     def __init__(self, tau: float):

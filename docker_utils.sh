@@ -76,10 +76,12 @@ fi
 
 if [[ $1 == "logs" ]]
 then
-    docker exec rtls_server bash -c "tail -f /app/logs/rtls_server.log"
+    # docker exec rtls_server bash -c "tail -f /app/logs/rtls_server.log"
+    tail -f ./logs/rtls_server.log
 fi
 
 if [[ $1 == "mqtt_logs" ]]
 then
-    docker exec rtls_server bash -c "tail -f /app/logs/mosquitto.log"
+    # docker exec rtls_server bash -c "tail -f /app/logs/mosquitto.log"
+    tail -f ./logs/mosquitto.log
 fi

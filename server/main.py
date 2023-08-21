@@ -1,11 +1,16 @@
 import sys
 import multiprocessing as mp
 
+import logs
 from data_ingestion_service import DataIngestionService
 from localization_service import LocalizationService
 from pathfinding_service import PathfindingService
 
+logger = logs.init_logger(__name__)
+
 def main():
+    logger.info("Starting rtls server...")
+
     try:
         dis_to_loc_conn_1, dis_to_loc_conn_2 = mp.Pipe()
         loc_to_pf_conn_1, loc_to_pf_conn_2 = mp.Pipe()
