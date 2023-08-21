@@ -32,5 +32,5 @@
         "port": 6969,
         "enabled": true
     },
-    "global_update_frequency_Hz": 10
+    "global_update_frequency_Hz": 8
 }

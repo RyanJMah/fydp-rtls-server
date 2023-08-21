@@ -17,13 +17,7 @@ from KalmanFilter import KalmanFilter as kf
 from KalmanFilter import initConstVelocityKF as initConstVel
 from KalmanFilter import initConstAccelerationKF as initConstAcc
 
-
 logger = logs.init_logger(__name__)
-
-HARDCODED_UID = 69
-
-DEBUG_ENDPOINT_ADDRESS = "0.0.0.0"
-DEBUG_ENDPOINT_PORT    = 6969
 
 @dataclass
 class LocalizationService_DebugData:
@@ -236,12 +230,10 @@ class LocalizationService(AbstractService):
             logger.info("client connected to debug endpoint...")
 
             while (1):
-                # self.new_data_evt.wait()
-                # self.new_data_evt.clear()
-                # logger.error("got data")
+                self.new_data_evt.wait()
+                self.new_data_evt.clear()
 
                 conn.send( pickle.dumps(self.debug_data) )
-                time.sleep(GL_CONF.update_period_secs)
 
 
     def main(self, in_conn, out_conn):
