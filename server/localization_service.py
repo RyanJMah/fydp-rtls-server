@@ -291,6 +291,8 @@ class LocalizationService(AbstractService):
 
         self.initialize()
 
+        logger.info("Starting localization service...")
+
         if GL_CONF.loc_debug_endpoint.enabled:
             threading.Thread(target=self.debug_endpoint_thread, daemon=True).start()
 

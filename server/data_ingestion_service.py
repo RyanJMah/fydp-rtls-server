@@ -100,6 +100,8 @@ class DataIngestionService(AbstractService):
 
         self.initialize()
 
+        logger.info("Starting data ingestion service...")
+
         self.mqtt_client.start_mainloop()
 
         timestamp = time.time()
