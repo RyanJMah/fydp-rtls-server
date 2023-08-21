@@ -22,7 +22,12 @@ function build_img_and_container() {
     set -e
 
     docker build -t $IMAGE_NAME .
-    docker container create -p 1883:1883 -p 6969:6969 -it --name $CONTAINER_NAME $IMAGE_NAME
+
+    docker container create                                 \
+        -p 1883:1883                                        \
+        -p 6969:6969                                        \
+        --mount type=bind,source="$(pwd)"/logs,target=/app/logs   \
+        -it --name $CONTAINER_NAME $IMAGE_NAME
 }
 
 if [[ $1 == "help" ]]
