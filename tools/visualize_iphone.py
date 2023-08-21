@@ -89,33 +89,33 @@ def update_dot(frame):
     anchor2.set_radius(r2)
     anchor3.set_radius(r3)
 
-    # if los0:
-    #     anchor0.set_color('g')
-    # else:
-    #     anchor0.set_color('r')
+    if los0:
+        anchor0.set_color('g')
+    else:
+        anchor0.set_color('r')
 
-    # if los1:
-    #     anchor1.set_color('g')
-    # else:
-    #     anchor1.set_color('r')
+    if los1:
+        anchor1.set_color('g')
+    else:
+        anchor1.set_color('r')
 
-    # if los2:
-    #     anchor2.set_color('g')
-    # else:
-    #     anchor2.set_color('r')
+    if los2:
+        anchor2.set_color('g')
+    else:
+        anchor2.set_color('r')
 
-    # if los3:
-    #     anchor3.set_color('g')
-    # else:
-    #     anchor3.set_color('r')
+    if los3:
+        anchor3.set_color('g')
+    else:
+        anchor3.set_color('r')
 
-    for i, a in enumerate([anchor0, anchor1, anchor2, anchor3]):
-        if i == critical_anchor:
-            a.set_fill('g')
-            a.set_alpha(0.3)
-        else:
-            a.set_fill(False)
-            a.set_alpha(1)
+    # for i, a in enumerate([anchor0, anchor1, anchor2, anchor3]):
+    #     if i == critical_anchor:
+    #         a.set_fill('g')
+    #         a.set_alpha(0.3)
+    #     else:
+    #         a.set_fill(False)
+    #         a.set_alpha(1)
 
 
     dot1.set_data(x, y)  # Update the dot's position

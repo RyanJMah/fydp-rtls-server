@@ -28,7 +28,7 @@ def _make_row_dict(row: List[str]) -> Dict[str, Any]:
         "distance_m"    : float (row[4]) if row[4] else None,
         "azimuth_deg"   : float (row[5]) if row[5] else None,
         "elevation_deg" : float (row[6]) if row[6] else None,
-        "los"           : bool  (row[7]) if row[7] else None
+        "los"           : int   (row[7]) if row[7] else None
     }
 
 def keyboard_listener_thread():

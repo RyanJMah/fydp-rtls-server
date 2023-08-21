@@ -90,7 +90,7 @@ class DataIngestionService(AbstractService):
 
         self.out_data.anchors[aid].distance_cm       = filtered_distance * 100
         self.out_data.anchors[aid].angle_deg         = filtered_angle
-        self.out_data.anchors[aid].los               = data.los
+        self.out_data.anchors[aid].los               = bool(data.los)
         self.out_data.anchors[aid].last_updated_time = time.time()
 
 

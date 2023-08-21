@@ -78,6 +78,55 @@ class LocalizationService(AbstractService):
         self.init_kalman_filter()
 
 
+    def multilateration(self, anchors: Dict[int, AnchorRangingState]):
+        """
+        Multilateration via weighted least squares estimation
+            - Reference equation 5 of https://ieeexplore.ieee.org/document/8911811
+
+        Least squares estimate of a potentially undersolved system of equations is A^T * A * x = A^T * b
+            - Refence: https://textbooks.math.gatech.edu/ila/least-squares.html
+        """
+
+        r0 = anchors[0].r
+        r1 = anchors[1].r
+        r2 = anchors[2].r
+        r3 = anchors[3].r
+
+        x0 = GL_CONF.anchor_coords[0][0]
+        y0 = GL_CONF.anchor_coords[0][1]
+        z0 = GL_CONF.anchor_coords[0][2]
+
+        x1 = GL_CONF.anchor_coords[1][0]
+        y1 = GL_CONF.anchor_coords[1][1]
+        z1 = GL_CONF.anchor_coords[1][2]
+
+        x2 = GL_CONF.anchor_coords[2][0]
+        y2 = GL_CONF.anchor_coords[2][1]
+        z2 = GL_CONF.anchor_coords[2][2]
+
+        x3 = GL_CONF.anchor_coords[3][0]
+        y3 = GL_CONF.anchor_coords[3][1]
+        z3 = GL_CONF.anchor_coords[3][2]
+
+        A = np.array([
+            [x1-x0, y1-y0, z1-z0],
+            [x2-x0, y2-y0, z2-z0],
+            [x3-x0, y3-y0, z3-z0]
+        ])
+
+        b = 0.5 * np.array([
+            [r0**2 - r1**2 + (x1**2 + y1**2 + z1**2) - (x0**2 + y0**2 + z0**2)],
+            [r0**2 - r2**2 + (x2**2 + y2**2 + z2**2) - (x0**2 + y0**2 + z0**2)],
+            [r0**2 - r3**2 + (x3**2 + y3**2 + z3**2) - (x0**2 + y0**2 + z0**2)]
+        ])
+
+        tmp = np.linalg.inv( np.matmul(A.T, A) )
+        tmp = np.matmul(tmp, A.T)
+        x   = np.matmul(tmp, b)
+
+        return x[0], x[1], x[2]
+
+
     def trilateration(self, a1, a2, a3, r1, r2, r3):
         P1 = GL_CONF.anchor_coords[a1]
         P2 = GL_CONF.anchor_coords[a2]
@@ -246,17 +295,11 @@ class LocalizationService(AbstractService):
             threading.Thread(target=self.debug_endpoint_thread, daemon=True).start()
 
         while (1):
-            # Blocking call
             anchor_data: DIS_OutData = self.in_conn.recv()     # type: ignore
 
             anchors = anchor_data.anchors
 
-            trilat_input    = self.select_anchors_for_trilateration( anchors )
-            critical_anchor = trilat_input[1]
-
-            coords, _ = self.trilateration( *trilat_input )
-
-            x, y, z = coords
+            x, y, z = self.multilateration( anchors )
 
             # Run coords through Kalman filter
             meas = np.array([x, y, z])
@@ -274,7 +317,7 @@ class LocalizationService(AbstractService):
             self.out_data.angle_deg = -1    # TODO
 
             # Send data to pathfinding service
-            # out_conn.send( self.out_data )
+            out_conn.send( self.out_data )
 
             # Copy data to debug variable
             self.debug_data.x         = kf_x
@@ -286,16 +329,18 @@ class LocalizationService(AbstractService):
             self.debug_data.r1   = anchors[1].r
             self.debug_data.r2   = anchors[2].r
             self.debug_data.r3   = anchors[3].r
+
             self.debug_data.phi0 = anchors[0].phi
             self.debug_data.phi1 = anchors[1].phi
             self.debug_data.phi2 = anchors[2].phi
             self.debug_data.phi3 = anchors[3].phi
+
             self.debug_data.los0 = anchors[0].los
             self.debug_data.los1 = anchors[1].los
             self.debug_data.los2 = anchors[2].los
             self.debug_data.los3 = anchors[3].los
 
-            self.debug_data.critical_anchor = critical_anchor
+            # self.debug_data.critical_anchor = critical_anchor
 
             # Signal debug endpoint thread to send data
             self.new_data_evt.set()
