@@ -1,6 +1,7 @@
 {
     "broker_address": "localhost",
     "broker_port": 1883,
+
     "anchors": [
         {
             "id": 0,
@@ -27,11 +28,20 @@
             "z": 273
         }
     ],
+
     "loc_debug_endpoint": {
         "host": "0.0.0.0",
         "port": 6969,
         "enabled": true
     },
-    "loc_service_max_gauss_newton_iterations": 1000,    // Run-time has an upper-bound of 0.03s
-    "global_update_frequency_Hz": 8
+
+    "global_update_frequency_Hz": 8,
+
+    // NOTE: This will cause dropped samples if too high, it should be as high
+    //       as possible without causing runtime to exceed the global update period
+    // 
+    //       There is commented out code in localization_service.multilateration() that
+    //       can be used to time to runtime of the GN solver. Use it to determine the
+    //       max_iters you can get away with for a certain update rate
+    "loc_service_max_gauss_newton_iterations": 500
 }

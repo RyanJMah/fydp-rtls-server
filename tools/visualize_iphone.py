@@ -109,14 +109,15 @@ def update_dot(frame):
     else:
         anchor3.set_color('r')
 
-    # for i, a in enumerate([anchor0, anchor1, anchor2, anchor3]):
-    #     if i == critical_anchor:
-    #         a.set_fill('g')
-    #         a.set_alpha(0.3)
-    #     else:
-    #         a.set_fill(False)
-    #         a.set_alpha(1)
+    for i, a in enumerate([anchor0, anchor1, anchor2, anchor3]):
+        if i == critical_anchor:
+            a.set_fill(True)
+            a.set_alpha(0.3)
+        else:
+            a.set_fill(False)
+            a.set_alpha(1)
 
+    label.set_text(f"Gauss-Newton Iterations: {data.gn_iters}")
 
     dot1.set_data(x, y)  # Update the dot's position
 
@@ -174,6 +175,8 @@ anchor3.set_radius(100)
 ax.add_patch(anchor3)
 
 ax.set_aspect("auto")
+
+label = ax.text(700 - 200, 800 - 20, "", ha='center', va='center', fontsize=14, color='r')
 
 # Create the animation
 animation = FuncAnimation(fig, update_dot, frames=range(200), interval=100)

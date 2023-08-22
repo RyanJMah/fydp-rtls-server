@@ -42,6 +42,7 @@ class GuidingLiteConf:
     anchors: Dict[int, AnchorConf]
 
     loc_debug_endpoint: LocalizationService_DebugEndpoint_Conf
+    loc_service_max_gauss_newton_iterations: int
 
     update_period_secs: float
 
@@ -65,5 +66,6 @@ GL_CONF = GuidingLiteConf(
     broker_port        = _gl_conf["broker_port"],
     update_period_secs = 1 / _gl_conf["global_update_frequency_Hz"],
     anchors            = GuidingLiteConf.anchors_from_dict(_gl_conf),
-    loc_debug_endpoint = LocalizationService_DebugEndpoint_Conf.from_dict(_gl_conf["loc_debug_endpoint"])
+    loc_debug_endpoint = LocalizationService_DebugEndpoint_Conf.from_dict(_gl_conf["loc_debug_endpoint"]),
+    loc_service_max_gauss_newton_iterations = _gl_conf["loc_service_max_gauss_newton_iterations"],
 )

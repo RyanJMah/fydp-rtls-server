@@ -4,7 +4,7 @@ import pickle
 import numpy as np
 import threading
 import atexit
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Tuple, Any
 from numpy.typing import NDArray
 from dataclasses import dataclass
 
@@ -44,10 +44,12 @@ class LocalizationService_State:
     los3: bool = False
 
     # anchor weights
-    w0: float = 1 / 4
-    w1: float = 1 / 4
-    w2: float = 1 / 4
-    w3: float = 1 / 4
+    w0: float = 0
+    w1: float = 1 / 3
+    w2: float = 1 / 3
+    w3: float = 1 / 3
+
+    gn_iters: int = 0
 
     critical_anchor: int = 0
 
@@ -59,6 +61,23 @@ class LocalizationService_OutData:
     z         : float = 0.0
     angle_deg : float = 0.0
 
+
+# global constants for convenience
+X0 = GL_CONF.anchor_coords[0][0]
+Y0 = GL_CONF.anchor_coords[0][1]
+Z0 = GL_CONF.anchor_coords[0][2]
+
+X1 = GL_CONF.anchor_coords[1][0]
+Y1 = GL_CONF.anchor_coords[1][1]
+Z1 = GL_CONF.anchor_coords[1][2]
+
+X2 = GL_CONF.anchor_coords[2][0]
+Y2 = GL_CONF.anchor_coords[2][1]
+Z2 = GL_CONF.anchor_coords[2][2]
+
+X3 = GL_CONF.anchor_coords[3][0]
+Y3 = GL_CONF.anchor_coords[3][1]
+Z3 = GL_CONF.anchor_coords[3][2]
 
 class LocalizationService(AbstractService):
     def init_kalman_filter(self):
@@ -83,22 +102,6 @@ class LocalizationService(AbstractService):
         Refer to ./tools/math.ipynb for derivation of the residual function and its Jacobian
         """
 
-        x0 = GL_CONF.anchor_coords[0][0]
-        y0 = GL_CONF.anchor_coords[0][1]
-        z0 = GL_CONF.anchor_coords[0][2]
-
-        x1 = GL_CONF.anchor_coords[1][0]
-        y1 = GL_CONF.anchor_coords[1][1]
-        z1 = GL_CONF.anchor_coords[1][2]
-
-        x2 = GL_CONF.anchor_coords[2][0]
-        y2 = GL_CONF.anchor_coords[2][1]
-        z2 = GL_CONF.anchor_coords[2][2]
-
-        x3 = GL_CONF.anchor_coords[3][0]
-        y3 = GL_CONF.anchor_coords[3][1]
-        z3 = GL_CONF.anchor_coords[3][2]
-
         # Residual function
         def r(x: NDArray) -> NDArray:
             # Remeber: Minimizing the square of a positive function is equivalent
@@ -119,10 +122,10 @@ class LocalizationService(AbstractService):
             w3 = self.loc_state.w3
 
             return np.array([
-                [ np.sqrt(w0)*np.abs( ( (x0 - x_)**2 + (y0 - y_)**2 + (z0 - z_)**2 ) - r0**2 ) ],
-                [ np.sqrt(w1)*np.abs( ( (x1 - x_)**2 + (y1 - y_)**2 + (z1 - z_)**2 ) - r1**2 ) ],
-                [ np.sqrt(w2)*np.abs( ( (x2 - x_)**2 + (y2 - y_)**2 + (z2 - z_)**2 ) - r2**2 ) ],
-                [ np.sqrt(w3)*np.abs( ( (x3 - x_)**2 + (y3 - y_)**2 + (z3 - z_)**2 ) - r3**2 ) ]
+                [ np.sqrt(w0)*np.abs( ( (X0 - x_)**2 + (Y0 - y_)**2 + (Z0 - z_)**2 ) - r0**2 ) ],
+                [ np.sqrt(w1)*np.abs( ( (X1 - x_)**2 + (Y1 - y_)**2 + (Z1 - z_)**2 ) - r1**2 ) ],
+                [ np.sqrt(w2)*np.abs( ( (X2 - x_)**2 + (Y2 - y_)**2 + (Z2 - z_)**2 ) - r2**2 ) ],
+                [ np.sqrt(w3)*np.abs( ( (X3 - x_)**2 + (Y3 - y_)**2 + (Z3 - z_)**2 ) - r3**2 ) ]
             ])
 
         # Jacobian of residual function, derived via sympy in ./tools/math.ipynb
@@ -142,16 +145,16 @@ class LocalizationService(AbstractService):
             w3 = self.loc_state.w3
 
             # sign of the error
-            sign0 = np.sign( ( (x0 - x_)**2 + (y0 - y_)**2 + (z0 - z_)**2 ) - r0**2 )
-            sign1 = np.sign( ( (x1 - x_)**2 + (y1 - y_)**2 + (z1 - z_)**2 ) - r1**2 )
-            sign2 = np.sign( ( (x2 - x_)**2 + (y2 - y_)**2 + (z2 - z_)**2 ) - r2**2 )
-            sign3 = np.sign( ( (x3 - x_)**2 + (y3 - y_)**2 + (z3 - z_)**2 ) - r3**2 )
+            sign0 = np.sign( ( (X0 - x_)**2 + (Y0 - y_)**2 + (Z0 - z_)**2 ) - r0**2 )
+            sign1 = np.sign( ( (X1 - x_)**2 + (Y1 - y_)**2 + (Z1 - z_)**2 ) - r1**2 )
+            sign2 = np.sign( ( (X2 - x_)**2 + (Y2 - y_)**2 + (Z2 - z_)**2 ) - r2**2 )
+            sign3 = np.sign( ( (X3 - x_)**2 + (Y3 - y_)**2 + (Z3 - z_)**2 ) - r3**2 )
 
             return np.array([
-                [ 2*np.sqrt(w0)*(x_ - x0)*sign0, 2*np.sqrt(w0)*(y_ - y0)*sign0, 2*np.sqrt(w0)*(z_ - z0)*sign0 ],
-                [ 2*np.sqrt(w1)*(x_ - x1)*sign1, 2*np.sqrt(w1)*(y_ - y1)*sign1, 2*np.sqrt(w1)*(z_ - z1)*sign1 ],
-                [ 2*np.sqrt(w2)*(x_ - x2)*sign2, 2*np.sqrt(w2)*(y_ - y2)*sign2, 2*np.sqrt(w2)*(z_ - z2)*sign2 ],
-                [ 2*np.sqrt(w3)*(x_ - x3)*sign3, 2*np.sqrt(w3)*(y_ - y3)*sign3, 2*np.sqrt(w3)*(z_ - z3)*sign3 ]
+                [ 2*np.sqrt(w0)*(x_ - X0)*sign0, 2*np.sqrt(w0)*(y_ - Y0)*sign0, 2*np.sqrt(w0)*(z_ - Z0)*sign0 ],
+                [ 2*np.sqrt(w1)*(x_ - X1)*sign1, 2*np.sqrt(w1)*(y_ - Y1)*sign1, 2*np.sqrt(w1)*(z_ - Z1)*sign1 ],
+                [ 2*np.sqrt(w2)*(x_ - X2)*sign2, 2*np.sqrt(w2)*(y_ - Y2)*sign2, 2*np.sqrt(w2)*(z_ - Z2)*sign2 ],
+                [ 2*np.sqrt(w3)*(x_ - X3)*sign3, 2*np.sqrt(w3)*(y_ - Y3)*sign3, 2*np.sqrt(w3)*(z_ - Z3)*sign3 ]
             ])
 
         self.gn_r         = r
@@ -159,14 +162,8 @@ class LocalizationService(AbstractService):
         self.gn_n         = 3   # 3 unknowns: x, y, z
         self.gn_m         = 4   # 4 equations: 4 anchors
         self.gn_tol       = 0.5
+        self.gn_max_iters = GL_CONF.loc_service_max_gauss_newton_iterations
 
-        # NOTE: This will cause dropped samples if too high, it should be as high
-        #       as possible without causing runtime to exceed the global update period
-        #
-        #       There is commented out code in self.multilateration() that can be used
-        #       to time to runtime of the GN solver. Use it to determine the max_iters
-        #       for a specif
-        self.gn_max_iters = 1000
 
     def initialize(self):
         # init "global" user location, which is periodically sent to pathfinding service
@@ -182,50 +179,92 @@ class LocalizationService(AbstractService):
         self.init_gauss_newton_params()
 
 
+    def choose_lse_A_b(self, anchor_num: int) -> Tuple[NDArray, NDArray]:
+        # The anchor at which we linearize the LSE problem around is very important.
+        #
+        # If we linearize around an unreliable anchor, the gauss-newton solver will
+        # probably not converge.
+        #
+        # We will setup matrices for linearized LSE around each anchor, and then
+        # choose the one with the highest weight to linearize around.
+
+        r0 = self.loc_state.r0
+        r1 = self.loc_state.r1
+        r2 = self.loc_state.r2
+        r3 = self.loc_state.r3
+
+        A: NDArray
+        b: NDArray
+
+        # Anchor 0
+        if anchor_num == 0:
+            A = np.array([
+                [X1-X0, Y1-Y0, Z1-Z0],
+                [X2-X0, Y2-Y0, Z2-Z0],
+                [X3-X0, Y3-Y0, Z3-Z0]
+            ])
+            b  = 0.5 * np.array([
+                [r0**2 - r1**2 + (X1**2 + Y1**2 + Z1**2) - (X0**2 + Y0**2 + Z0**2)],
+                [r0**2 - r2**2 + (X2**2 + Y2**2 + Z2**2) - (X0**2 + Y0**2 + Z0**2)],
+                [r0**2 - r3**2 + (X3**2 + Y3**2 + Z3**2) - (X0**2 + Y0**2 + Z0**2)]
+            ])
+
+        # Anchor 1
+        elif anchor_num == 1:
+            A = np.array([
+                [X0-X1, Y0-Y1, Z0-Z1],
+                [X2-X1, Y2-Y1, Z2-Z1],
+                [X3-X1, Y3-Y1, Z3-Z1]
+            ])
+            b  = 0.5 * np.array([
+                [r1**2 - r0**2 + (X0**2 + Y0**2 + Z0**2) - (X1**2 + Y1**2 + Z1**2)],
+                [r1**2 - r2**2 + (X2**2 + Y2**2 + Z2**2) - (X1**2 + Y1**2 + Z1**2)],
+                [r1**2 - r3**2 + (X3**2 + Y3**2 + Z3**2) - (X1**2 + Y1**2 + Z1**2)]
+            ])
+
+        # Anchor 2
+        elif anchor_num == 2:
+            A = np.array([
+                [X0-X2, Y0-Y2, Z0-Z2],
+                [X1-X2, Y1-Y2, Z1-Z2],
+                [X3-X2, Y3-Y2, Z3-Z2]
+            ])
+            b  = 0.5 * np.array([
+                [r2**2 - r0**2 + (X0**2 + Y0**2 + Z0**2) - (X2**2 + Y2**2 + Z2**2)],
+                [r2**2 - r1**2 + (X1**2 + Y1**2 + Z1**2) - (X2**2 + Y2**2 + Z2**2)],
+                [r2**2 - r3**2 + (X3**2 + Y3**2 + Z3**2) - (X2**2 + Y2**2 + Z2**2)]
+            ])
+
+        # Anchor 3
+        elif anchor_num == 3:
+            A = np.array([
+                [X0-X3, Y0-Y3, Z0-Z3],
+                [X1-X3, Y1-Y3, Z1-Z3],
+                [X2-X3, Y2-Y3, Z2-Z3]
+            ])
+            b  = 0.5 * np.array([
+                [r3**2 - r0**2 + (X0**2 + Y0**2 + Z0**2) - (X3**2 + Y3**2 + Z3**2)],
+                [r3**2 - r1**2 + (X1**2 + Y1**2 + Z1**2) - (X3**2 + Y3**2 + Z3**2)],
+                [r3**2 - r2**2 + (X2**2 + Y2**2 + Z2**2) - (X3**2 + Y3**2 + Z3**2)]
+            ])
+
+        else:
+            logger.error("Invalid anchor index: {}".format(best_anchor))
+
+        return A, b
+
     def multilateration(self, anchors: Dict[int, AnchorRangingState]):
         """
         Multilateration via weighted least squares estimation
             - Reference equation 5 of https://ieeexplore.ieee.org/document/8911811
         """
 
-        r0 = anchors[0].r
-        r1 = anchors[1].r
-        r2 = anchors[2].r
-        r3 = anchors[3].r
-
-        x0 = GL_CONF.anchor_coords[0][0]
-        y0 = GL_CONF.anchor_coords[0][1]
-        z0 = GL_CONF.anchor_coords[0][2]
-
-        x1 = GL_CONF.anchor_coords[1][0]
-        y1 = GL_CONF.anchor_coords[1][1]
-        z1 = GL_CONF.anchor_coords[1][2]
-
-        x2 = GL_CONF.anchor_coords[2][0]
-        y2 = GL_CONF.anchor_coords[2][1]
-        z2 = GL_CONF.anchor_coords[2][2]
-
-        x3 = GL_CONF.anchor_coords[3][0]
-        y3 = GL_CONF.anchor_coords[3][1]
-        z3 = GL_CONF.anchor_coords[3][2]
-
-        A = np.array([
-            [x1-x0, y1-y0, z1-z0],
-            [x2-x0, y2-y0, z2-z0],
-            [x3-x0, y3-y0, z3-z0]
+        # First, try using the last known location as the initial guess, see if it converges
+        x0_ = np.array([
+            [self.loc_state.x],
+            [self.loc_state.y],
+            [self.loc_state.z]
         ])
-
-        b  = 0.5 * np.array([
-            [r0**2 - r1**2 + (x1**2 + y1**2 + z1**2) - (x0**2 + y0**2 + z0**2)],
-            [r0**2 - r2**2 + (x2**2 + y2**2 + z2**2) - (x0**2 + y0**2 + z0**2)],
-            [r0**2 - r3**2 + (x3**2 + y3**2 + z3**2) - (x0**2 + y0**2 + z0**2)]
-        ])
-
-        # Use linearized, non-weighted least squares estimate as initial guess
-        x0_ = linearized_lse(A, b)
-
-        # Use Gauss-Newton to refine estimate with weights
-        start = time.time()
         iters, x = gauss_newton_lse( self.gn_r,
                                      self.gn_J,
                                      x0_,
@@ -233,17 +272,78 @@ class LocalizationService(AbstractService):
                                      self.gn_m,
                                      tolerance=self.gn_tol,
                                      max_iters=self.gn_max_iters )
-        end = time.time()
-        logger.info(f"gauss-newton iterations: {iters}, time: {end - start}")
 
-        if iters == 0:
-            logger.error("Something is wrong, Gauss-Newton did not run any iterations...")
+        if iters < self.gn_max_iters:
+            # Update "global" state
+            self.loc_state.gn_iters = iters
+            self.loc_state.critical_anchor = -1
 
-        elif iters == self.gn_max_iters:
-            # logger.warning("Gauss-Newton did not converge, falling back to linearized least squares estimate...")
-            x = x0_
+            return x[0][0], x[1][0], x[2][0]
 
-        return x[0], x[1], x[2]
+        # If Gauss-Newton fails to converge, try linearized LSE as the initial guess
+        #
+        # Try Gauss-Newton with the initial guess being linearized around each anchor, try
+        # the anchor with the highest weight first
+        #
+        # If Gauss-Newton fails to converge, try the next highest weight anchor
+        #
+        # If none of the anchors work, use the linearized estimate, linearized around the
+        # anchor with the highest weight, as the fallback estimate
+
+        weights = [self.loc_state.w0, self.loc_state.w1, self.loc_state.w2, self.loc_state.w3]
+
+        fallback_x: NDArray
+
+        for i in range(GL_CONF.num_anchors):
+            # Choose A and b based on the anchor with the highest weight
+            best_anchor = np.argmax( weights )
+
+            A, b = self.choose_lse_A_b( best_anchor )
+
+            # Use linearized, non-weighted least squares estimate as initial guess
+            x0_ = linearized_lse(A, b)
+
+            if i == 0:
+                # Use the first try as the fallback estimate
+                fallback_x = x0_
+
+            # Use Gauss-Newton to refine estimate with weights
+            start = time.time()
+            iters, x = gauss_newton_lse( self.gn_r,
+                                         self.gn_J,
+                                         x0_,
+                                         self.gn_n,
+                                         self.gn_m,
+                                         tolerance=self.gn_tol,
+                                         max_iters=self.gn_max_iters )
+            end = time.time()
+
+
+            if iters == self.gn_max_iters:  # Fails to converge
+                # Try the next highest weight anchor
+                weights[best_anchor] = 0
+                continue
+
+            else:
+                if iters == 0:
+                    logger.warning("Gauss-Newton converged in 0 iterations, something might be wrong...")
+
+                logger.info(f"gauss-newton iterations: {iters}, time: {end - start}, linearized around anchor {best_anchor}")
+
+                # Update "global" state
+                self.loc_state.gn_iters = iters
+                self.loc_state.critical_anchor = best_anchor
+
+                return x[0][0], x[1][0], x[2][0]
+
+
+        logger.warning("Gauss-Newton did not converge, falling back to linearized least squares estimate...")
+
+        # Update "global" state
+        self.loc_state.gn_iters = self.gn_max_iters
+        self.loc_state.critical_anchor = -1
+
+        return fallback_x[0][0], fallback_x[1][0], fallback_x[2][0]
 
 
     def trilateration(self, a1, a2, a3, r1, r2, r3):
@@ -427,9 +527,9 @@ class LocalizationService(AbstractService):
             meas.shape = (len(meas), 1)
             self.kf.performKalmanFilter(np.array(meas), 0)
 
-            kf_x = self.kf.x_m[0]
-            kf_y = self.kf.x_m[1]
-            kf_z = self.kf.x_m[2]
+            kf_x = self.kf.x_m[0][0]
+            kf_y = self.kf.x_m[1][0]
+            kf_z = self.kf.x_m[2][0]
 
             # Copy data to output variable
             self.out_data.x         = kf_x
