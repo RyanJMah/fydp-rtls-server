@@ -34,7 +34,7 @@ WORKDIR /app/cpp
 RUN make clean_all && make
 
 ADD ./mosquitto.conf /app
-ADD ./gl_conf.json /app
+ADD ./gl_conf.jsonc /app
 
 COPY ./resources /app/resources
 COPY ./server /app/server

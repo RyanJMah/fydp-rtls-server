@@ -32,5 +32,6 @@
         "port": 6969,
         "enabled": true
     },
+    "loc_service_max_gauss_newton_iterations": 1000,    // Run-time has an upper-bound of 0.03s
     "global_update_frequency_Hz": 8
 }

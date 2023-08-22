@@ -13,7 +13,7 @@ import warnings
 warnings.filterwarnings("ignore")   # this suppresses all warnings, this is bad, who cares!
 
 import includes
-from localization_service import LocalizationService_DebugData
+from localization_service import LocalizationService_State
 from gl_conf import GL_CONF
 
 ENDPOINT_HOST = "localhost"

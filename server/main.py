@@ -9,6 +9,10 @@ from pathfinding_service import PathfindingService
 logger = logs.init_logger(__name__)
 
 def main():
+    # First thing, start the queued logs handler
+    log_service = logs.LogQueueingService( in_conn=None, out_conn=None )
+    log_service.start()
+
     logger.info("Starting rtls server...")
 
     try:
@@ -32,6 +36,8 @@ def main():
         loc.join()
         pf.join()
 
+        log_service.join()
+
         # should never get here (ideally)
         sys.exit(1)
 
@@ -41,6 +47,8 @@ def main():
         dis.kill()
         loc.kill()
         pf.kill()
+
+        log_service.kill()
 
         sys.exit(0)
 

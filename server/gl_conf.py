@@ -1,4 +1,4 @@
-import json
+import commentjson as json
 from dataclasses import dataclass, field
 from typing import List, Dict, Tuple, Any
 from app_paths import AppPaths
