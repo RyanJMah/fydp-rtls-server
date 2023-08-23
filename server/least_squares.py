@@ -19,6 +19,33 @@ def linearized_lse(A: NDArray, b: NDArray) -> NDArray:
 
     return x
 
+def weighted_linearized_lse(A: NDArray, b: NDArray, W: NDArray) -> NDArray:
+    # Refence equation (7) of https://ieeexplore.ieee.org/document/8911811
+
+    # tmp = np.matmul(A.T, W)
+    # tmp = np.matmul(tmp, A)
+    # tmp = np.linalg.inv(tmp)
+
+    # tmp = np.matmul(tmp, A.T)
+    # tmp = np.matmul(tmp, W)
+
+    # x = np.matmul(tmp, b)
+
+    # return x
+    
+    tmp = np.matmul(A.T, W.T)
+    tmp = np.matmul(tmp, W)
+    tmp = np.matmul(tmp, A)
+    tmp = np.linalg.inv(tmp)
+
+    tmp = np.matmul(tmp, A.T)
+    tmp = np.matmul(tmp, W.T)
+    tmp = np.matmul(tmp, W)
+
+    x = np.matmul(tmp, b)
+
+    return x
+
 # Reference for Gauss-Newton method:
 #   - https://en.wikipedia.org/wiki/Gauss–Newton_algorithm
 #

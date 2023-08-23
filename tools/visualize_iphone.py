@@ -117,9 +117,9 @@ def update_dot(frame):
             a.set_fill(False)
             a.set_alpha(1)
 
-    label.set_text(f"Gauss-Newton Iterations: {data.gn_iters}")
-
     dot1.set_data(x, y)  # Update the dot's position
+
+    label.set_text(f"X: {x:.2f}, Y: {y:.2f}, Z: {z:.2f}, Theta: {theta:.2f}")
 
 
 # Create a figure and axis
@@ -176,7 +176,7 @@ ax.add_patch(anchor3)
 
 ax.set_aspect("auto")
 
-label = ax.text(700 - 200, 800 - 20, "", ha='center', va='center', fontsize=14, color='r')
+label = ax.text(700/2, 800 - 20, "", ha='center', va='center', fontsize=14, color='r')
 
 # Create the animation
 animation = FuncAnimation(fig, update_dot, frames=range(200), interval=100)
