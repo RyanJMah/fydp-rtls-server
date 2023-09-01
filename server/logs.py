@@ -1,10 +1,25 @@
 import time
 import logging
+import multiprocessing as mp
+
+from abstract_service import AbstractService
 
 LOG_LEVEL = logging.INFO
 # LOG_LEVEL = logging.DEBUG
 
 LOG_FORMAT_STR = "[%(asctime)s] %(levelname)s --- %(message)s (%(name)s)"
+
+g_log_queue: mp.Queue = mp.Queue(-1)
+
+class LogQueueingService(AbstractService):
+    def main(self, in_conn, out_conn):
+        while True:
+            try:
+                print( g_log_queue.get(block=True) )
+
+            except Exception as e:
+                print(f"REALLY BAD ERROR: LOG QUEUEING SERVICE FAILED TO HANDLE LOG RECORD: {e}")
+
 
 class _Formatter(logging.Formatter):
     """Custom formatter that adds color to log messages based on the log level."""
@@ -35,6 +50,18 @@ class _Formatter(logging.Formatter):
 
         return super().format(record)
 
+class _QueuedLogsHandler(logging.Handler):
+    def __init__(self):
+        super().__init__()
+
+    def emit(self, record):
+        try:
+            log_entry = self.format(record)
+            g_log_queue.put(log_entry, block=False)
+
+        except Exception:
+            self.handleError(record)
+
 
 def init_logger(name: str) -> logging.Logger:
     logger = logging.getLogger(name)
@@ -42,10 +69,10 @@ def init_logger(name: str) -> logging.Logger:
 
     formatter = _Formatter()
 
-    console_handler = logging.StreamHandler()
-    console_handler.setFormatter(formatter)
+    queued_logs_handler = _QueuedLogsHandler()
+    queued_logs_handler.setFormatter(formatter)
 
-    logger.addHandler(console_handler)
+    logger.addHandler(queued_logs_handler)
 
     return logger
 

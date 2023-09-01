@@ -21,7 +21,6 @@ RUN mkdir -p /app/resources
 RUN mkdir -p /app/logs
 
 ADD ./supervisord.conf /etc/supervisor/conf.d/
-ADD ./mosquitto.conf /app
 
 WORKDIR /app
 
@@ -34,6 +33,9 @@ COPY ./recastnavigation /app/recastnavigation
 WORKDIR /app/cpp
 RUN make clean_all && make
 
+ADD ./mosquitto.conf /app
+ADD ./gl_conf.jsonc /app
+
 COPY ./resources /app/resources
 COPY ./server /app/server
 COPY ./tests /app/tests
@@ -41,5 +43,6 @@ COPY ./tests /app/tests
 WORKDIR /app
 
 EXPOSE 1883
+EXPOSE 6969
 
 CMD ["supervisord", "-n"]

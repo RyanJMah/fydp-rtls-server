@@ -22,7 +22,12 @@ function build_img_and_container() {
     set -e
 
     docker build -t $IMAGE_NAME .
-    docker container create -p 1883:1883 -it --name $CONTAINER_NAME $IMAGE_NAME
+
+    docker container create                                 \
+        -p 1883:1883                                        \
+        -p 6969:6969                                        \
+        --mount type=bind,source="$(pwd)"/logs,target=/app/logs   \
+        -it --name $CONTAINER_NAME $IMAGE_NAME
 }
 
 if [[ $1 == "help" ]]
@@ -71,10 +76,12 @@ fi
 
 if [[ $1 == "logs" ]]
 then
-    docker exec rtls_server bash -c "tail -f /app/logs/rtls_server.log"
+    # docker exec rtls_server bash -c "tail -f /app/logs/rtls_server.log"
+    tail -f ./logs/rtls_server.log
 fi
 
 if [[ $1 == "mqtt_logs" ]]
 then
-    docker exec rtls_server bash -c "tail -f /app/logs/mosquitto.log"
+    # docker exec rtls_server bash -c "tail -f /app/logs/mosquitto.log"
+    tail -f ./logs/mosquitto.log
 fi
