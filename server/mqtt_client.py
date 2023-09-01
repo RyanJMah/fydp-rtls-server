@@ -184,3 +184,6 @@ class MqttClient():
     def start_mainloop(self):
         self._mqtt.loop_start()
 
+
+    def stop_mainloop(self):
+        self._mqtt.loop_stop()
