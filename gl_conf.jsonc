@@ -35,13 +35,5 @@
         "enabled": true
     },
 
-    "global_update_frequency_Hz": 8,
-
-    // NOTE: This will cause dropped samples if too high, it should be as high
-    //       as possible without causing runtime to exceed the global update period
-    // 
-    //       There is commented out code in localization_service.multilateration() that
-    //       can be used to time to runtime of the GN solver. Use it to determine the
-    //       max_iters you can get away with for a certain update rate
-    "loc_service_max_gauss_newton_iterations": 500
+    "global_update_frequency_Hz": 8
 }
