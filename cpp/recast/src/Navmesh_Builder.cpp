@@ -575,8 +575,7 @@ bool NavmeshBuilder::handleBuild()
 		return false;
 	}
 
-    std::cout << "woefjoijfe" << std::endl;
-    m_ctx->log(RC_LOG_ERROR, "DOES IT LOG THIS?");
+    m_ctx->log(RC_LOG_PROGRESS, "starting navmesh build...");
 
 	m_tmproc->init(m_geom);
 	
@@ -726,7 +725,8 @@ bool NavmeshBuilder::handleBuild()
 		if (tile->header)
 			navmeshMemUsage += tile->dataSize;
 	}
-	printf("navmeshMemUsage = %.1f kB\n", navmeshMemUsage/1024.0f);
+	
+    m_ctx->log(RC_LOG_PROGRESS, "navmeshMemUsage = %.1f kB", navmeshMemUsage/1024.0f);
 		
 	return true;
 }

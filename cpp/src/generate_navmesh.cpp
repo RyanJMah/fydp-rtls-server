@@ -1,4 +1,6 @@
 #include <iostream>
+#include <stdarg.h>
+
 #include "Recast.h"
 #include "InputGeom.h"
 #include "Navmesh_Builder.h"
@@ -10,9 +12,8 @@ class GL_BuildContext : public rcContext
 {
     public:
         // override to print to stdout
-        void log(const rcLogCategory category, const char* msg, const int len)
+	    virtual void doLog(const rcLogCategory category, const char* msg, const int len)
         {
-            std::cout << "why doesn't this fucking work" << std::endl;
             switch ( category )
             {
                 case RC_LOG_PROGRESS:
@@ -32,7 +33,14 @@ class GL_BuildContext : public rcContext
                     std::cout << "RECAST-ERROR: ";
                     break;
                 }
+
+                default:
+                {
+                    std::cout << "INVALID LOG CATEGORY, ABORTING!!!!" << std::endl;
+                    exit(1);
+                }
             }
+
             std::cout << msg << std::endl;
         }
 };

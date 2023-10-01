@@ -3,6 +3,5 @@ set args ../server/floorplan_png_to_navmesh.py
 
 set breakpoint pending on
 
-b main
-
-b NavmeshBuilder::handleBuild
+# b NavmeshBuilder::handleBuild
+b generate_navmesh
