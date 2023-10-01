@@ -3,7 +3,7 @@
 
 #include "Recast.h"
 #include "InputGeom.h"
-#include "Navmesh_Builder.h"
+#include "Navmesh_Handle.h"
 
 #include "macros.h"
 #include "generate_navmesh.hpp"
@@ -52,7 +52,7 @@ bool generate_navmesh(std::string in_file, std::string out_file)
     bool ret_code = true;
 
     InputGeom* input_geom = new InputGeom();
-    NavmeshBuilder* navmesh_builder = new NavmeshBuilder();
+    NavmeshHandle* navmesh_builder = new NavmeshHandle();
 
     if ( !input_geom->load( &ctx, in_file.c_str() ) )
     {

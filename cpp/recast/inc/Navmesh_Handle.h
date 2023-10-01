@@ -25,7 +25,7 @@
 #include "ChunkyTriMesh.h"
 
 
-class NavmeshBuilder : public Builder
+class NavmeshHandle : public Builder
 {
 protected:
     bool m_keepInterResults;
@@ -62,8 +62,8 @@ protected:
     float m_tileSize;
     
 public:
-    NavmeshBuilder();
-    virtual ~NavmeshBuilder();
+    NavmeshHandle();
+    virtual ~NavmeshHandle();
 
     virtual void handleSettings();
     virtual void handleMeshChanged(class InputGeom* geom);
@@ -80,10 +80,6 @@ public:
     void loadAll(const char* path);
 
 private:
-    // Explicitly disabled copy constructor and copy assignment operator.
-    NavmeshBuilder(const NavmeshBuilder&);
-    NavmeshBuilder& operator=(const NavmeshBuilder&);
-
     int rasterizeTileLayers(const int tx, const int ty, const rcConfig& cfg, struct TileCacheData* tiles, const int maxTiles);
 };
 
