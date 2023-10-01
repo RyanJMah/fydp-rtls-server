@@ -2,6 +2,8 @@
 #include "Recast.h"
 #include "InputGeom.h"
 #include "Navmesh_Builder.h"
+
+#include "macros.h"
 #include "generate_navmesh.hpp"
 
 bool generate_navmesh(std::string in_file, std::string out_file)
@@ -16,7 +18,7 @@ bool generate_navmesh(std::string in_file, std::string out_file)
     if ( !input_geom->load( &ctx, in_file.c_str() ) )
     {
         ret_code = false;
-        goto cleanup;
+        goto_error(cleanup, "Failed to load input geometry");
     }
 
     navmesh_builder->setContext( &ctx );
@@ -27,7 +29,7 @@ bool generate_navmesh(std::string in_file, std::string out_file)
     if ( !navmesh_builder->handleBuild() )
     {
         ret_code = false;
-        goto cleanup;
+        goto_error(cleanup, "Failed to build navmesh");
     }
 
     navmesh_builder->save( out_file.c_str() );
