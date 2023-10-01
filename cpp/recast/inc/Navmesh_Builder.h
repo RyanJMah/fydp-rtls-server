@@ -28,63 +28,63 @@
 class NavmeshBuilder : public Builder
 {
 protected:
-	bool m_keepInterResults;
+    bool m_keepInterResults;
 
-	struct LinearAllocator* m_talloc;
-	struct FastLZCompressor* m_tcomp;
-	struct MeshProcess* m_tmproc;
+    struct LinearAllocator* m_talloc;
+    struct FastLZCompressor* m_tcomp;
+    struct MeshProcess* m_tmproc;
 
-	class dtTileCache* m_tileCache;
-	
-	float m_cacheBuildTimeMs;
-	int m_cacheCompressedSize;
-	int m_cacheRawSize;
-	int m_cacheLayerCount;
-	unsigned int m_cacheBuildMemUsage;
-	
-	enum DrawMode
-	{
-		DRAWMODE_NAVMESH,
-		DRAWMODE_NAVMESH_TRANS,
-		DRAWMODE_NAVMESH_BVTREE,
-		DRAWMODE_NAVMESH_NODES,
-		DRAWMODE_NAVMESH_PORTALS,
-		DRAWMODE_NAVMESH_INVIS,
-		DRAWMODE_MESH,
-		DRAWMODE_CACHE_BOUNDS,
-		MAX_DRAWMODE
-	};
-	
-	DrawMode m_drawMode;
-	
-	int m_maxTiles;
-	int m_maxPolysPerTile;
-	float m_tileSize;
-	
+    class dtTileCache* m_tileCache;
+    
+    float m_cacheBuildTimeMs;
+    int m_cacheCompressedSize;
+    int m_cacheRawSize;
+    int m_cacheLayerCount;
+    unsigned int m_cacheBuildMemUsage;
+    
+    enum DrawMode
+    {
+        DRAWMODE_NAVMESH,
+        DRAWMODE_NAVMESH_TRANS,
+        DRAWMODE_NAVMESH_BVTREE,
+        DRAWMODE_NAVMESH_NODES,
+        DRAWMODE_NAVMESH_PORTALS,
+        DRAWMODE_NAVMESH_INVIS,
+        DRAWMODE_MESH,
+        DRAWMODE_CACHE_BOUNDS,
+        MAX_DRAWMODE
+    };
+    
+    DrawMode m_drawMode;
+    
+    int m_maxTiles;
+    int m_maxPolysPerTile;
+    float m_tileSize;
+    
 public:
-	NavmeshBuilder();
-	virtual ~NavmeshBuilder();
-	
-	virtual void handleSettings();
-	virtual void handleMeshChanged(class InputGeom* geom);
-	virtual bool handleBuild();
-	virtual void handleUpdate(const float dt);
+    NavmeshBuilder();
+    virtual ~NavmeshBuilder();
 
-	void getTilePos(const float* pos, int& tx, int& ty);
-	
-	void addTempObstacle(const float* pos);
-	void removeTempObstacle(const float* sp, const float* sq);
-	void clearAllTempObstacles();
+    virtual void handleSettings();
+    virtual void handleMeshChanged(class InputGeom* geom);
+    virtual bool handleBuild();
+    virtual void handleUpdate(const float dt);
 
-	void saveAll(const char* path);
-	void loadAll(const char* path);
+    void getTilePos(const float* pos, int& tx, int& ty);
+    
+    void addTempObstacle(const float* pos);
+    void removeTempObstacle(const float* sp, const float* sq);
+    void clearAllTempObstacles();
+
+    void saveAll(const char* path);
+    void loadAll(const char* path);
 
 private:
-	// Explicitly disabled copy constructor and copy assignment operator.
-	NavmeshBuilder(const NavmeshBuilder&);
-	NavmeshBuilder& operator=(const NavmeshBuilder&);
+    // Explicitly disabled copy constructor and copy assignment operator.
+    NavmeshBuilder(const NavmeshBuilder&);
+    NavmeshBuilder& operator=(const NavmeshBuilder&);
 
-	int rasterizeTileLayers(const int tx, const int ty, const rcConfig& cfg, struct TileCacheData* tiles, const int maxTiles);
+    int rasterizeTileLayers(const int tx, const int ty, const rcConfig& cfg, struct TileCacheData* tiles, const int maxTiles);
 };
 
 
