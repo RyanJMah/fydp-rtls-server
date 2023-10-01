@@ -16,7 +16,7 @@ bool generate_navmesh(std::string in_file, std::string out_file)
     if ( !input_geom->load( &ctx, in_file.c_str() ) )
     {
         ret_code = false;
-        goto exit;
+        goto cleanup;
     }
 
     navmesh_builder->setContext( &ctx );
@@ -27,14 +27,15 @@ bool generate_navmesh(std::string in_file, std::string out_file)
     if ( !navmesh_builder->handleBuild() )
     {
         ret_code = false;
-        goto exit;
+        goto cleanup;
     }
 
     navmesh_builder->save( out_file.c_str() );
 
-exit:
+cleanup:
     delete input_geom;
     delete navmesh_builder;
 
+exit:
     return ret_code;
 }
