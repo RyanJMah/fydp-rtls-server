@@ -2,7 +2,7 @@ import time
 import test_paths
 
 import logs
-from mqtt_client import MqttClient, MqttMsg
+from mqtt_client import MqttClient, MqttMsg     # type: ignore
 
 logger = logs.init_logger(__name__)
 

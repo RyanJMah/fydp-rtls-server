@@ -6,9 +6,40 @@
 #include "macros.h"
 #include "generate_navmesh.hpp"
 
+class GL_BuildContext : public rcContext
+{
+    public:
+        // override to print to stdout
+        void log(const rcLogCategory category, const char* msg, const int len)
+        {
+            std::cout << "why doesn't this fucking work" << std::endl;
+            switch ( category )
+            {
+                case RC_LOG_PROGRESS:
+                {
+                    std::cout << "RECAST-INFO: ";
+                    break;
+                }
+
+                case RC_LOG_WARNING:
+                {
+                    std::cout << "RECAST-WARNING: ";
+                    break;
+                }
+
+                case RC_LOG_ERROR:
+                {
+                    std::cout << "RECAST-ERROR: ";
+                    break;
+                }
+            }
+            std::cout << msg << std::endl;
+        }
+};
+
 bool generate_navmesh(std::string in_file, std::string out_file)
 {
-    rcContext ctx;
+    GL_BuildContext ctx;
 
     bool ret_code = true;
 
@@ -18,7 +49,7 @@ bool generate_navmesh(std::string in_file, std::string out_file)
     if ( !input_geom->load( &ctx, in_file.c_str() ) )
     {
         ret_code = false;
-        goto_error(cleanup, "Failed to load input geometry");
+        goto_error(exit, "Failed to load input geometry");
     }
 
     navmesh_builder->setContext( &ctx );
@@ -29,15 +60,14 @@ bool generate_navmesh(std::string in_file, std::string out_file)
     if ( !navmesh_builder->handleBuild() )
     {
         ret_code = false;
-        goto_error(cleanup, "Failed to build navmesh");
+        goto_error(exit, "Failed to build navmesh");
     }
 
     navmesh_builder->save( out_file.c_str() );
 
-cleanup:
+exit:
     delete input_geom;
     delete navmesh_builder;
 
-exit:
     return ret_code;
 }

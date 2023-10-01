@@ -1,0 +1,13 @@
+{
+    "files.associations": {
+        "*.m": "matlab",
+        "*.json": "jsonc",
+        "*.c": "cpp",
+        "__tree": "cpp",
+        "bit": "cpp",
+        "cmath": "cpp",
+        "complex": "cpp",
+        "valarray": "cpp",
+        "random": "cpp"
+    }
+}

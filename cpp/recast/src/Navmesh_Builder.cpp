@@ -563,6 +563,8 @@ void NavmeshBuilder::clearAllTempObstacles()
 	}
 }
 
+#include <iostream>
+
 bool NavmeshBuilder::handleBuild()
 {
 	dtStatus status;
@@ -572,6 +574,9 @@ bool NavmeshBuilder::handleBuild()
 		m_ctx->log(RC_LOG_ERROR, "buildTiledNavigation: No vertices and triangles.");
 		return false;
 	}
+
+    std::cout << "woefjoijfe" << std::endl;
+    m_ctx->log(RC_LOG_ERROR, "DOES IT LOG THIS?");
 
 	m_tmproc->init(m_geom);
 	

@@ -112,6 +112,7 @@ void Builder::resetCommonSettings()
 	m_partitionType = BUILDER_PARTITION_WATERSHED;
 }
 
+// Default implementation, child class may override this.
 bool Builder::handleBuild()
 {
 	return true;

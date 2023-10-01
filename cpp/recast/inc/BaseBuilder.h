@@ -19,6 +19,7 @@
 #ifndef RECASTBUILDER_H
 #define RECASTBUILDER_H
 
+#include <iostream>
 #include "Recast.h"
 
 /// These are just sample areas to use consistent values across the samples.
