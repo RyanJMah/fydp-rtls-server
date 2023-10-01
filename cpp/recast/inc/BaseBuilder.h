@@ -52,10 +52,12 @@ enum BuilderPartitionType
 
 class Builder
 {
-protected:
-	class InputGeom* m_geom;
+public:
 	class dtNavMesh* m_navMesh;
 	class dtNavMeshQuery* m_navQuery;
+
+protected:
+	class InputGeom* m_geom;
 	class dtCrowd* m_crowd;
 
 	float m_cellSize;

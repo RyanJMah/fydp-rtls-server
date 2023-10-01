@@ -1,6 +1,8 @@
 #pragma once
 
 #include <string>
+#include <vector>
+#include <array>
 #include <stdint.h>
 
 #include "DetourStatus.h"
@@ -34,18 +36,6 @@ class GL_Pathfinder
         void load_navmesh( std::string navmesh_filepath );
 
         /**
-         * @brief   Finds the shortest traversible path from the start point
-         *          to the end point
-         * 
-         * @param start[in]         awef
-         * @param end[in]           awef
-         * @param out_path[out]     awef
-         * 
-         * @return                  error code 
-         */
-        dtStatus find_path( GL_Coordinate start, GL_Coordinate end );
-
-        /**
          * @brief   Set the maximum amount of polygons for GL_Pathfinder::find_path
          * 
          * @param max_polygons[in]      number to set max polygons to, -1 means no limit
@@ -54,12 +44,21 @@ class GL_Pathfinder
          */
         void set_max_output_path_polygons( int32_t max_polygons );
 
+        /**
+         * @brief   Finds the shortest traversible path from the start point
+         *          to the end point
+         * 
+         * @param start[in]     Starting (x,y,z) of path
+         * @param end[in]       Ending (x,y,z) of path
+         * 
+         * @return              Output path, empty if error occured
+         */
+        std::vector< std::array<float, 3> > find_path( GL_Coordinate start, GL_Coordinate end );
+
     private:
         bool    _is_initialized;
         int32_t _max_output_path_polygons;
 
-
-
-        dtQueryFilter*  _p_filter;
-        dtNavMeshQuery* _p_navmesh_query;
+        NavmeshHandle* _p_navmesh_handle;
+        dtQueryFilter* _p_filter;
 };
