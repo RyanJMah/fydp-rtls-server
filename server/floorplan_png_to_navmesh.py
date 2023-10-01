@@ -5,7 +5,7 @@ from PIL import Image
 from pydelatin import Delatin
 
 from app_paths import AppPaths
-from lib_pathfinding import generate_navmesh
+import lib_pathfinding as cpp   # type: ignore
 
 def png_to_heightmap(png_path: str) -> Image:
     img = Image.open(png_path)
@@ -46,7 +46,7 @@ def _main():
     write_mesh_to_obj(mesh, obj_path)
 
     navmesh_path = AppPaths.get_navmesh("e7-4th-floor.nav")
-    generate_navmesh(obj_path, navmesh_path)
+    cpp.generate_navmesh(obj_path, navmesh_path)
 
 if __name__ == "__main__":
     _main()

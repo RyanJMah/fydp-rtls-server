@@ -1,3 +1,4 @@
+#include <iostream>
 #include "Recast.h"
 #include "InputGeom.h"
 #include "Navmesh_Builder.h"
