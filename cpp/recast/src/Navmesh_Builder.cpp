@@ -563,8 +563,6 @@ void NavmeshBuilder::clearAllTempObstacles()
 	}
 }
 
-#include <iostream>
-
 bool NavmeshBuilder::handleBuild()
 {
 	dtStatus status;
