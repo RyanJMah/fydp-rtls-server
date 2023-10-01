@@ -5,6 +5,7 @@
 #include <array>
 #include <stdint.h>
 
+#include "Navmesh_Handle.h"
 #include "DetourStatus.h"
 #include "DetourNavMeshQuery.h"
 
