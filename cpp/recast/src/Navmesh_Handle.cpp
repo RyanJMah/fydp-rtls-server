@@ -820,43 +820,50 @@ void NavmeshHandle::loadAll(const char* path)
     {
         // Error or early EOF
         fclose(fp);
-        return;
+        m_ctx->log(RC_LOG_ERROR, "failed to read navmesh file %s", path);
+        exit(1);
     }
     if (header.magic != TILECACHESET_MAGIC)
     {
         fclose(fp);
-        return;
+        m_ctx->log(RC_LOG_ERROR, "invalid header magic");
+        exit(1);
     }
     if (header.version != TILECACHESET_VERSION)
     {
         fclose(fp);
-        return;
+        m_ctx->log(RC_LOG_ERROR, "invalid header version");
+        exit(1);
     }
     
     m_navMesh = dtAllocNavMesh();
     if (!m_navMesh)
     {
         fclose(fp);
-        return;
+        m_ctx->log(RC_LOG_ERROR, "failed to alloc navmesh");
+        exit(1);
     }
     dtStatus status = m_navMesh->init(&header.meshParams);
     if (dtStatusFailed(status))
     {
         fclose(fp);
-        return;
+        m_ctx->log(RC_LOG_ERROR, "failed to init navmesh");
+        exit(1);
     }
 
     m_tileCache = dtAllocTileCache();
     if (!m_tileCache)
     {
         fclose(fp);
-        return;
+        m_ctx->log(RC_LOG_ERROR, "failed to alloc tile cache");
+        exit(1);
     }
     status = m_tileCache->init(&header.cacheParams, m_talloc, m_tcomp, m_tmproc);
     if (dtStatusFailed(status))
     {
         fclose(fp);
-        return;
+        m_ctx->log(RC_LOG_ERROR, "failed to read tile cache");
+        exit(1);
     }
         
     // Read tiles.
@@ -868,7 +875,7 @@ void NavmeshHandle::loadAll(const char* path)
         {
             // Error or early EOF
             fclose(fp);
-            return;
+            exit(1);
         }
         if (!tileHeader.tileRef || !tileHeader.dataSize)
             break;
@@ -882,7 +889,9 @@ void NavmeshHandle::loadAll(const char* path)
             // Error or early EOF
             dtFree(data);
             fclose(fp);
-            return;
+
+            m_ctx->log(RC_LOG_ERROR, "could not read tile");
+            exit(1);
         }
         
         dtCompressedTileRef tile = 0;
@@ -897,6 +906,10 @@ void NavmeshHandle::loadAll(const char* path)
     }
     
     fclose(fp);
+
+    m_ctx->log( RC_LOG_PROGRESS,
+                "NavmeshHandle::loadAll - successfully loaded navmesh %s",
+                path );
 }
 
 void NavmeshHandle::handleSettings()

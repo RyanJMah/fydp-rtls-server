@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdio.h>
+#include <cstring>
 
 #define UNUSED          __attribute__((unused))
 #define ALWAYS_INLINE   inline __attribute__((always_inline))
@@ -33,6 +34,18 @@
             goto exception_label;                                               \
         }                                                                       \
     } while ( 0 )
+
+#include "DetourStatus.h"
+#define require_dt_success(err_code, exception_label)                           \
+    do                                                                          \
+    {                                                                           \
+        if ( __builtin_expect(DT_SUCCESS != (err_code), 0) )                    \
+        {                                                                       \
+            printf("Error 0x%x at %s:%d\n", err_code, __FILENAME__, __LINE__);  \
+            goto exception_label;                                               \
+        }                                                                       \
+    } while ( 0 )
+
 
 #define require(assertion, exception_label)                                             \
     do                                                                                  \

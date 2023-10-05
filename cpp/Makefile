@@ -6,7 +6,7 @@ OS_TYPE := $(shell uname)
 SHARED_LIB_EXT := $(shell python3-config --extension-suffix)
 
 DEBUG = 1
-OPT = -O0
+OPT = -O3
 
 CPP = g++ -std=c++11
 CC  = gcc
