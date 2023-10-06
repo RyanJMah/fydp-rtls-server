@@ -20,8 +20,7 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/.venv/lib/python3.11/site-packages/pybind11/include",
-                "/opt/homebrew/opt/python@3.11/Frameworks/Python.framework/Versions/3.11/include/python3.11",
-                "/usr/include/python3.9"
+                "/opt/homebrew/opt/python@3.11/Frameworks/Python.framework/Versions/3.11/include/python3.11"
             ],
             "defines": [],
             "macFrameworkPath": [

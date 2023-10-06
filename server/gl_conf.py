@@ -21,7 +21,7 @@ class AnchorConf:
         return (self.x, self.y, self.z)
 
 @dataclass
-class LocalizationService_DebugEndpoint_Conf:
+class DebugEndpoint_Conf:
     host: str
     port: int
     enabled: bool
@@ -41,7 +41,7 @@ class GuidingLiteConf:
 
     anchors: Dict[int, AnchorConf]
 
-    loc_debug_endpoint: LocalizationService_DebugEndpoint_Conf
+    debug_endpoint: DebugEndpoint_Conf
 
     update_period_secs: float
 
@@ -65,5 +65,5 @@ GL_CONF = GuidingLiteConf(
     broker_port        = _gl_conf["broker_port"],
     update_period_secs = 1 / _gl_conf["global_update_frequency_Hz"],
     anchors            = GuidingLiteConf.anchors_from_dict(_gl_conf),
-    loc_debug_endpoint = LocalizationService_DebugEndpoint_Conf.from_dict(_gl_conf["loc_debug_endpoint"]),
+    debug_endpoint     = DebugEndpoint_Conf.from_dict(_gl_conf["debug_endpoint"]),
 )

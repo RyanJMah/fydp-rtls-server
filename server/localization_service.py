@@ -14,6 +14,7 @@ from lpf import LowPassFilter
 from least_squares import weighted_linearized_lse, linearized_lse
 from abstract_service import AbstractService
 from data_ingestion_service import DIS_OutData, AnchorRangingState
+from debug_endpoint_service import DebugEndpointService, DebugEndpointData
 
 from KalmanFilter import KalmanFilter as kf
 from KalmanFilter import initConstVelocityKF as initConstVel
@@ -136,9 +137,6 @@ class LocalizationService(AbstractService):
         # init "global" localization state
         self.loc_state = LocalizationService_State()
 
-        # event that fires when new data is available, used to signal to debug endpoint
-        self.new_data_evt = threading.Event()
-
         self.init_kalman_filter()
         self.precompute_lse_A_matrix()
 
@@ -225,7 +223,7 @@ class LocalizationService(AbstractService):
             W = np.diag([np.sqrt(self.loc_state.w0), np.sqrt(self.loc_state.w1), np.sqrt(self.loc_state.w2)])
 
         else:
-            logger.error("Invalid anchor index: {}".format(best_anchor))
+            logger.error("Invalid anchor index: {}".format(self.loc_state.critical_anchor))
 
         return A, b, W
 
@@ -301,28 +299,6 @@ class LocalizationService(AbstractService):
         return K1,K2
 
 
-    def debug_endpoint_thread(self):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-        # this is so we can restart the program without waiting for the socket to timeout
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-
-        sock.bind( (GL_CONF.loc_debug_endpoint.host, GL_CONF.loc_debug_endpoint.port) )
-        sock.listen()
-
-        logger.info("Debug endpoint listening on %s:%d" % (GL_CONF.loc_debug_endpoint.host, GL_CONF.loc_debug_endpoint.port))
-
-        conn, addr = sock.accept()
-        with conn:
-            logger.info("client connected to debug endpoint...")
-
-            while (1):
-                self.new_data_evt.wait()
-                self.new_data_evt.clear()
-
-                conn.send( pickle.dumps(self.loc_state) )
-
-
     def main(self, in_conn, out_conn):
         assert(in_conn is not None)
         assert(out_conn is not None)
@@ -330,9 +306,6 @@ class LocalizationService(AbstractService):
         self.initialize()
 
         logger.info("Starting localization service...")
-
-        if GL_CONF.loc_debug_endpoint.enabled:
-            threading.Thread(target=self.debug_endpoint_thread, daemon=True).start()
 
         while (1):
             anchor_data: DIS_OutData = self.in_conn.recv()     # type: ignore
@@ -384,7 +357,8 @@ class LocalizationService(AbstractService):
             self.loc_state.z         = kf_z
             self.loc_state.angle_deg = -1    # TODO
 
-            # Signal debug endpoint thread to send data
-            self.new_data_evt.set()
+            # Push data to debug endpoint
+            debug_endpoint_data = DebugEndpointData( tag="loc_state",
+                                                     data=self.loc_state )
 
-
+            DebugEndpointService.push(debug_endpoint_data)

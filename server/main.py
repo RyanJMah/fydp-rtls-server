@@ -2,6 +2,7 @@ import sys
 import multiprocessing as mp
 
 import logs
+from debug_endpoint_service import DebugEndpointService
 from data_ingestion_service import DataIngestionService
 from localization_service import LocalizationService
 from pathfinding_service import PathfindingService
@@ -16,6 +17,11 @@ def main():
     logger.info("Starting rtls server...")
 
     try:
+        # start debug endpoint
+        debug_endpoint = DebugEndpointService(in_conn=None, out_conn=None)
+        debug_endpoint.start()
+
+        # start application services
         dis_to_loc_conn_1, dis_to_loc_conn_2 = mp.Pipe()
         loc_to_pf_conn_1, loc_to_pf_conn_2 = mp.Pipe()
 
@@ -43,6 +49,8 @@ def main():
 
     except KeyboardInterrupt:
         print("Terminating...")
+
+        debug_endpoint.kill()
 
         dis.kill()
         loc.kill()
