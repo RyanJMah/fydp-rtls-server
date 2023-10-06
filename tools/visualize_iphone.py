@@ -17,7 +17,7 @@ from localization_service import LocalizationService_State  # type: ignore
 from gl_conf import GL_CONF                                 # type: ignore
 
 ENDPOINT_HOST = "localhost"
-ENDPOINT_PORT = GL_CONF.loc_debug_endpoint.port
+ENDPOINT_PORT = GL_CONF.debug_endpoint.port
 
 ANCHOR_0_COORDINATES = GL_CONF.anchors[0].get_coords()
 ANCHOR_1_COORDINATES = GL_CONF.anchors[1].get_coords()
@@ -62,64 +62,68 @@ def update_dot(frame):
         print(f"WARNING: dropped packet, failed to unpickle data...")
         return
 
-    x = data.x
-    y = data.y
-    z = data.z
-    theta = data.angle_deg
+    tag  = data.tag
+    data = data.data
 
-    r0 = data.r0
-    r1 = data.r1
-    r2 = data.r2
-    r3 = data.r3
+    if tag == "loc_state":
+        x = data.x
+        y = data.y
+        z = data.z
+        theta = data.angle_deg
 
-    phi0 = data.phi0
-    phi1 = data.phi1
-    phi2 = data.phi2
-    phi3 = data.phi3
+        r0 = data.r0
+        r1 = data.r1
+        r2 = data.r2
+        r3 = data.r3
 
-    los0 = data.los0
-    los1 = data.los1
-    los2 = data.los2
-    los3 = data.los3
+        phi0 = data.phi0
+        phi1 = data.phi1
+        phi2 = data.phi2
+        phi3 = data.phi3
 
-    critical_anchor = data.critical_anchor
+        los0 = data.los0
+        los1 = data.los1
+        los2 = data.los2
+        los3 = data.los3
 
-    anchor0.set_radius(r0)
-    anchor1.set_radius(r1)
-    anchor2.set_radius(r2)
-    anchor3.set_radius(r3)
+        critical_anchor = data.critical_anchor
 
-    if los0:
-        anchor0.set_color('g')
-    else:
-        anchor0.set_color('r')
+        anchor0.set_radius(r0)
+        anchor1.set_radius(r1)
+        anchor2.set_radius(r2)
+        anchor3.set_radius(r3)
 
-    if los1:
-        anchor1.set_color('g')
-    else:
-        anchor1.set_color('r')
-
-    if los2:
-        anchor2.set_color('g')
-    else:
-        anchor2.set_color('r')
-
-    if los3:
-        anchor3.set_color('g')
-    else:
-        anchor3.set_color('r')
-
-    for i, a in enumerate([anchor0, anchor1, anchor2, anchor3]):
-        if i == critical_anchor:
-            a.set_fill(True)
-            a.set_alpha(0.3)
+        if los0:
+            anchor0.set_color('g')
         else:
-            a.set_fill(False)
-            a.set_alpha(1)
+            anchor0.set_color('r')
 
-    dot1.set_data(x, y)  # Update the dot's position
+        if los1:
+            anchor1.set_color('g')
+        else:
+            anchor1.set_color('r')
 
-    label.set_text(f"X: {x:.2f}, Y: {y:.2f}, Z: {z:.2f}, Theta: {theta:.2f}")
+        if los2:
+            anchor2.set_color('g')
+        else:
+            anchor2.set_color('r')
+
+        if los3:
+            anchor3.set_color('g')
+        else:
+            anchor3.set_color('r')
+
+        for i, a in enumerate([anchor0, anchor1, anchor2, anchor3]):
+            if i == critical_anchor:
+                a.set_fill(True)
+                a.set_alpha(0.3)
+            else:
+                a.set_fill(False)
+                a.set_alpha(1)
+
+        dot1.set_data(x, y)  # Update the dot's position
+
+        label.set_text(f"X: {x:.2f}, Y: {y:.2f}, Z: {z:.2f}, Theta: {theta:.2f}")
 
 
 # Create a figure and axis

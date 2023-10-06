@@ -15,8 +15,6 @@ class LogQueueingService(AbstractService):
     def main(self, in_conn, out_conn):
         global g_log_queue
 
-        print("log service started")
-
         while True:
             try:
                 print( g_log_queue.get() )
