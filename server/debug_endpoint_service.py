@@ -46,4 +46,4 @@ class DebugEndpointService(AbstractService):
             while (1):
                 data = g_queue.get()
 
-                conn.send( pickle.dumps(self.loc_state) )
+                conn.send( pickle.dumps(data) )
