@@ -10,7 +10,7 @@ def _main():
     pf = cpp.Pathfinder()
     pf.load_navmesh(navmesh_path)
 
-    print( pf.find_path( (50, 50, 0), (1000, 40, 0) ) )
+    print( pf.find_path( (100, 100, 0), (500, 400, 0) ) )
 
 if __name__ == "__main__":
     _main()

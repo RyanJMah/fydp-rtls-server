@@ -84,6 +84,8 @@ GL_Pathfinder::GL_Pathfinder(void)
     this->_half_extents[1] = 2;
     this->_half_extents[2] = 100;   // Overkill serach range for z axis, treats navmesh like 2-D
 
+    this->_scale = 1.0F;
+
     fix_coordinate_system( this->_half_extents );
 
     this->_path_max_len = 2048;
@@ -184,9 +186,9 @@ GL_Path GL_Pathfinder::find_path(GL_Point start_, GL_Point end_)
 
         fix_coordinate_system(xyz);
 
-        ret[i][0] = xyz[0];
-        ret[i][1] = xyz[1];
-        ret[i][2] = xyz[2];
+        ret[i][0] = this->_scale * xyz[0];
+        ret[i][1] = this->_scale * xyz[1];
+        ret[i][2] = this->_scale * xyz[2];
     }
 
 exit:
@@ -212,4 +214,9 @@ void GL_Pathfinder::set_path_max_polygons(size_t n)
     this->_path_max_len = n;
 
     this->_path = (dtPolyRef* )realloc( this->_path, n*sizeof(dtPolyRef) );
+}
+
+void GL_Pathfinder::set_navmesh_scale(float scale)
+{
+    this->_scale = scale;
 }

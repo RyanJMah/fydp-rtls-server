@@ -60,13 +60,22 @@ public:
      * @param n[in]     Number of polygons
      */
     void set_path_max_polygons(size_t n);
-    
 
+    /**
+     * @brief   Set the scaling factor for the navmesh (i.e., navmesh coords
+     *          to real life coords), default is 1.0
+     * 
+     * @param scale[in]     Scaling factor
+     */
+    void set_navmesh_scale(float scale);
+    
 private:
     bool _is_initialized;
 
     // (x ,y, z) distances for agent radius
     float _half_extents[3];
+
+    float _scale;
 
     dtPolyRef* _path;
     size_t     _path_max_len;

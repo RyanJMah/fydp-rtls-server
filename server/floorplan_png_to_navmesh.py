@@ -7,6 +7,8 @@ from pydelatin import Delatin
 from app_paths import AppPaths
 import lib_pathfinding as cpp   # type: ignore
 
+BASE_HEIGHT = 100
+
 def png_to_heightmap(png_path: str) -> Image:
     img = Image.open(png_path)
     img = img.convert("L")
@@ -17,7 +19,7 @@ def heightmap_to_mesh(heightmap: Image) -> meshio.Mesh:
             np.array(heightmap),
             width=heightmap.width,
             height=heightmap.height,
-            base_height=50,
+            base_height=BASE_HEIGHT,
             invert=True )
     vertices, triangles = tin.vertices, tin.triangles
 
@@ -27,25 +29,27 @@ def heightmap_to_mesh(heightmap: Image) -> meshio.Mesh:
     return mesh
 
 def write_mesh_to_obj(mesh: meshio.Mesh, outpath: str):
-    # Rotate the mesh by 90 degrees in the x-axis
-    rotation_matrix = np.array([
-                            [1, 0,  0],
-                            [0, 0, -1],
-                            [0, 1,  0] ])
+    # Recast navigation uses y as the height axis, so swap y and z
 
-    mesh.points = np.dot(mesh.points, rotation_matrix.T)
+    for i, p in enumerate(mesh.points):
+        tmp = p[1]
+        mesh.points[i][1] = p[2]
+        mesh.points[i][2] = tmp
+
+        mesh.points[i][1] += BASE_HEIGHT
+
     mesh.write(outpath)
 
 
 def _main():
-    png_path = AppPaths.get_floorplan("e7-4th-floor.png")
+    png_path = AppPaths.get_floorplan("ssdc-testing-area.png")
     heightmap = png_to_heightmap(png_path)
     mesh = heightmap_to_mesh(heightmap)
 
-    obj_path = AppPaths.get_obj("e7-4th-floor.obj")
+    obj_path = AppPaths.get_obj("ssdc-testing-area.obj")
     write_mesh_to_obj(mesh, obj_path)
 
-    navmesh_path = AppPaths.get_navmesh("e7-4th-floor.nav")
+    navmesh_path = AppPaths.get_navmesh("ssdc-testing-area.nav")
     cpp.generate_navmesh(obj_path, navmesh_path)
 
 if __name__ == "__main__":
