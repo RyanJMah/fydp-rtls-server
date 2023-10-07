@@ -1,7 +1,7 @@
 import socket
-import pickle
+import json
 import multiprocessing as mp
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from typing import Any
 
 import logs
@@ -46,4 +46,8 @@ class DebugEndpointService(AbstractService):
             while (1):
                 data = g_queue.get()
 
-                conn.send( pickle.dumps(data) )
+                json_payload = json.dumps( asdict(data) ).encode()
+
+                payload_len = len(json_payload).to_bytes(4, "big")
+
+                conn.sendall( payload_len + json_payload )

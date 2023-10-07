@@ -1,14 +1,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "DetourCommon.h"
 #include "Navmesh_Handle.h"
 #include "macros.h"
 #include "pathfinder.hpp"
 
 #define MAX_NAVQUERY_SEARCH_NODES       ( 65535 )
-
-// -1 ==> no limit
-#define MAX_OUTPUT_PATH_POLYGONS        ( -1 )
 
 /*
  * IMPORTANT: READ ME BEFORE WRITING ANY CODE
@@ -133,6 +131,9 @@ GL_Path GL_Pathfinder::find_path(GL_Point start_, GL_Point end_)
      */
     float* start = start_.data();
     float* end   = end_.data();
+
+    dtVscale(start, start, 1/this->_scale);
+    dtVscale(end,   end,   1/this->_scale);
 
     fix_coordinate_system(start);
     fix_coordinate_system(end);

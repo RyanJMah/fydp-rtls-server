@@ -2,8 +2,8 @@
     "broker_address": "localhost",
     "broker_port": 1883,
 
-    "navmesh_relative_path": "./resources/navmeshes/ssdc-testing-area.png",
-    "navmesh_scale": 0.543,
+    "navmesh_relative_path": "resources/navmeshes/ssdc-testing-area.nav",
+    "navmesh_to_real_life_scale": 0.543,
 
     "anchors": [
         {
