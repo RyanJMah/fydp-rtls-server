@@ -1,12 +1,13 @@
 import time
 import sys
 import socket
-import pickle
+import json
 import threading
 import queue
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+from typing import List
 
 # suppress the matplotlib warning
 import warnings
@@ -16,7 +17,7 @@ import includes
 from localization_service import LocalizationService_State  # type: ignore
 from gl_conf import GL_CONF                                 # type: ignore
 
-ENDPOINT_HOST = "localhost"
+ENDPOINT_HOST = "10.0.0.125"
 ENDPOINT_PORT = GL_CONF.debug_endpoint.port
 
 ANCHOR_0_COORDINATES = GL_CONF.anchors[0].get_coords()
@@ -43,29 +44,43 @@ def connect_to_server():
             print('Failed to connect to server, retrying...')
             time.sleep(1)
 
+def receive_debug_packet(sock) -> bytes:
+    data = sock.recv(4)
+
+    if len(data) == 0:
+        return bytes()
+
+    length = int.from_bytes(data, "big")
+    data = sock.recv(length)
+
+    return data
 
 sock = connect_to_server()
+
+g_path: List[ List[float] ] = []
 
 # Function to update the position of the dot in the plot
 def update_dot(frame):
     global sock
 
-    data = sock.recv(4096)
+    data = receive_debug_packet(sock)
 
     if len(data) == 0:
         print('Server disconnected, reconnecting...')
         sock = connect_to_server()
 
     try:
-        data = pickle.loads(data)
+        data = json.loads(data.decode())
     except Exception as e:
-        print(f"WARNING: dropped packet, failed to unpickle data...")
+        print(f"WARNING: dropped packet, failed to parse json: {e}")
         return
 
-    tag  = data.tag
-    data = data.data
+    tag  = data["tag"]
+    data = data["data"]
 
     if tag == "loc_state":
+        data = LocalizationService_State(**data)
+
         x = data.x
         y = data.y
         z = data.z
@@ -124,6 +139,24 @@ def update_dot(frame):
         dot1.set_data(x, y)  # Update the dot's position
 
         label.set_text(f"X: {x:.2f}, Y: {y:.2f}, Z: {z:.2f}, Theta: {theta:.2f}")
+
+    elif tag == "path":
+        global g_path
+
+        # clear the previous path dots
+        for p in g_path:
+            p.remove()
+
+        g_path.clear()
+
+        for p in data:
+            x = p[0]
+            y = p[1]
+
+            path_dot, = ax.plot([], [], 'ro', markersize=8)
+            path_dot.set_data(x, y)
+
+            g_path.append(path_dot)
 
 
 # Create a figure and axis
