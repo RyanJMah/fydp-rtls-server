@@ -17,7 +17,7 @@ import includes
 from localization_service import LocalizationService_State  # type: ignore
 from gl_conf import GL_CONF                                 # type: ignore
 
-ENDPOINT_HOST = "10.0.0.125"
+ENDPOINT_HOST = "localhost"
 ENDPOINT_PORT = GL_CONF.debug_endpoint.port
 
 ANCHOR_0_COORDINATES = GL_CONF.anchors[0].get_coords()

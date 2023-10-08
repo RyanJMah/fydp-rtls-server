@@ -2,6 +2,7 @@ import sys
 import multiprocessing as mp
 
 import logs
+from heartbeat_service import HeartbeatService
 from debug_endpoint_service import DebugEndpointService
 from data_ingestion_service import DataIngestionService
 from localization_service import LocalizationService
@@ -20,6 +21,10 @@ def main():
         # start debug endpoint
         debug_endpoint = DebugEndpointService(in_conn=None, out_conn=None)
         debug_endpoint.start()
+
+        # start heartbeat service
+        hb = HeartbeatService( in_conn=None, out_conn=None )
+        hb.start()
 
         # start application services
         dis_to_loc_conn_1, dis_to_loc_conn_2 = mp.Pipe()
@@ -51,6 +56,7 @@ def main():
         print("Terminating...")
 
         debug_endpoint.kill()
+        hb.kill()
 
         dis.kill()
         loc.kill()

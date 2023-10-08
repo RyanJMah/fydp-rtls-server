@@ -1,7 +1,21 @@
 from ctypes import Structure, c_uint8, c_uint32, c_int16, c_int32, c_float
 
-ANCHOR_DATA_TOPIC = "gl/anchor/<aid>/data"
-IOS_DATA_TOPIC    = "gl/user/<uid>/data/<aid>"
+ANCHOR_HEARTBEAT_TOPIC   = "gl/anchor/<aid>/heartbeat"
+ANCHOR_DATA_TOPIC        = "gl/anchor/<aid>/data"
+ANCHOR_CONN_REQ_TOPIC    = "gl/anchor/<aid>/conn/req"
+ANCHOR_CONN_RESP_TOPIC   = "gl/anchor/<aid>/conn/resp"
+ANCHOR_NI_CONFIG_TOPIC   = "gl/anchor/<aid>/conn/ni_config"
+ANCHOR_CONFIG_BASE_TOPIC = "gl/anchor/<aid>/config"
+ANCHOR_DFU_TOPIC         = "gl/anchor/<aid>/config"
+
+IOS_HEARTBEAT_TOPIC = "gl/user/<uid>/heartbeat"
+IOS_DATA_TOPIC      = "gl/user/<uid>/data/<aid>"
+IOS_POSITION_TOPIC  = "gl/user/<uid>/position"
+IOS_PATHING_TOPIC   = "gl/user/<id>/pathing"
+
+SERVER_HEARTBEAT_TOPIC          = "gl/server/heartbeat"
+SERVER_PATHFINDING_CONFIG_TOPIC = "gl/server/pathfinding/config"
+
 
 class Struct(Structure):
     def __str__(self):
