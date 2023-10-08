@@ -1,4 +1,5 @@
 import time
+import json
 from typing import Optional
 
 import logs
@@ -7,7 +8,8 @@ from gl_conf import GL_CONF
 import app_paths
 import lib_pathfinding as cpp     # type: ignore
 
-from mqtt_client import MqttClient
+from mqtt_client import MqttClient, MqttMsg
+from app_mqtt import SERVER_PATHFINDING_CONFIG_TOPIC
 
 from abstract_service import AbstractService
 from localization_service import LocalizationService_OutData
@@ -25,13 +27,29 @@ class PathfindingService(AbstractService):
         self.mqtt = MqttClient()
 
         self.mqtt.connect(GL_CONF.broker_address, GL_CONF.broker_port)
+        self.mqtt.subscribe(SERVER_PATHFINDING_CONFIG_TOPIC, self.handle_config_publish)
+        self.mqtt.start_mainloop()
+
+        self.endpoint = [0, 0, 0]
+
+    def handle_config_publish(self, client: MqttClient, msg: MqttMsg):
+        """
+        Every possible json input field
+
+        {
+            "endpoint": [x, y, z],
+        }
+        """
+        inputs = json.loads( msg.payload.decode() )
+
+        if "endpoint" in inputs.keys():
+            self.endpoint = inputs["endpoint"]
+            logger.info(f"changed endpoint to {self.endpoint}")
 
 
     def main(self, in_conn, out_conn):
         self.initialize()
 
-        timestamp = time.time()
-    
         while (1):
             position_data: LocalizationService_OutData = in_conn.recv()     # type: ignore
 
@@ -41,7 +59,7 @@ class PathfindingService(AbstractService):
 
             # start = time.time()
 
-            path = self.pf.find_path( (x, y, 0), (500, 500, 0)  )
+            path = self.pf.find_path( (x, y, 0), self.endpoint  )
 
             # end = time.time()
             # logger.info(f"pathfinding runtime: {end - start}")
