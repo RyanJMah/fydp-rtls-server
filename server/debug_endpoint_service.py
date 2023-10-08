@@ -23,12 +23,7 @@ class DebugEndpointService(AbstractService):
         global g_queue
         g_queue.put(data)
 
-    def main(self, in_conn, out_conn):
-        global g_queue
-
-        if not GL_CONF.debug_endpoint.enabled:
-            return
-
+    def accept_client(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         # this is so we can restart the program without waiting for the socket to timeout
@@ -51,3 +46,17 @@ class DebugEndpointService(AbstractService):
                 payload_len = len(json_payload).to_bytes(4, "big")
 
                 conn.sendall( payload_len + json_payload )
+
+    def main(self, in_conn, out_conn):
+        global g_queue
+
+        if not GL_CONF.debug_endpoint.enabled:
+            return
+
+        while (1):
+            try:
+                self.accept_client()
+
+            except Exception as e:
+                logger.error(e)
+                continue
