@@ -1,23 +1,24 @@
 import time
 import sys
 import socket
-import pickle
+import json
 import threading
 import queue
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+from typing import List
 
 # suppress the matplotlib warning
 import warnings
 warnings.filterwarnings("ignore")   # this suppresses all warnings, this is bad, who cares!
 
 import includes
-from localization_service import LocalizationService_State
-from gl_conf import GL_CONF
+from localization_service import LocalizationService_State  # type: ignore
+from gl_conf import GL_CONF                                 # type: ignore
 
 ENDPOINT_HOST = "localhost"
-ENDPOINT_PORT = GL_CONF.loc_debug_endpoint.port
+ENDPOINT_PORT = GL_CONF.debug_endpoint.port
 
 ANCHOR_0_COORDINATES = GL_CONF.anchors[0].get_coords()
 ANCHOR_1_COORDINATES = GL_CONF.anchors[1].get_coords()
@@ -43,83 +44,119 @@ def connect_to_server():
             print('Failed to connect to server, retrying...')
             time.sleep(1)
 
+def receive_debug_packet(sock) -> bytes:
+    data = sock.recv(4)
+
+    if len(data) == 0:
+        return bytes()
+
+    length = int.from_bytes(data, "big")
+    data = sock.recv(length)
+
+    return data
 
 sock = connect_to_server()
+
+g_path: List[ List[float] ] = []
 
 # Function to update the position of the dot in the plot
 def update_dot(frame):
     global sock
 
-    data = sock.recv(4096)
+    data = receive_debug_packet(sock)
 
     if len(data) == 0:
         print('Server disconnected, reconnecting...')
         sock = connect_to_server()
 
     try:
-        data = pickle.loads(data)
+        data = json.loads(data.decode())
     except Exception as e:
-        print(f"WARNING: dropped packet, failed to unpickle data...")
+        print(f"WARNING: dropped packet, failed to parse json: {e}")
         return
 
-    x = data.x
-    y = data.y
-    z = data.z
-    theta = data.angle_deg
+    tag  = data["tag"]
+    data = data["data"]
 
-    r0 = data.r0
-    r1 = data.r1
-    r2 = data.r2
-    r3 = data.r3
+    if tag == "loc_state":
+        data = LocalizationService_State(**data)
 
-    phi0 = data.phi0
-    phi1 = data.phi1
-    phi2 = data.phi2
-    phi3 = data.phi3
+        x = data.x
+        y = data.y
+        z = data.z
+        theta = data.angle_deg
 
-    los0 = data.los0
-    los1 = data.los1
-    los2 = data.los2
-    los3 = data.los3
+        r0 = data.r0
+        r1 = data.r1
+        r2 = data.r2
+        r3 = data.r3
 
-    critical_anchor = data.critical_anchor
+        phi0 = data.phi0
+        phi1 = data.phi1
+        phi2 = data.phi2
+        phi3 = data.phi3
 
-    anchor0.set_radius(r0)
-    anchor1.set_radius(r1)
-    anchor2.set_radius(r2)
-    anchor3.set_radius(r3)
+        los0 = data.los0
+        los1 = data.los1
+        los2 = data.los2
+        los3 = data.los3
 
-    if los0:
-        anchor0.set_color('g')
-    else:
-        anchor0.set_color('r')
+        critical_anchor = data.critical_anchor
 
-    if los1:
-        anchor1.set_color('g')
-    else:
-        anchor1.set_color('r')
+        anchor0.set_radius(r0)
+        anchor1.set_radius(r1)
+        anchor2.set_radius(r2)
+        anchor3.set_radius(r3)
 
-    if los2:
-        anchor2.set_color('g')
-    else:
-        anchor2.set_color('r')
-
-    if los3:
-        anchor3.set_color('g')
-    else:
-        anchor3.set_color('r')
-
-    for i, a in enumerate([anchor0, anchor1, anchor2, anchor3]):
-        if i == critical_anchor:
-            a.set_fill(True)
-            a.set_alpha(0.3)
+        if los0:
+            anchor0.set_color('g')
         else:
-            a.set_fill(False)
-            a.set_alpha(1)
+            anchor0.set_color('r')
 
-    dot1.set_data(x, y)  # Update the dot's position
+        if los1:
+            anchor1.set_color('g')
+        else:
+            anchor1.set_color('r')
 
-    label.set_text(f"X: {x:.2f}, Y: {y:.2f}, Z: {z:.2f}, Theta: {theta:.2f}")
+        if los2:
+            anchor2.set_color('g')
+        else:
+            anchor2.set_color('r')
+
+        if los3:
+            anchor3.set_color('g')
+        else:
+            anchor3.set_color('r')
+
+        for i, a in enumerate([anchor0, anchor1, anchor2, anchor3]):
+            if i == critical_anchor:
+                a.set_fill(True)
+                a.set_alpha(0.3)
+            else:
+                a.set_fill(False)
+                a.set_alpha(1)
+
+        dot1.set_data(x, y)  # Update the dot's position
+
+        label.set_text(f"X: {x:.2f}, Y: {y:.2f}, Z: {z:.2f}, Theta: {theta:.2f}")
+
+    elif tag == "path":
+        global g_path
+
+        # clear the previous path dots
+        for p in g_path:
+            p.remove()
+
+        g_path.clear()
+
+        for p in data:
+            x = p[0]
+            y = p[1]
+
+            path_dot, = ax.plot([], [], 'ro', markersize=8)
+            path_dot.set_data(x, y)
+
+            g_path.append(path_dot)
 
 
 # Create a figure and axis

@@ -10,4 +10,4 @@ __pycache__/
 # Python virtual env files
 venv/
 env/
-
+.venv/

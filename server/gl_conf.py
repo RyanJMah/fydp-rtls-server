@@ -1,3 +1,4 @@
+import os
 import commentjson as json
 from dataclasses import dataclass, field
 from typing import List, Dict, Tuple, Any
@@ -21,7 +22,7 @@ class AnchorConf:
         return (self.x, self.y, self.z)
 
 @dataclass
-class LocalizationService_DebugEndpoint_Conf:
+class DebugEndpoint_Conf:
     host: str
     port: int
     enabled: bool
@@ -39,9 +40,12 @@ class GuidingLiteConf:
     broker_address: str
     broker_port: int
 
+    navmesh_path: str
+    navmesh_to_real_life_scale: float
+
     anchors: Dict[int, AnchorConf]
 
-    loc_debug_endpoint: LocalizationService_DebugEndpoint_Conf
+    debug_endpoint: DebugEndpoint_Conf
 
     update_period_secs: float
 
@@ -61,9 +65,11 @@ with open(AppPaths.GL_CONF_FILE, "r") as f:
     _gl_conf = json.load(f)
 
 GL_CONF = GuidingLiteConf(
-    broker_address     = _gl_conf["broker_address"],
-    broker_port        = _gl_conf["broker_port"],
-    update_period_secs = 1 / _gl_conf["global_update_frequency_Hz"],
-    anchors            = GuidingLiteConf.anchors_from_dict(_gl_conf),
-    loc_debug_endpoint = LocalizationService_DebugEndpoint_Conf.from_dict(_gl_conf["loc_debug_endpoint"]),
+    broker_address             = _gl_conf["broker_address"],
+    broker_port                = _gl_conf["broker_port"],
+    navmesh_path               = os.path.join( os.path.dirname(AppPaths.GL_CONF_FILE), _gl_conf["navmesh_relative_path"] ),
+    navmesh_to_real_life_scale = _gl_conf["navmesh_to_real_life_scale"],
+    update_period_secs         = 1 / _gl_conf["global_update_frequency_Hz"],
+    anchors                    = GuidingLiteConf.anchors_from_dict(_gl_conf),
+    debug_endpoint             = DebugEndpoint_Conf.from_dict(_gl_conf["debug_endpoint"]),
 )

@@ -31,9 +31,9 @@
 #endif
 
 Builder::Builder() :
-	m_geom(0),
 	m_navMesh(0),
 	m_navQuery(0),
+	m_geom(0),
 	m_crowd(0),
 	m_filterLowHangingObstacles(true),
 	m_filterLedgeSpans(true),
@@ -112,6 +112,7 @@ void Builder::resetCommonSettings()
 	m_partitionType = BUILDER_PARTITION_WATERSHED;
 }
 
+// Default implementation, child class may override this.
 bool Builder::handleBuild()
 {
 	return true;

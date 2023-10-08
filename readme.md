@@ -21,13 +21,20 @@ sudo apt install libsdl2-dev libglm-dev libegl-mesa0
 
 1. Populate submodules
 
-```
+```bash
 git submodule update --init --recursive
+```
+
+2. Initialize python venv
+
+```bash
+python3 -m venv .venv
+source ./.venv/bin/activate
 ```
 
 2. Install required python libs
 
-```
+```bash
 python3 -m pip install -r requirements.txt
 ```
 

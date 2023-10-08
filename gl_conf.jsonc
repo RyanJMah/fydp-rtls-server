@@ -2,6 +2,9 @@
     "broker_address": "localhost",
     "broker_port": 1883,
 
+    "navmesh_relative_path": "resources/navmeshes/ssdc-testing-area.nav",
+    "navmesh_to_real_life_scale": 0.543,
+
     "anchors": [
         {
             "id": 0,
@@ -29,11 +32,11 @@
         }
     ],
 
-    "loc_debug_endpoint": {
+    "debug_endpoint": {
         "host": "0.0.0.0",
         "port": 6969,
         "enabled": true
     },
 
-    "global_update_frequency_Hz": 8
+    "global_update_frequency_Hz": 5
 }

@@ -1,0 +1,21 @@
+{
+    "files.associations": {
+        "*.m": "matlab",
+        "*.json": "jsonc",
+        "*.c": "cpp",
+        "__tree": "cpp",
+        "bit": "cpp",
+        "cmath": "cpp",
+        "complex": "cpp",
+        "valarray": "cpp",
+        "random": "cpp",
+        "new": "cpp",
+        "*.tcc": "cpp",
+        "unordered_map": "cpp",
+        "fstream": "cpp",
+        "istream": "cpp",
+        "numeric": "cpp",
+        "ostream": "cpp",
+        "sstream": "cpp"
+    }
+}

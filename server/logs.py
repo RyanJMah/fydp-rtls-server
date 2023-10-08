@@ -9,13 +9,15 @@ LOG_LEVEL = logging.INFO
 
 LOG_FORMAT_STR = "[%(asctime)s] %(levelname)s --- %(message)s (%(name)s)"
 
-g_log_queue: mp.Queue = mp.Queue(-1)
+g_log_queue: mp.Queue = mp.Queue()
 
 class LogQueueingService(AbstractService):
     def main(self, in_conn, out_conn):
+        global g_log_queue
+
         while True:
             try:
-                print( g_log_queue.get(block=True) )
+                print( g_log_queue.get() )
 
             except Exception as e:
                 print(f"REALLY BAD ERROR: LOG QUEUEING SERVICE FAILED TO HANDLE LOG RECORD: {e}")
@@ -55,6 +57,8 @@ class _QueuedLogsHandler(logging.Handler):
         super().__init__()
 
     def emit(self, record):
+        global g_log_queue
+
         try:
             log_entry = self.format(record)
             g_log_queue.put(log_entry, block=False)
