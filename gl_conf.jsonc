@@ -38,5 +38,5 @@
         "enabled": true
     },
 
-    "global_update_frequency_Hz": 5.5
+    "global_update_frequency_Hz": 5
 }
