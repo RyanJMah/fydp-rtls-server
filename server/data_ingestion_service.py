@@ -51,9 +51,6 @@ class DIS_OutData:
 
 class DataIngestionService(AbstractService):
     def initialize(self):
-        # The update period for UWB TWR is (approximately) a normal distribution with a mean of 5.5Hz
-        self.nominal_uwb_update_period_secs = 1.0 / 5.5
-
         # init filters
         self.anchor_filters = [ _AnchorFilters() for _ in range(GL_CONF.num_anchors) ]
 
