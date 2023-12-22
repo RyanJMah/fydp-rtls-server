@@ -1,4 +1,4 @@
-### Prerequisites
+## Prerequisites
 
 1. Install necessary libraries
 
@@ -17,7 +17,7 @@ sudo apt install libsdl2-dev libglm-dev libegl-mesa0
 ./linux_install_docker.sh
 ```
 
-### Build C++ Locally
+## Build C++ Locally
 
 1. Populate submodules
 
@@ -45,7 +45,7 @@ cd cpp
 make
 ```
 
-### Build docker image and container
+## Build docker image and container
 
 1. Populate submodules
 
@@ -60,4 +60,26 @@ git submodule update --init --recursive
 
 # See list of commands for docker_utils.sh
 ./docker_utils.sh help
+```
+
+## Visualization Script
+
+It will connect to the debug client hosted on the server and visualize the iPhone
+in 2D space.
+
+```bash
+python3 ./tools/visualize_iphone.py
+```
+
+## Telemetry Record and Replay
+
+Utility scripts to record all telemetry data from iPhone and anchors. Record test data
+once and use it to test without HW.
+
+```bash
+# Record some telemetry data, recording will stop when you press ctrl+c
+python3 ./tools/telem_capture.py
+
+# Replay the recorded telemetry
+python3 tools/telem_replay.py --uid 69 data/walking_path_3.csv
 ```
