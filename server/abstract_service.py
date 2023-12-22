@@ -7,9 +7,17 @@ class AbstractService(ABC):
         self.in_conn = in_conn
         self.out_conn = out_conn
 
-        self._process = mp.Process( target=self.main,
+        self._process = mp.Process( target=self._supervisor,
                                     args=(self.in_conn, self.out_conn,),
                                     daemon=True )
+
+    def _supervisor(self, in_conn: Any, out_conn: Any):
+        while (1):
+            try:
+                self.main(in_conn, out_conn)
+
+            except Exception as e:
+                print(f"REALLY BAD ERROR: SERVICE MAINLOOP CRASHED: {e}")
 
     def start(self):
         self._process.start()
