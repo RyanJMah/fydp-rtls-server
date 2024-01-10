@@ -6,43 +6,23 @@ import logs
 
 logger = logs.init_logger(__name__)
 
-
 def linearized_lse(A: NDArray, b: NDArray) -> NDArray:
     """
     Least squares estimate of a system of equations is A^T * A * x = A^T * b
         - Refence: https://textbooks.math.gatech.edu/ila/least-squares.html
     """
 
-    tmp = np.linalg.inv( np.matmul(A.T, A) )
-    tmp = np.matmul(tmp, A.T)
-    x   = np.matmul(tmp, b)
+    x = np.linalg.solve(A.T @ A, A.T @ b)
 
     return x
 
 def weighted_linearized_lse(A: NDArray, b: NDArray, W: NDArray) -> NDArray:
     # Refence equation (7) of https://ieeexplore.ieee.org/document/8911811
 
-    # tmp = np.matmul(A.T, W)
-    # tmp = np.matmul(tmp, A)
-    # tmp = np.linalg.inv(tmp)
+    tmp = A.T @ W.T @ W @ A
+    tmp = np.linalg.solve(tmp, A.T @ W.T @ W)
 
-    # tmp = np.matmul(tmp, A.T)
-    # tmp = np.matmul(tmp, W)
-
-    # x = np.matmul(tmp, b)
-
-    # return x
-    
-    tmp = np.matmul(A.T, W.T)
-    tmp = np.matmul(tmp, W)
-    tmp = np.matmul(tmp, A)
-    tmp = np.linalg.inv(tmp)
-
-    tmp = np.matmul(tmp, A.T)
-    tmp = np.matmul(tmp, W.T)
-    tmp = np.matmul(tmp, W)
-
-    x = np.matmul(tmp, b)
+    x = tmp @ b
 
     return x
 

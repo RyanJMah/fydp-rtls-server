@@ -46,41 +46,35 @@ if [[ $1 == "clean" ]]
 then
     clean_docker
     exit 0
-fi
 
-if [[ $1 == "stop" ]]
+elif [[ $1 == "stop" ]]
 then
     set +e
     docker stop $CONTAINER_NAME
     set -e
 
     exit 0
-fi
 
-if [[ $1 == "build" ]]
+elif [[ $1 == "build" ]]
 then
     build_img_and_container
     exit 0
-fi
 
-if [[ $1 == "start" ]]
+elif [[ $1 == "start" ]]
 then
     docker start $CONTAINER_NAME
     exit 0
-fi
 
-if [[ $1 == "shell" ]]
+elif [[ $1 == "shell" ]]
 then
     docker exec -it $CONTAINER_NAME bash
-fi
 
-if [[ $1 == "logs" ]]
+elif [[ $1 == "logs" ]]
 then
     # docker exec rtls_server bash -c "tail -f /app/logs/rtls_server.log"
     tail -f ./logs/rtls_server.log
-fi
 
-if [[ $1 == "mqtt_logs" ]]
+elif [[ $1 == "mqtt_logs" ]]
 then
     # docker exec rtls_server bash -c "tail -f /app/logs/mosquitto.log"
     tail -f ./logs/mosquitto.log

@@ -43,6 +43,8 @@ def main():
         loc.start()
         pf.start()
 
+        debug_endpoint.join()
+        hb.join()
         dis.join()
         loc.join()
         pf.join()
