@@ -2,7 +2,7 @@
 compile_commands.json
 .cache/
 build/
-*.nav
+# *.nav
 *.obj
 __pycache__/
 *.log
