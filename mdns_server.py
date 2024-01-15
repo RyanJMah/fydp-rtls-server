@@ -1,16 +1,13 @@
+# IMPORTANT: make sure to run with sudo if it doesn't work at first (lol)
+
 import socket
-import logging
 from time import sleep
 from zeroconf import IPVersion, ServiceInfo, Zeroconf
 
-import server.logs
-
 SERVICE_HOSTNAME = "GuidingLight._mqtt._tcp.local."
 
-logger = server.logs.init_logger(__name__)
-
 def main():
-    logger.setLevel(logging.DEBUG)
+    print("Starting mDNS server...")
 
     info = ServiceInfo(
         "_mqtt._tcp.local.",
@@ -22,14 +19,14 @@ def main():
     zeroconf = Zeroconf(ip_version=IPVersion.V4Only)
     zeroconf.register_service(info)
 
-    logger.info(f"Registered service {SERVICE_HOSTNAME}")
+    print(f"Registered service {SERVICE_HOSTNAME}")
 
     try:
         while True:
             sleep(0.1)
 
     finally:
-        logger.info("Unregistering...")
+        print("Unregistering...")
         zeroconf.unregister_service(info)
         zeroconf.close()
 
