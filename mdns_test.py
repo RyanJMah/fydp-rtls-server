@@ -1,6 +1,5 @@
 import socket
 import random
-import test_paths
 
 from mdns_server import SERVICE_HOSTNAME
 

@@ -42,14 +42,14 @@ def write_mesh_to_obj(mesh: meshio.Mesh, outpath: str):
 
 
 def _main():
-    png_path = AppPaths.get_floorplan("ssdc-testing-area.png")
+    png_path = AppPaths.get_floorplan("e7_display_area.png")
     heightmap = png_to_heightmap(png_path)
     mesh = heightmap_to_mesh(heightmap)
 
-    obj_path = AppPaths.get_obj("ssdc-testing-area.obj")
+    obj_path = AppPaths.get_obj("e7_display_area.obj")
     write_mesh_to_obj(mesh, obj_path)
 
-    navmesh_path = AppPaths.get_navmesh("ssdc-testing-area.nav")
+    navmesh_path = AppPaths.get_navmesh("e7_display_area.nav")
     cpp.generate_navmesh(obj_path, navmesh_path)
 
 if __name__ == "__main__":
