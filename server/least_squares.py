@@ -17,12 +17,12 @@ def linearized_lse(A: NDArray, b: NDArray) -> NDArray:
     return x
 
 def weighted_linearized_lse(A: NDArray, b: NDArray, W: NDArray) -> NDArray:
-    # Refence equation (7) of https://ieeexplore.ieee.org/document/8911811
+    # Reference equation (7) of https://ieeexplore.ieee.org/document/8911811
 
-    tmp = A.T @ W.T @ W @ A
-    tmp = np.linalg.solve(tmp, A.T @ W.T @ W)
+    tmp = np.dot(np.dot(A.T, W.T), np.dot(W, A))
+    tmp = np.dot(np.dot(np.linalg.inv(tmp), A.T), np.dot(W.T, W))
 
-    x = tmp @ b
+    x = np.dot(tmp, b)
 
     return x
 

@@ -6,6 +6,7 @@ build/
 *.obj
 __pycache__/
 *.log
+*.log*
 .vscode/settings.json
 
 # Python virtual env files

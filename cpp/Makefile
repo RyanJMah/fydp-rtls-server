@@ -71,7 +71,7 @@ OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(C_SOURCES:.c=.o)))
 vpath %.c $(sort $(dir $(C_SOURCES)))
 
 .PHONY: all
-all: $(BUILD_DIR)/$(TARGET) $(BUILD_DIR)/$(SHARED_LIB)$(SHARED_LIB_EXT)
+all: $(BUILD_DIR)/$(SHARED_LIB)$(SHARED_LIB_EXT)
 
 .PHONY: run
 run: all

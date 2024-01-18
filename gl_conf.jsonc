@@ -2,8 +2,8 @@
     "broker_address": "localhost",
     "broker_port": 1883,
 
-    "navmesh_relative_path": "resources/navmeshes/e7_display_area.nav",
-    "navmesh_to_real_life_scale": 0.01,
+    "navmesh_relative_path": "resources/navmeshes/e7_2nd_floor_reduced.nav",
+    "navmesh_to_real_life_scale": 0.5732484076433121,
 
     // The floor tiles are 30cm x 60cm
     //
@@ -69,5 +69,5 @@
         "enabled": true
     },
 
-    "global_update_frequency_Hz": 5
+    "global_update_frequency_Hz": 8
 }

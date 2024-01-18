@@ -94,6 +94,11 @@ void Builder::collectSettings(BuildSettings& settings)
 	settings.partitionType = m_partitionType;
 }
 
+void Builder::setTileSize(float tileSize)
+{
+    m_cellSize = tileSize;
+}
+
 void Builder::resetCommonSettings()
 {
 	m_cellSize = 0.3f;

@@ -25,6 +25,17 @@ ANCHOR_1_COORDINATES = GL_CONF.anchors[1].get_coords()
 ANCHOR_2_COORDINATES = GL_CONF.anchors[2].get_coords()
 ANCHOR_3_COORDINATES = GL_CONF.anchors[3].get_coords()
 
+TABLE_DOT0 = (435, 240)
+TABLE_DOT1 = (525, 240)
+TABLE_DOT2 = (435, 360)
+TABLE_DOT3 = (525, 360)
+
+# FLOORPLAN_WIDTH  = 700
+# FLOORPLAN_HEIGHT = 800
+
+FLOORPLAN_WIDTH  = 1140
+FLOORPLAN_HEIGHT = 1200
+
 # ANCHOR_0_COORDINATES = (615, 0, 273)
 # ANCHOR_1_COORDINATES = (615, 520, 263)
 # ANCHOR_2_COORDINATES = (0, 0, 277)
@@ -161,10 +172,14 @@ def update_dot(frame):
 
 # Create a figure and axis
 fig, ax = plt.subplots()
-# ax.set_xlim(0, 621)  # Set the X-axis limits
-# ax.set_ylim(0, 520)    # Set the Y-axis limits
-ax.set_xlim(0, 700)  # Set the X-axis limits
-ax.set_ylim(0, 800)  # Set the X-axis limits
+
+# ax.set_xlim(0, 700)  # Set the X-axis limits
+# ax.set_ylim(0, 800)  # Set the X-axis limits
+
+ax.set_xlim(0, FLOORPLAN_WIDTH)  # Set the X-axis limits
+ax.set_ylim(0, FLOORPLAN_HEIGHT)  # Set the X-axis limits
+
+
 
 # Create the dot as a scatter plot
 dot1, = ax.plot([], [], 'ro', markersize=8)
@@ -172,26 +187,27 @@ dot1, = ax.plot([], [], 'ro', markersize=8)
 
 # bottom left
 table_dot0, = ax.plot([], [], 'bo', markersize=8)
-table_dot0.set_data(216, 164)
+table_dot0.set_data( *TABLE_DOT0 )
+
 
 table_dot1, = ax.plot([], [], 'bo', markersize=8)
-table_dot1.set_data(385, 168)
+table_dot1.set_data( *TABLE_DOT1 )
 
 table_dot2, = ax.plot([], [], 'bo', markersize=8)
-table_dot2.set_data(216, 229)
+table_dot2.set_data( *TABLE_DOT2 )
 
 table_dot3, = ax.plot([], [], 'bo', markersize=8)
-table_dot3.set_data(385, 232)
+table_dot3.set_data( *TABLE_DOT3 )
 
 
-path_dot1 = plt.Circle([138, 138], 50, color='g', fill=False)
-ax.add_patch(path_dot1)
+# path_dot1 = plt.Circle([138, 138], 50, color='g', fill=False)
+# ax.add_patch(path_dot1)
 
-path_dot2 = plt.Circle([437, 79], 50, color='g', fill=False)
-ax.add_patch(path_dot2)
+# path_dot2 = plt.Circle([437, 79], 50, color='g', fill=False)
+# ax.add_patch(path_dot2)
 
-path_dot2 = plt.Circle([436, 308], 50, color='g', fill=False)
-ax.add_patch(path_dot2)
+# path_dot2 = plt.Circle([436, 308], 50, color='g', fill=False)
+# ax.add_patch(path_dot2)
 
 
 
@@ -213,7 +229,7 @@ ax.add_patch(anchor3)
 
 ax.set_aspect("auto")
 
-label = ax.text(700/2, 800 - 20, "", ha='center', va='center', fontsize=14, color='r')
+label = ax.text(FLOORPLAN_WIDTH/2, FLOORPLAN_HEIGHT - 20, "", ha='center', va='center', fontsize=14, color='r')
 
 # Create the animation
 animation = FuncAnimation(fig, update_dot, frames=range(200), interval=100)

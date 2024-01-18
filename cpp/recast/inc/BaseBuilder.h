@@ -102,6 +102,8 @@ public:
 	virtual float getAgentHeight() { return m_agentHeight; }
 	virtual float getAgentClimb() { return m_agentMaxClimb; }
 	
+    void setTileSize(float tileSize);
+    
 	void resetCommonSettings();
 	void handleCommonSettings();
 

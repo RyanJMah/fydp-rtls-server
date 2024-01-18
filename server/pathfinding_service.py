@@ -50,25 +50,27 @@ class PathfindingService(AbstractService):
     def main(self, in_conn, out_conn):
         self.initialize()
 
+        logger.info("Pathfinding service started")
+
         while (1):
             position_data: LocalizationService_OutData = in_conn.recv()     # type: ignore
 
-            x = position_data.x
-            y = position_data.y
-            z = position_data.z
+            # x = position_data.x
+            # y = position_data.y
+            # z = position_data.z
 
-            # start = time.time()
+            # # start = time.time()
 
-            path = self.pf.find_path( (x, y, 0), self.endpoint  )
+            # path = self.pf.find_path( (x, y, 0), self.endpoint  )
 
-            # end = time.time()
-            # logger.info(f"pathfinding runtime: {end - start}")
+            # # end = time.time()
+            # # logger.info(f"pathfinding runtime: {end - start}")
 
-            if len(path) == 0:
-                continue
+            # if len(path) == 0:
+            #     continue
 
-            # Push to debug endpoint
-            debug_data = DebugEndpointData( tag="path",
-                                            data=path )
+            # # Push to debug endpoint
+            # debug_data = DebugEndpointData( tag="path",
+            #                                 data=path )
 
-            DebugEndpointService.push(debug_data)
+            # DebugEndpointService.push(debug_data)
