@@ -6,6 +6,9 @@
     "navmesh_to_real_life_scale": 0.01,
 
     // The floor tiles are 30cm x 60cm
+    //
+    // NOTE: the box's bottom left corner is at (14.5, 4) tiles
+
     "anchors": [
         {
             "id": 0,
@@ -16,7 +19,7 @@
         {
             "id": 1,
             "x": 1140,
-            "y": 940,
+            "y": 970,
             "z": 178
         },
         {

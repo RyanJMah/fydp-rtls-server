@@ -1,4 +1,5 @@
 import os
+import sys
 import meshio
 import numpy as np
 from PIL import Image
@@ -42,14 +43,18 @@ def write_mesh_to_obj(mesh: meshio.Mesh, outpath: str):
 
 
 def _main():
-    png_path = AppPaths.get_floorplan("e7_display_area.png")
+    png_filename = sys.argv[-1]
+
+    basename = os.path.splitext(png_filename)[0]
+
+    png_path = AppPaths.get_floorplan(png_filename)
     heightmap = png_to_heightmap(png_path)
     mesh = heightmap_to_mesh(heightmap)
 
-    obj_path = AppPaths.get_obj("e7_display_area.obj")
+    obj_path = AppPaths.get_obj(f"{basename}.obj")
     write_mesh_to_obj(mesh, obj_path)
 
-    navmesh_path = AppPaths.get_navmesh("e7_display_area.nav")
+    navmesh_path = AppPaths.get_navmesh(f"{basename}.nav")
     cpp.generate_navmesh(obj_path, navmesh_path)
 
 if __name__ == "__main__":
