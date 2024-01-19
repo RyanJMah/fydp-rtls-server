@@ -7,6 +7,7 @@
 #include "pathfinder.hpp"
 
 #define MAX_NAVQUERY_SEARCH_NODES       ( 65535 )
+#define PATH_SMOOTHING_FACTOR           ( 0.35F )
 
 /*
  * IMPORTANT: READ ME BEFORE WRITING ANY CODE
@@ -165,6 +166,19 @@ GL_Path GL_Pathfinder::find_path(GL_Point start_, GL_Point end_)
         ret[i][0] = this->_scale * xyz[0];
         ret[i][1] = this->_scale * xyz[1];
         ret[i][2] = this->_scale * xyz[2];
+    }
+
+    // Smooth the path using linear interpolation
+    for (int i = 1; i < path_len - 1; i++)
+    {
+        float* currentPoint = &ret[i][0];
+        float* previousPoint = &ret[i - 1][0];
+        float* nextPoint = &ret[i + 1][0];
+
+        for (int j = 0; j < 3; j++)
+        {
+            currentPoint[j] = currentPoint[j] + PATH_SMOOTHING_FACTOR * (previousPoint[j] + nextPoint[j] - 2 * currentPoint[j]);
+        }
     }
 
 exit:
