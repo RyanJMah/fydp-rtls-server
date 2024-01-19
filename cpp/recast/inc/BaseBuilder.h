@@ -103,6 +103,7 @@ public:
 	virtual float getAgentClimb() { return m_agentMaxClimb; }
 	
     void setTileSize(float tileSize);
+    void setAgentRadius(float agentRadius);
     
 	void resetCommonSettings();
 	void handleCommonSettings();

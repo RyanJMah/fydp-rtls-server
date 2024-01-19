@@ -6,7 +6,10 @@
 #include "GL_RecastContext.hpp"
 #include "generate_navmesh.hpp"
 
-bool generate_navmesh(float tile_size, std::string in_file, std::string out_file)
+bool generate_navmesh( float tile_size,
+                       float agent_radius,
+                       std::string in_file,
+                       std::string out_file )
 {
     GL_RecastContext ctx;
 
@@ -25,6 +28,7 @@ bool generate_navmesh(float tile_size, std::string in_file, std::string out_file
 
     navmesh_builder->resetCommonSettings();
     navmesh_builder->setTileSize( tile_size );
+    navmesh_builder->setAgentRadius( agent_radius );
 
     navmesh_builder->handleMeshChanged( input_geom );
     navmesh_builder->handleSettings();
