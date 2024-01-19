@@ -7,7 +7,7 @@
 #include "pathfinder.hpp"
 
 #define MAX_NAVQUERY_SEARCH_NODES       ( 65535 )
-#define PATH_SMOOTHING_FACTOR           ( 0.35F )
+#define PATH_SMOOTHING_FACTOR           ( 0.25F )
 
 /*
  * IMPORTANT: READ ME BEFORE WRITING ANY CODE
