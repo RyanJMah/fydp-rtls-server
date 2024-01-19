@@ -43,31 +43,6 @@ static ALWAYS_INLINE void fix_coordinate_system(float xyz[3])
     std::swap( xyz[1], xyz[2] );
 }
 
-static void getPolyCenter(dtNavMesh* navMesh, dtPolyRef ref, float center[3])
-{
-    center[0] = 0;
-    center[1] = 0;
-    center[2] = 0;
-    
-    const dtMeshTile* tile = 0;
-    const dtPoly* poly = 0;
-    dtStatus status = navMesh->getTileAndPolyByRef(ref, &tile, &poly);
-    if (dtStatusFailed(status))
-        return;
-        
-    for (int i = 0; i < (int)poly->vertCount; ++i)
-    {
-        const float* v = &tile->verts[poly->verts[i]*3];
-        center[0] += v[0];
-        center[1] += v[1];
-        center[2] += v[2];
-    }
-    const float s = 1.0f / poly->vertCount;
-    center[0] *= s;
-    center[1] *= s;
-    center[2] *= s;
-}
-
 ALWAYS_INLINE void GL_Pathfinder::_assign_convenience_ptrs(void)
 {
     this->_p_navmesh   = this->_p_navmesh_handle->m_navMesh;
@@ -183,7 +158,7 @@ GL_Path GL_Pathfinder::find_path(GL_Point start_, GL_Point end_)
     for (int i = 0; i < path_len; i++)
     {
         float xyz[3];
-        getPolyCenter(this->_p_navmesh, this->_path[i], &xyz[0]);
+        this->_p_nav_query->closestPointOnPoly(this->_path[i], end_pos, xyz, 0);
 
         fix_coordinate_system(xyz);
 

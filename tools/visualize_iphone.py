@@ -164,7 +164,7 @@ def update_dot(frame):
             x = p[0]
             y = p[1]
 
-            path_dot, = ax.plot([], [], 'ro', markersize=8)
+            path_dot, = ax.plot([], [], 'go', markersize=8)
             path_dot.set_data(x, y)
 
             g_path.append(path_dot)
