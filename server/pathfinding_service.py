@@ -1,6 +1,8 @@
-import time
 import json
-from typing import Optional
+import queue
+import threading
+import numpy as np
+from typing import Tuple
 
 import logs
 from gl_conf import GL_CONF
@@ -19,18 +21,35 @@ logger = logs.init_logger(__name__)
 
 class PathfindingService(AbstractService):
     def initialize(self):
+        ######################################################################################
         self.pf = cpp.Pathfinder()
 
         self.pf.load_navmesh( GL_CONF.navmesh_path )
         self.pf.set_navmesh_scale( GL_CONF.navmesh_to_real_life_scale )
+        ######################################################################################
 
+        ######################################################################################
         self.mqtt = MqttClient()
 
         self.mqtt.connect(GL_CONF.broker_address, GL_CONF.broker_port)
         self.mqtt.subscribe(SERVER_PATHFINDING_CONFIG_TOPIC, self.handle_config_publish)
         self.mqtt.start_mainloop()
+        ######################################################################################
 
-        self.endpoint = [0, 0, 0]
+        ######################################################################################
+        self.recalc_path = threading.Event()
+        self.recalc_path.clear()
+
+        self.xy_at_last_path_calc = (0, 0)
+
+        self.path_queue: queue.Queue = queue.Queue()
+        ######################################################################################
+
+        ######################################################################################
+        self.endpoint           = [0, 0, 0]
+        self.distance_threshold = 100   # cm
+        ######################################################################################
+
 
     def handle_config_publish(self, client: MqttClient, msg: MqttMsg):
         """
@@ -38,39 +57,112 @@ class PathfindingService(AbstractService):
 
         {
             "endpoint": [x, y, z],
+            "distance_threshold": 200
         }
         """
-        inputs = json.loads( msg.payload.decode() )
+        try:
+            inputs = json.loads( msg.payload.decode() )
+
+        except json.JSONDecodeError:
+            logger.error(f"Failed to decode json from {msg.payload.decode()}")
+            return
 
         if "endpoint" in inputs.keys():
+            old_endpoint = self.endpoint
             self.endpoint = inputs["endpoint"]
+
             logger.info(f"changed endpoint to {self.endpoint}")
+
+            # recalc path if endpoint changes
+            if old_endpoint != self.endpoint:
+                self.recalc_path.set()
+
+
+        if "distance_threshold" in inputs.keys():
+            self.distance_threshold = inputs["distance_threshold"]
+            logger.info(f"changed distance_threshold to {self.distance_threshold}")
+
+
+    def distance_between_points(self, xy1: Tuple[float], xy2: Tuple[float]):
+        # Using NumPy arrays to represent the points
+        point1 = np.array(xy1)
+        point2 = np.array(xy2)
+
+        # Calculate the Euclidean distance using NumPy functions
+        distance = np.linalg.norm(point2 - point1)
+
+        return distance
+
+    def determine_if_recalc_needed(self, curr_xy: Tuple[float]):
+        d = self.distance_between_points(curr_xy, self.xy_at_last_path_calc)
+
+        if d > self.distance_threshold:
+            self.recalc_path.set()
+
+
+    def _find_path(self, start: Tuple[float], end: Tuple[float]):
+        # Calculate the path and put it in the queue
+
+        # start = time.time()
+        self.path_queue.put( self.pf.find_path(start, end) )
+        # logger.info(f"pathfinding runtime: {time.time() - start}")
+
+
+    def async_find_path(self, start: Tuple[float], end: Tuple[float]):
+        # Kick-off a thread to calculate the path
+
+        t = threading.Thread(target = self._find_path, args = (start, end,))
+        t.start()
 
 
     def main(self, in_conn, out_conn):
+        assert(in_conn is not None)
+        # assert(out_conn is not None)
+
         self.initialize()
 
         logger.info("Pathfinding service started")
 
+        # Algorithm:
+        #
+        # 1. Calculate the path from the user's current position to the endpoint, store the user's current position.
+        # 2. If the user's position deviates from the stored position past a certain threshold, recalculate the path.
+        #
+        # Some edgecases:
+        #
+        # 1. If the endpoint changes, recalculate the path
+
         while (1):
             position_data: LocalizationService_OutData = in_conn.recv()     # type: ignore
 
-            # x = position_data.x
-            # y = position_data.y
-            # z = position_data.z
+            x = position_data.x
+            y = position_data.y
+            z = position_data.z
 
-            # # start = time.time()
+            self.determine_if_recalc_needed( (x, y) )
 
-            # path = self.pf.find_path( (x, y, 0), self.endpoint  )
 
-            # # end = time.time()
-            # # logger.info(f"pathfinding runtime: {end - start}")
+            if self.recalc_path.is_set():
+                # Recalculate the path...
+                self.async_find_path( (x, y, 0), self.endpoint )
 
-            # if len(path) == 0:
-            #     continue
 
-            # # Push to debug endpoint
-            # debug_data = DebugEndpointData( tag="path",
-            #                                 data=path )
+            if not self.path_queue.empty():
+                path = self.path_queue.get()
 
-            # DebugEndpointService.push(debug_data)
+                if len(path) == 0:
+                    # try again
+                    continue
+
+                # Save the user's current position
+                self.xy_at_last_path_calc = (x, y)
+
+                # We've successfully recalculated the path, reset the event
+                self.recalc_path.clear()
+
+
+                # Push to debug endpoint
+                debug_data = DebugEndpointData( tag="path",
+                                                data=path )
+                DebugEndpointService.push(debug_data)
+
