@@ -71,10 +71,7 @@ class PathfindingService(AbstractService):
 
             logger.info(f"changed endpoint to {self.endpoint}")
 
-            # recalc path if endpoint changes
-            if old_endpoint != self.endpoint:
-                self.recalc_path.set()
-
+            self.recalc_path.set()
 
         if "distance_threshold" in inputs.keys():
             self.distance_threshold = inputs["distance_threshold"]
@@ -96,13 +93,6 @@ class PathfindingService(AbstractService):
 
         if d > self.distance_threshold:
             self.recalc_path.set()
-
-
-    def async_find_path(self, start: Tuple[float], end: Tuple[float]):
-        # Kick-off a thread to calculate the path
-
-        t = threading.Thread(target = self._find_path, args = (start, end,))
-        t.start()
 
 
     def main(self, in_conn, out_conn):
