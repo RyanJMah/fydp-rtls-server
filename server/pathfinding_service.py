@@ -41,13 +41,11 @@ class PathfindingService(AbstractService):
         self.recalc_path.clear()
 
         self.xy_at_last_path_calc = (0, 0)
-
-        self.path_queue: queue.Queue = queue.Queue()
         ######################################################################################
 
         ######################################################################################
         self.endpoint           = [0, 0, 0]
-        self.distance_threshold = 25   # cm
+        self.distance_threshold = 50   # cm
         ######################################################################################
 
 
@@ -100,14 +98,6 @@ class PathfindingService(AbstractService):
             self.recalc_path.set()
 
 
-    def _find_path(self, start: Tuple[float], end: Tuple[float]):
-        # Calculate the path and put it in the queue
-
-        # start = time.time()
-        self.path_queue.put( self.pf.find_path(start, end) )
-        # logger.info(f"pathfinding runtime: {time.time() - start}")
-
-
     def async_find_path(self, start: Tuple[float], end: Tuple[float]):
         # Kick-off a thread to calculate the path
 
@@ -141,14 +131,10 @@ class PathfindingService(AbstractService):
 
             self.determine_if_recalc_needed( (x, y) )
 
-
             if self.recalc_path.is_set():
                 # Recalculate the path...
-                self.async_find_path( (x, y, 0), self.endpoint )
 
-
-            if not self.path_queue.empty():
-                path = self.path_queue.get()
+                path = self.pf.find_path( (x, y, 0), self.endpoint )
 
                 if len(path) == 0:
                     # try again
