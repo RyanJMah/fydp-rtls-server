@@ -42,7 +42,7 @@ class DebugEndpointService(AbstractService):
             while (1):
                 data = g_queue.get()
 
-                json_payload = json.dumps(data , option=json.OPT_SERIALIZE_NUMPY)
+                json_payload = json.dumps(data, option=json.OPT_SERIALIZE_NUMPY)
 
                 payload_len = len(json_payload).to_bytes(4, "big")
 
