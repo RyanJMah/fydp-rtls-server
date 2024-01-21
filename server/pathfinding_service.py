@@ -1,5 +1,5 @@
+import time
 import json
-import queue
 import threading
 import numpy as np
 import multiprocessing as mp
@@ -20,11 +20,13 @@ from debug_endpoint_service import DebugEndpointService, DebugEndpointData
 
 logger = logs.init_logger(__name__)
 
-g_path: List[ Tuple[float, float, float] ] = []
-g_path_mutex = mp.Lock()
 
 class _PathfindingWorkerSlave(AbstractService):
     # Handles the expensive pathfinding calculations
+
+    def __init__(self, in_conn, out_conn, daemon):
+        super().__init__(in_conn, out_conn, daemon)
+        self.initialize()
 
     def initialize(self):
         self.pf = cpp.Pathfinder()
@@ -32,13 +34,18 @@ class _PathfindingWorkerSlave(AbstractService):
         self.pf.load_navmesh( GL_CONF.navmesh_path )
         self.pf.set_navmesh_scale( GL_CONF.navmesh_to_real_life_scale )
 
+        self.out_queue = mp.Queue(-1)   # using queue instead of pipe so we can use non-blocking polling
+
+
+    def new_path_available(self) -> bool:
+        return not self.out_queue.empty()
+    
+    def get_new_path(self) -> List[ Tuple[float, float] ]:
+        return self.out_queue.get()
+
 
     def main(self, in_conn, out_conn):
         assert(in_conn is not None)
-
-        global g_path, g_path_mutex
-
-        self.initialize()
 
         while (1):
             start_xyz, end_xyz = in_conn.recv()     # type: ignore
@@ -49,12 +56,15 @@ class _PathfindingWorkerSlave(AbstractService):
                 # try again
                 continue
 
-            with g_path_mutex:
-                g_path = [(p[0], p[1]) for p in path]
+            # Not using the z
+            path = [(p[0], p[1],) for p in path]
+
+            # Push to the main service
+            self.out_queue.put(path)
 
             # Push to debug endpoint
             debug_data = DebugEndpointData( tag="path",
-                                            data=g_path )
+                                            data=path )
             DebugEndpointService.push(debug_data)
 
 
@@ -66,8 +76,8 @@ class PathfindingService(AbstractService):
         ######################################################################################
         self._to_slave_conn1, self._to_slave_conn2 = mp.Pipe()
 
-        self._worker = _PathfindingWorkerSlave(in_conn=self._to_slave_conn2, out_conn=None, daemon=True)
-        self._worker.start()
+        self.worker = _PathfindingWorkerSlave(in_conn=self._to_slave_conn2, out_conn=None, daemon=True)
+        self.worker.start()
         ######################################################################################
 
         ######################################################################################
@@ -84,7 +94,9 @@ class PathfindingService(AbstractService):
 
         self.xy_at_last_path_calc = (0, 0)
 
-        self.point_indx_to_nav_to = 0
+        # self.point_indx_to_nav_to = 0
+
+        self.path: List[ Tuple[float, float] ] = []
         ######################################################################################
 
         ######################################################################################
@@ -153,6 +165,9 @@ class PathfindingService(AbstractService):
         # Convert the tangent vector to an angle (heading)
         target_heading = np.arctan2(tangent_vector[1], tangent_vector[0])
 
+        # Convert the angle from radians to degrees
+        target_heading = np.degrees(target_heading)
+
         return target_heading
 
     def find_closest_point_on_path(self, current_position):
@@ -188,8 +203,6 @@ class PathfindingService(AbstractService):
         assert(in_conn is not None)
         # assert(out_conn is not None)
 
-        global g_path, g_path_mutex
-
         self.initialize()
 
         logger.info("Pathfinding service started")
@@ -223,18 +236,17 @@ class PathfindingService(AbstractService):
                 # We've successfully recalcd the path, reset the event
                 self.recalc_path.clear()
 
+            # Update from worker if there's a new path
+            if self.worker.new_path_available():
+                self.path = self.worker.get_new_path()
 
-            # Doing this weird continue so we don't have to hold the lock for the rest of the whole loop
-            with g_path_mutex:
-                if len(g_path) == 0:
-                    continue
+            # # Use the path to calculate the target heading
+            # if len(self.path) > 0:
+            #     target_heading = self.calc_target_heading( x, y )
 
-            target_heading = self.calc_target_heading( (x, y) )
+            #     # logger.error("target_heading: %f" % target_heading)
 
-            # if target_point_indx != self.point_indx_to_nav_to:
-            #     self.point_indx_to_nav_to = target_point_indx
-
-            #     debug_data = DebugEndpointData( tag="target_point",
-            #                                     data=target_point_indx )
+            #     debug_data = DebugEndpointData( tag="target_heading",
+            #                                     data=target_heading )
             #     DebugEndpointService.push(debug_data)
 

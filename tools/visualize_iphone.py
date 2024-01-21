@@ -71,8 +71,6 @@ sock = connect_to_server()
 g_path: List[ Tuple[float, float] ] = []
 g_path_ax_dots: List[Any] = []
 
-g_target_heading: float = 0.0
-
 g_x = 0
 g_y = 0
 
@@ -81,7 +79,6 @@ def update_dot(frame):
     global sock
     global g_path, g_path_ax_dots
     global g_x, g_y
-    global g_target_heading
 
     data = receive_debug_packet(sock)
 
@@ -182,14 +179,7 @@ def update_dot(frame):
             g_path_ax_dots.append(path_dot)
 
     elif tag == "target_heading":
-        g_target_heading = data
-
-
-def update_path_line_thread():
-    global g_target_heading, g_x, g_y
-
-    while (1):
-        target_heading = g_target_heading + 90  # 0 degrees should point North, not East
+        target_heading = data
 
         # Draw line from the user's current position to some point in the direction of the target heading
         path_line_x0 = g_x
@@ -200,9 +190,8 @@ def update_path_line_thread():
         path_line_y1 = g_y + line_length * np.sin(np.deg2rad(target_heading))
 
         path_line.set_data([path_line_x0, path_line_x1], [path_line_y0, path_line_y1])
-    
 
-        time.sleep(GL_CONF.update_period_secs)
+
 
 
 # Create a figure and axis
@@ -271,10 +260,6 @@ label = ax.text(FLOORPLAN_WIDTH/2, FLOORPLAN_HEIGHT - 20, "", ha='center', va='c
 
 # Create the animation
 animation = FuncAnimation(fig, update_dot, frames=range(200), interval=100)
-
-# Create a thread to update the path line
-thread = threading.Thread(target=update_path_line_thread)
-thread.start()
 
 def run():
     plt.show()
