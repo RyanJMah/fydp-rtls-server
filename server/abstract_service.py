@@ -3,13 +3,13 @@ from typing import Any
 from abc import ABC, abstractmethod
 
 class AbstractService(ABC):
-    def __init__(self, in_conn: Any, out_conn: Any):
+    def __init__(self, in_conn: Any, out_conn: Any, daemon: bool = False):
         self.in_conn = in_conn
         self.out_conn = out_conn
 
         self._process = mp.Process( target=self._supervisor,
                                     args=(self.in_conn, self.out_conn,),
-                                    daemon=True )
+                                    daemon=daemon )
 
     def _supervisor(self, in_conn: Any, out_conn: Any):
         while (1):

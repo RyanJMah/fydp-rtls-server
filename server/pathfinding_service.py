@@ -2,7 +2,8 @@ import json
 import queue
 import threading
 import numpy as np
-from typing import Tuple
+import multiprocessing as mp
+from typing import Tuple, List
 
 import logs
 from gl_conf import GL_CONF
@@ -19,13 +20,54 @@ from debug_endpoint_service import DebugEndpointService, DebugEndpointData
 
 logger = logs.init_logger(__name__)
 
-class PathfindingService(AbstractService):
+g_path: List[ Tuple[float, float, float] ] = []
+g_path_mutex = mp.Lock()
+
+class _PathfindingWorkerSlave(AbstractService):
+    # Handles the expensive pathfinding calculations
+
     def initialize(self):
-        ######################################################################################
         self.pf = cpp.Pathfinder()
 
         self.pf.load_navmesh( GL_CONF.navmesh_path )
         self.pf.set_navmesh_scale( GL_CONF.navmesh_to_real_life_scale )
+
+
+    def main(self, in_conn, out_conn):
+        assert(in_conn is not None)
+
+        global g_path, g_path_mutex
+
+        self.initialize()
+
+        while (1):
+            start_xyz, end_xyz = in_conn.recv()     # type: ignore
+
+            path = self.pf.find_path( start_xyz, end_xyz )
+
+            if len(path) == 0:
+                # try again
+                continue
+
+            with g_path_mutex:
+                g_path = path
+
+            # Push to debug endpoint
+            debug_data = DebugEndpointData( tag="path",
+                                            data=path )
+            DebugEndpointService.push(debug_data)
+
+
+class PathfindingService(AbstractService):
+    def start_worker_pathfinding(self, start_xyz: Tuple[float, float, float], end_xyz: Tuple[float, float, float]):
+        self._to_slave_conn1.send( (start_xyz, end_xyz,) )
+
+    def initialize(self):
+        ######################################################################################
+        self._to_slave_conn1, self._to_slave_conn2 = mp.Pipe()
+
+        self._worker = _PathfindingWorkerSlave(in_conn=self._to_slave_conn2, out_conn=None, daemon=True)
+        self._worker.start()
         ######################################################################################
 
         ######################################################################################
@@ -41,6 +83,8 @@ class PathfindingService(AbstractService):
         self.recalc_path.clear()
 
         self.xy_at_last_path_calc = (0, 0)
+
+        self.point_indx_to_nav_to = 0
         ######################################################################################
 
         ######################################################################################
@@ -95,9 +139,22 @@ class PathfindingService(AbstractService):
             self.recalc_path.set()
 
 
+    def select_point_to_nav_to(self, curr_xy: Tuple[float, float]) -> int:
+        # Return the farthest point in the path that is within the distance threshold
+        for i, point in enumerate(self.path):
+            d = self.distance_between_points( curr_xy, (point[0], point[1]) )
+
+            if d >= self.distance_threshold:
+                return i
+        
+        return 0
+
+
     def main(self, in_conn, out_conn):
         assert(in_conn is not None)
         # assert(out_conn is not None)
+
+        global g_path
 
         self.initialize()
 
@@ -121,14 +178,10 @@ class PathfindingService(AbstractService):
 
             self.determine_if_recalc_needed( (x, y) )
 
+            # Recalculate the path if needed
             if self.recalc_path.is_set():
-                # Recalculate the path...
-
-                path = self.pf.find_path( (x, y, 0), self.endpoint )
-
-                if len(path) == 0:
-                    # try again
-                    continue
+                # Let the worker handle the pathfinding
+                self.start_worker_pathfinding( (x, y, 0), self.endpoint )
 
                 # Save the user's current position
                 self.xy_at_last_path_calc = (x, y)
@@ -136,9 +189,16 @@ class PathfindingService(AbstractService):
                 # We've successfully recalculated the path, reset the event
                 self.recalc_path.clear()
 
+            with g_path_mutex:
+                if len(g_path) == 0:
+                    continue
 
-                # Push to debug endpoint
-                debug_data = DebugEndpointData( tag="path",
-                                                data=path )
-                DebugEndpointService.push(debug_data)
+                target_point_indx = self.select_point_to_nav_to( (x, y) )
+
+                if target_point_indx != self.point_indx_to_nav_to:
+                    self.point_indx_to_nav_to = target_point_indx
+
+                    debug_data = DebugEndpointData( tag="target_point",
+                                                    data=target_point_indx )
+                    DebugEndpointService.push(debug_data)
 

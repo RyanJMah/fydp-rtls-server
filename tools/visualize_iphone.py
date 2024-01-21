@@ -7,7 +7,7 @@ import queue
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-from typing import List
+from typing import List, Tuple, Any
 
 # suppress the matplotlib warning
 import warnings
@@ -68,11 +68,18 @@ def receive_debug_packet(sock) -> bytes:
 
 sock = connect_to_server()
 
-g_path: List[ List[float] ] = []
+g_path: List[ Tuple[float, float] ] = []
+g_path_ax_dots: List[Any] = []
+g_path_indx = 0
+
+g_x = 0
+g_y = 0
 
 # Function to update the position of the dot in the plot
 def update_dot(frame):
     global sock
+    global g_path, g_path_ax_dots, g_path_indx
+    global g_x, g_y
 
     data = receive_debug_packet(sock)
 
@@ -91,6 +98,9 @@ def update_dot(frame):
 
     if tag == "loc_state":
         data = LocalizationService_State(**data)
+
+        g_x = data.x
+        g_y = data.y
 
         x = data.x
         y = data.y
@@ -152,22 +162,45 @@ def update_dot(frame):
         label.set_text(f"X: {x:.2f}, Y: {y:.2f}, Z: {z:.2f}, Theta: {theta:.2f}")
 
     elif tag == "path":
-        global g_path
+        g_path = data
 
         # clear the previous path dots
-        for p in g_path:
+        for p in g_path_ax_dots:
             p.remove()
 
-        g_path.clear()
+        g_path_ax_dots.clear()
 
-        for p in data:
+        for p in g_path:
             x = p[0]
             y = p[1]
 
             path_dot, = ax.plot([], [], 'go', markersize=8)
             path_dot.set_data(x, y)
 
-            g_path.append(path_dot)
+            g_path_ax_dots.append(path_dot)
+
+    elif tag == "target_point":
+        g_path_indx = data
+
+
+def update_path_line_thread():
+    global g_path, g_path_indx
+
+    while (1):
+        if ( len(g_path) != 0 ):
+            try:
+                # Draw line from the user's current position to the first path point
+                path_line_x0 = g_x
+                path_line_y0 = g_y
+                path_line_x1 = g_path[g_path_indx][0]
+                path_line_y1 = g_path[g_path_indx][1]
+
+                path_line.set_data([path_line_x0, path_line_x1], [path_line_y0, path_line_y1])
+            
+            except IndexError:
+                pass
+
+        time.sleep(GL_CONF.update_period_secs)
 
 
 # Create a figure and axis
@@ -199,6 +232,9 @@ table_dot2.set_data( *TABLE_DOT2 )
 table_dot3, = ax.plot([], [], 'bo', markersize=8)
 table_dot3.set_data( *TABLE_DOT3 )
 
+
+path_line = plt.Line2D([], [], color='g', linewidth=2)
+ax.add_line(path_line)
 
 # path_dot1 = plt.Circle([138, 138], 50, color='g', fill=False)
 # ax.add_patch(path_dot1)
@@ -233,6 +269,10 @@ label = ax.text(FLOORPLAN_WIDTH/2, FLOORPLAN_HEIGHT - 20, "", ha='center', va='c
 
 # Create the animation
 animation = FuncAnimation(fig, update_dot, frames=range(200), interval=100)
+
+# Create a thread to update the path line
+thread = threading.Thread(target=update_path_line_thread)
+thread.start()
 
 def run():
     plt.show()
