@@ -1,6 +1,6 @@
 import socket
-import json
 import multiprocessing as mp
+import orjson as json   # fast json library
 from dataclasses import dataclass, asdict
 from typing import Any
 
@@ -41,7 +41,7 @@ class DebugEndpointService(AbstractService):
             while (1):
                 data = g_queue.get()
 
-                json_payload = json.dumps( asdict(data) ).encode()
+                json_payload = json.dumps( asdict(data) , option=json.OPT_SERIALIZE_NUMPY )
 
                 payload_len = len(json_payload).to_bytes(4, "big")
 
