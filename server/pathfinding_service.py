@@ -50,11 +50,11 @@ class _PathfindingWorkerSlave(AbstractService):
                 continue
 
             with g_path_mutex:
-                g_path = path
+                g_path = [(p[0], p[1]) for p in path]
 
             # Push to debug endpoint
             debug_data = DebugEndpointData( tag="path",
-                                            data=path )
+                                            data=g_path )
             DebugEndpointService.push(debug_data)
 
 
@@ -133,28 +133,62 @@ class PathfindingService(AbstractService):
         return distance
 
     def determine_if_recalc_needed(self, curr_xy: Tuple[float]):
-        d = self.distance_between_points(curr_xy, self.xy_at_last_path_calc)
+        # d = self.distance_between_points(curr_xy, self.xy_at_last_path_calc)
 
-        if d > self.distance_threshold:
-            self.recalc_path.set()
+        # if d > self.distance_threshold:
+        #     self.recalc_path.set()
 
+        return
 
-    def select_point_to_nav_to(self, curr_xy: Tuple[float, float]) -> int:
-        # Return the farthest point in the path that is within the distance threshold
-        for i, point in enumerate(self.path):
-            d = self.distance_between_points( curr_xy, (point[0], point[1]) )
+    def calc_target_heading(self, x, y):
+        if not self.path:
+            return 0.0  # Default heading if no path is available
 
-            if d >= self.distance_threshold:
-                return i
-        
-        return 0
+        # Find the closest point on the path
+        closest_point, closest_index = self.find_closest_point_on_path((x, y))
+
+        # Calculate the tangent vector at the closest point
+        tangent_vector = self.calc_tangent_vector(closest_index)
+
+        # Convert the tangent vector to an angle (heading)
+        target_heading = np.arctan2(tangent_vector[1], tangent_vector[0])
+
+        return target_heading
+
+    def find_closest_point_on_path(self, current_position):
+        # Find the index of the closest point on the path
+        closest_index = np.argmin(
+            [self.distance_between_points(current_position, point) for point in self.path]
+        )
+
+        # Return the closest point and its index
+        return self.path[closest_index], closest_index
+
+    def calc_tangent_vector(self, index):
+        # Calculate the tangent vector at a given index on the path
+        if index == 0:
+            # Use the next point to calc the tangent at the beginning of the path
+            tangent_vector = np.array(self.path[index + 1]) - np.array(self.path[index])
+        elif index == len(self.path) - 1:
+            # Use the previous point to calc the tangent at the end of the path
+            tangent_vector = np.array(self.path[index]) - np.array(self.path[index - 1])
+        else:
+            # Use the average of the tangents at the previous and next points
+            tangent_vector = 0.5 * (
+                np.array(self.path[index + 1]) - np.array(self.path[index - 1])
+            )
+
+        # Normalize the tangent vector
+        tangent_vector /= np.linalg.norm(tangent_vector)
+
+        return tangent_vector
 
 
     def main(self, in_conn, out_conn):
         assert(in_conn is not None)
         # assert(out_conn is not None)
 
-        global g_path
+        global g_path, g_path_mutex
 
         self.initialize()
 
@@ -163,22 +197,22 @@ class PathfindingService(AbstractService):
         # Algorithm:
         #
         # 1. Calculate the path from the user's current position to the endpoint, store the user's current position.
-        # 2. If the user's position deviates from the stored position past a certain threshold, recalculate the path.
+        # 2. If the user's position deviates from the stored position past a certain threshold, recalc the path.
         #
         # Some edgecases:
         #
-        # 1. If the endpoint changes, recalculate the path
+        # 1. If the endpoint changes, recalc the path
 
         while (1):
             position_data: LocalizationService_OutData = in_conn.recv()     # type: ignore
 
             x = position_data.x
             y = position_data.y
-            z = position_data.z
+            # z = position_data.z
 
             self.determine_if_recalc_needed( (x, y) )
 
-            # Recalculate the path if needed
+            # Recalc the path if needed
             if self.recalc_path.is_set():
                 # Let the worker handle the pathfinding
                 self.start_worker_pathfinding( (x, y, 0), self.endpoint )
@@ -186,19 +220,21 @@ class PathfindingService(AbstractService):
                 # Save the user's current position
                 self.xy_at_last_path_calc = (x, y)
 
-                # We've successfully recalculated the path, reset the event
+                # We've successfully recalcd the path, reset the event
                 self.recalc_path.clear()
 
+
+            # Doing this weird continue so we don't have to hold the lock for the rest of the whole loop
             with g_path_mutex:
                 if len(g_path) == 0:
                     continue
 
-                target_point_indx = self.select_point_to_nav_to( (x, y) )
+            target_heading = self.calc_target_heading( (x, y) )
 
-                if target_point_indx != self.point_indx_to_nav_to:
-                    self.point_indx_to_nav_to = target_point_indx
+            # if target_point_indx != self.point_indx_to_nav_to:
+            #     self.point_indx_to_nav_to = target_point_indx
 
-                    debug_data = DebugEndpointData( tag="target_point",
-                                                    data=target_point_indx )
-                    DebugEndpointService.push(debug_data)
+            #     debug_data = DebugEndpointData( tag="target_point",
+            #                                     data=target_point_indx )
+            #     DebugEndpointService.push(debug_data)
 

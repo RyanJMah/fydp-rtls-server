@@ -70,7 +70,8 @@ sock = connect_to_server()
 
 g_path: List[ Tuple[float, float] ] = []
 g_path_ax_dots: List[Any] = []
-g_path_indx = 0
+
+g_target_heading: float = 0.0
 
 g_x = 0
 g_y = 0
@@ -78,8 +79,9 @@ g_y = 0
 # Function to update the position of the dot in the plot
 def update_dot(frame):
     global sock
-    global g_path, g_path_ax_dots, g_path_indx
+    global g_path, g_path_ax_dots
     global g_x, g_y
+    global g_target_heading
 
     data = receive_debug_packet(sock)
 
@@ -174,31 +176,31 @@ def update_dot(frame):
             x = p[0]
             y = p[1]
 
-            path_dot, = ax.plot([], [], 'go', markersize=8)
+            path_dot, = ax.plot([], [], 'yo', markersize=8)
             path_dot.set_data(x, y)
 
             g_path_ax_dots.append(path_dot)
 
-    elif tag == "target_point":
-        g_path_indx = data
+    elif tag == "target_heading":
+        g_target_heading = data
 
 
 def update_path_line_thread():
-    global g_path, g_path_indx
+    global g_target_heading, g_x, g_y
 
     while (1):
-        if ( len(g_path) != 0 ):
-            try:
-                # Draw line from the user's current position to the first path point
-                path_line_x0 = g_x
-                path_line_y0 = g_y
-                path_line_x1 = g_path[g_path_indx][0]
-                path_line_y1 = g_path[g_path_indx][1]
+        target_heading = g_target_heading + 90  # 0 degrees should point North, not East
 
-                path_line.set_data([path_line_x0, path_line_x1], [path_line_y0, path_line_y1])
-            
-            except IndexError:
-                pass
+        # Draw line from the user's current position to some point in the direction of the target heading
+        path_line_x0 = g_x
+        path_line_y0 = g_y
+
+        line_length = 100
+        path_line_x1 = g_x + line_length * np.cos(np.deg2rad(target_heading))
+        path_line_y1 = g_y + line_length * np.sin(np.deg2rad(target_heading))
+
+        path_line.set_data([path_line_x0, path_line_x1], [path_line_y0, path_line_y1])
+    
 
         time.sleep(GL_CONF.update_period_secs)
 
