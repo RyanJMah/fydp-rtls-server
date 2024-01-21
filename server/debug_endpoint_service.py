@@ -22,7 +22,10 @@ class DebugEndpointService(AbstractService):
     @staticmethod
     def push(data: DebugEndpointData):
         global g_queue
-        g_queue.put(data)
+
+        if GL_CONF.debug_endpoint.enabled:
+            g_queue.put(data)
+
 
     def accept_client(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
