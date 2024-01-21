@@ -240,13 +240,13 @@ class PathfindingService(AbstractService):
             if self.worker.new_path_available():
                 self.path = self.worker.get_new_path()
 
-            # # Use the path to calculate the target heading
-            # if len(self.path) > 0:
-            #     target_heading = self.calc_target_heading( x, y )
+            # Use the path to calculate the target heading
+            if len(self.path) > 0:
+                target_heading = self.calc_target_heading( x, y )
 
-            #     # logger.error("target_heading: %f" % target_heading)
+                # logger.error("target_heading: %f" % target_heading)
 
-            #     debug_data = DebugEndpointData( tag="target_heading",
-            #                                     data=target_heading )
-            #     DebugEndpointService.push(debug_data)
+                # debug_data = DebugEndpointData( tag="target_heading",
+                #                                 data=target_heading )
+                # DebugEndpointService.push(debug_data)
 
