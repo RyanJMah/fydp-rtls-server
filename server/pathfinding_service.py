@@ -246,7 +246,7 @@ class PathfindingService(AbstractService):
 
                 # logger.error("target_heading: %f" % target_heading)
 
-                # debug_data = DebugEndpointData( tag="target_heading",
-                #                                 data=target_heading )
-                # DebugEndpointService.push(debug_data)
+                debug_data = DebugEndpointData( tag="target_heading",
+                                                data=target_heading )
+                DebugEndpointService.push(debug_data)
 

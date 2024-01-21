@@ -1,10 +1,10 @@
 import time
 import sys
 import socket
-import json
 import threading
 import queue
 import numpy as np
+import orjson as json
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from typing import List, Tuple, Any
@@ -259,7 +259,7 @@ ax.set_aspect("auto")
 label = ax.text(FLOORPLAN_WIDTH/2, FLOORPLAN_HEIGHT - 20, "", ha='center', va='center', fontsize=14, color='r')
 
 # Create the animation
-animation = FuncAnimation(fig, update_dot, frames=range(200), interval=100)
+animation = FuncAnimation(fig, update_dot, frames=range(200), interval=10)
 
 def run():
     plt.show()
