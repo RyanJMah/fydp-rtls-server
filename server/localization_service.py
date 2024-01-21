@@ -8,7 +8,7 @@ from gl_conf import GL_CONF
 from least_squares import weighted_linearized_lse
 from abstract_service import AbstractService
 from data_ingestion_service import DIS_OutData
-from debug_endpoint_service import DebugEndpointService, DebugEndpointData
+from outbound_data_service import OutboundDataService, OutboundData
 
 from KalmanFilter import KalmanFilter as kf
 # from KalmanFilter import initConstVelocityKF as initConstVel
@@ -18,10 +18,10 @@ logger = logs.init_logger(__name__)
 
 @dataclass
 class LocalizationService_State:
-    x         : float = 0.0
-    y         : float = 0.0
-    z         : float = 0.0
-    angle_deg : float = 0.0
+    x      : float = 0.0
+    y      : float = 0.0
+    z      : float = 0.0
+    heading: float = 0.0
 
     r0: float = 0.0
     r1: float = 0.0
@@ -49,10 +49,10 @@ class LocalizationService_State:
 
 @dataclass
 class LocalizationService_OutData:
-    x         : float = 0.0
-    y         : float = 0.0
-    z         : float = 0.0
-    angle_deg : float = 0.0
+    x      : float = 0.0
+    y      : float = 0.0
+    z      : float = 0.0
+    heading: float = 0.0
 
 
 # global constants for convenience
@@ -340,19 +340,23 @@ class LocalizationService(AbstractService):
             self.out_data.x         = kf_x
             self.out_data.y         = kf_y
             self.out_data.z         = kf_z
-            self.out_data.angle_deg = -1    # TODO
+            self.out_data.heading = -1    # TODO
 
             # Send data to pathfinding service
             out_conn.send( self.out_data )
+
+            # Push data to app
+            app_data = OutboundData( tag="position",
+                                     data=self.out_data )
+            OutboundDataService.push(app_data, is_debug_data=False)
 
             # Copy data to debug variable
             self.loc_state.x         = kf_x
             self.loc_state.y         = kf_y
             self.loc_state.z         = kf_z
-            self.loc_state.angle_deg = -1    # TODO
+            self.loc_state.heading = -1    # TODO
 
             # Push data to debug endpoint
-            debug_endpoint_data = DebugEndpointData( tag="loc_state",
-                                                     data=self.loc_state )
-
-            DebugEndpointService.push(debug_endpoint_data)
+            debug_endpoint_data = OutboundData( tag="loc_state",
+                                                data=self.loc_state )
+            OutboundDataService.push(debug_endpoint_data, is_debug_data=True)

@@ -16,7 +16,7 @@ from app_mqtt import SERVER_PATHFINDING_CONFIG_TOPIC
 
 from abstract_service import AbstractService
 from localization_service import LocalizationService_OutData
-from debug_endpoint_service import DebugEndpointService, DebugEndpointData
+from outbound_data_service import OutboundDataService, OutboundData
 
 logger = logs.init_logger(__name__)
 
@@ -62,10 +62,13 @@ class _PathfindingWorkerSlave(AbstractService):
             # Push to the main service
             self.out_queue.put(path)
 
-            # Push to debug endpoint
-            debug_data = DebugEndpointData( tag="path",
-                                            data=path )
-            DebugEndpointService.push(debug_data)
+            # Push to application and debug endpoint
+            outbound_data = OutboundData( tag="path",
+                                          data=path )
+
+            OutboundDataService.push(outbound_data, is_debug_data=False)
+            OutboundDataService.push(outbound_data, is_debug_data=True)
+
 
 
 class PathfindingService(AbstractService):
@@ -244,9 +247,11 @@ class PathfindingService(AbstractService):
             if len(self.path) > 0:
                 target_heading = self.calc_target_heading( x, y )
 
-                # logger.error("target_heading: %f" % target_heading)
 
-                debug_data = DebugEndpointData( tag="target_heading",
-                                                data=target_heading )
-                DebugEndpointService.push(debug_data)
+                outbound_data = OutboundData( tag="target_heading",
+                                              data=target_heading )
+
+                # Push to debug endpoint + app
+                OutboundDataService.push(outbound_data, is_debug_data=False)
+                OutboundDataService.push(outbound_data, is_debug_data=True)
 

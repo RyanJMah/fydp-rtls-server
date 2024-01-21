@@ -3,7 +3,7 @@ import multiprocessing as mp
 
 import logs
 from heartbeat_service import HeartbeatService
-from debug_endpoint_service import DebugEndpointService
+from outbound_data_service import OutboundDataService
 from data_ingestion_service import DataIngestionService
 from localization_service import LocalizationService
 from pathfinding_service import PathfindingService
@@ -18,9 +18,9 @@ def main():
     logger.info("Starting rtls server...")
 
     try:
-        # start debug endpoint
-        debug_endpoint = DebugEndpointService(in_conn=None, out_conn=None)
-        debug_endpoint.start()
+        # start outbound data service
+        out = OutboundDataService( in_conn=None, out_conn=None )
+        out.start()
 
         # start heartbeat service
         hb = HeartbeatService( in_conn=None, out_conn=None )
@@ -43,7 +43,7 @@ def main():
         loc.start()
         pf.start()
 
-        debug_endpoint.join()
+        out.join()
         hb.join()
         dis.join()
         loc.join()
@@ -57,7 +57,7 @@ def main():
     except KeyboardInterrupt:
         print("Terminating...")
 
-        debug_endpoint.kill()
+        out.kill()
         hb.kill()
 
         dis.kill()

@@ -8,14 +8,15 @@ ANCHOR_NI_CONFIG_TOPIC   = "gl/anchor/<aid>/conn/ni_config"
 ANCHOR_CONFIG_BASE_TOPIC = "gl/anchor/<aid>/config"
 ANCHOR_DFU_TOPIC         = "gl/anchor/<aid>/config"
 
+IOS_BASE_TOPIC      = "gl/user/<uid>"
 IOS_HEARTBEAT_TOPIC = "gl/user/<uid>/heartbeat"
 IOS_DATA_TOPIC      = "gl/user/<uid>/data/<aid>"
-IOS_POSITION_TOPIC  = "gl/user/<uid>/position"
-IOS_PATHING_TOPIC   = "gl/user/<id>/pathing"
 
 SERVER_HEARTBEAT_TOPIC          = "gl/server/heartbeat"
 SERVER_PATHFINDING_CONFIG_TOPIC = "gl/server/pathfinding/config"
 
+def insert_uid(topic: str, uid: str) -> str:
+    return topic.replace("<uid>", uid)
 
 class Struct(Structure):
     def __str__(self):

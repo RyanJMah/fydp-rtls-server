@@ -104,7 +104,7 @@ def update_dot(frame):
         x = data.x
         y = data.y
         z = data.z
-        theta = data.angle_deg
+        theta = data.heading
 
         r0 = data.r0
         r1 = data.r1
@@ -259,7 +259,7 @@ ax.set_aspect("auto")
 label = ax.text(FLOORPLAN_WIDTH/2, FLOORPLAN_HEIGHT - 20, "", ha='center', va='center', fontsize=14, color='r')
 
 # Create the animation
-animation = FuncAnimation(fig, update_dot, frames=range(200), interval=10)
+animation = FuncAnimation(fig, update_dot, frames=range(200), interval=5)
 
 def run():
     plt.show()
