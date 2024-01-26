@@ -163,9 +163,13 @@ class PathfindingService(AbstractService):
         if len(self.path) == 0:
             return
 
-        # d = self.calc_perpendicular_distance(curr_xy[0], curr_xy[1])
-        _, _, d = self.find_closest_point_on_path(curr_xy)
-        # d = self.distance_between_points(curr_xy, self.xy_at_last_path_calc)
+        try:
+            d = self.calc_perpendicular_distance(curr_xy[0], curr_xy[1])
+        
+        except ZeroDivisionError as e:
+            logger.error(f"ZeroDivisionError in calc_perpendicular_distance: {e}")
+            _, _, d = self.find_closest_point_on_path(curr_xy)
+
 
         if d > self.distance_threshold:
             self.recalc_path.set()
@@ -235,6 +239,12 @@ class PathfindingService(AbstractService):
 
 
         # Interpolate line from xp1, yp1 to xp2, yp2 ==> y1 = m*x + b1
+
+        if xp2 == xp1:
+            # Handle the case where the line is vertical
+            perpendicular_distance = np.abs(xu - xp1)
+            return perpendicular_distance
+
         m  = (yp2 - yp1) / (xp2 - xp1)
         b1 = yp1 - m*xp1
 
