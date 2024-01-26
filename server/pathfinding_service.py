@@ -14,12 +14,15 @@ import lib_pathfinding as cpp     # type: ignore
 from mqtt_client import MqttClient, MqttMsg
 from app_mqtt import SERVER_PATHFINDING_CONFIG_TOPIC
 
+from lpf import LowPassFilter
+
 from abstract_service import AbstractService
 from localization_service import LocalizationService_OutData
 from outbound_data_service import OutboundDataService, OutboundData
 
 logger = logs.init_logger(__name__)
 
+TARGET_HEADING_TIME_CONSTANT = 0.15
 
 class _PathfindingWorkerSlave(AbstractService):
     # Handles the expensive pathfinding calculations
@@ -102,6 +105,8 @@ class PathfindingService(AbstractService):
         # self.point_indx_to_nav_to = 0
 
         self.path: List[ Tuple[float, float] ] = []
+
+        self.target_heading_filter = LowPassFilter(tau=TARGET_HEADING_TIME_CONSTANT)
         ######################################################################################
 
         ######################################################################################
@@ -166,23 +171,6 @@ class PathfindingService(AbstractService):
 
         return
 
-    def calc_target_heading(self, x, y):
-        if not self.path:
-            return 0.0  # Default heading if no path is available
-
-        # Find the closest point on the path
-        closest_point, closest_index, _ = self.find_closest_point_on_path((x, y))
-
-        # Calculate the tangent vector at the closest point
-        tangent_vector = self.calc_tangent_vector(closest_index)
-
-        # Convert the tangent vector to an angle (heading)
-        target_heading = np.arctan2(tangent_vector[1], tangent_vector[0])
-
-        # Convert the angle from radians to degrees
-        target_heading = np.degrees(target_heading)
-
-        return target_heading
 
     def find_closest_point_on_path(self, current_position):
         # Find the index of the closest point on the path
@@ -209,6 +197,38 @@ class PathfindingService(AbstractService):
         tangent_vector /= np.linalg.norm(tangent_vector)
 
         return tangent_vector
+
+    def calc_tangent_angle(self, x, y):
+        if not self.path:
+            return 0.0  # Default heading if no path is available
+
+        # Find the closest point on the path
+        closest_point, closest_index, _ = self.find_closest_point_on_path((x, y))
+
+        # Calculate the tangent vector at the closest point
+        tangent_vector = self.calc_tangent_vector(closest_index)
+
+        # Convert the tangent vector to an angle (heading)
+        target_heading = np.arctan2(tangent_vector[1], tangent_vector[0])
+
+        # Convert the angle from radians to degrees
+        target_heading = np.degrees(target_heading)
+
+        return target_heading
+
+
+    def calc_target_heading(self, x, y):
+        # target heading is the tangent angle + a steering term output
+        # from the PID controller (to correct perpendicular distance error)
+
+        tangent_angle = self.calc_tangent_angle(x, y)
+
+        # for now
+        steering_term = 0
+
+        target_heading = tangent_angle + steering_term
+
+        return target_heading
 
 
     def main(self, in_conn, out_conn):
@@ -245,8 +265,7 @@ class PathfindingService(AbstractService):
 
             # Use the path to calculate the target heading
             if len(self.path) > 0:
-                target_heading = self.calc_target_heading( x, y )
-
+                target_heading = self.target_heading_filter.exec( self.calc_target_heading( x, y ) )
 
                 outbound_data = OutboundData( tag="target_heading",
                                               data=target_heading )
