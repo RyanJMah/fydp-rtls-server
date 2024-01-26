@@ -163,6 +163,7 @@ class PathfindingService(AbstractService):
         if len(self.path) == 0:
             return
 
+        # d = self.calc_perpendicular_distance(curr_xy[0], curr_xy[1])
         _, _, d = self.find_closest_point_on_path(curr_xy)
         # d = self.distance_between_points(curr_xy, self.xy_at_last_path_calc)
 
@@ -217,18 +218,52 @@ class PathfindingService(AbstractService):
         return target_heading
 
 
+    def calc_perpendicular_distance(self, x, y):
+        xu, yu = x, y   # user's current position
+
+        _, closest_index, _ = self.find_closest_point_on_path((x, y))
+
+        if closest_index == len(self.path) - 1:
+            # Use the previous point to calc the tangent at the end of the path
+            xp1, yp1 = self.path[closest_index - 1]
+            xp2, yp2 = self.path[closest_index]
+
+        else:
+            # Use the next point to calc the tangent at the beginning of the path
+            xp1, yp1 = self.path[closest_index]
+            xp2, yp2 = self.path[closest_index + 1]
+
+
+        # Interpolate line from xp1, yp1 to xp2, yp2 ==> y1 = m*x + b1
+        m  = (yp2 - yp1) / (xp2 - xp1)
+        b1 = yp1 - m*xp1
+
+        # Interpolate line perpendicular to the above line which passes through (xu, yu) ==> y2 = -1/m*x + b2
+        b2 = yu + (1/m)*xu
+
+        # Solve for the intersection of the two lines
+        x_intersection = (b2 - b1) / (m + 1/m)
+        y_intersection = m*x_intersection + b1
+        
+        # Calculate the distance between the user's current position and the intersection point
+        perpendicular_distance = self.distance_between_points( (xu, yu), (x_intersection, y_intersection) )
+
+        return perpendicular_distance
+
+
     def calc_target_heading(self, x, y):
         # target heading is the tangent angle + a steering term output
         # from the PID controller (to correct perpendicular distance error)
 
         tangent_angle = self.calc_tangent_angle(x, y)
 
-        # for now
-        steering_term = 0
+        # # for now
+        # steering_term = 0
 
-        target_heading = tangent_angle + steering_term
+        # target_heading = tangent_angle + steering_term
 
-        return target_heading
+        # return target_heading
+        return tangent_angle
 
 
     def main(self, in_conn, out_conn):
