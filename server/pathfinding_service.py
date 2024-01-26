@@ -196,17 +196,14 @@ class PathfindingService(AbstractService):
 
     def calc_tangent_vector(self, index):
         # Calculate the tangent vector at a given index on the path
-        if index == 0:
-            # Use the next point to calc the tangent at the beginning of the path
-            tangent_vector = np.array(self.path[index + 1]) - np.array(self.path[index])
-        elif index == len(self.path) - 1:
+
+        if index == len(self.path) - 1:
             # Use the previous point to calc the tangent at the end of the path
             tangent_vector = np.array(self.path[index]) - np.array(self.path[index - 1])
+
         else:
-            # Use the average of the tangents at the previous and next points
-            tangent_vector = 0.5 * (
-                np.array(self.path[index + 1]) - np.array(self.path[index - 1])
-            )
+            # Use the next point to calc the tangent at the beginning of the path
+            tangent_vector = np.array(self.path[index + 1]) - np.array(self.path[index])
 
         # Normalize the tangent vector
         tangent_vector /= np.linalg.norm(tangent_vector)
