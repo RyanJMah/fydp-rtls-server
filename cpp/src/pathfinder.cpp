@@ -7,7 +7,6 @@
 #include "pathfinder.hpp"
 
 #define MAX_NAVQUERY_SEARCH_NODES       ( 65535 )
-#define PATH_SMOOTHING_FACTOR           ( 0.25F )
 
 /*
  * IMPORTANT: READ ME BEFORE WRITING ANY CODE
@@ -59,6 +58,7 @@ GL_Pathfinder::GL_Pathfinder(void)
     this->_half_extents[2] = 100;   // Overkill serach range for z axis, treats navmesh like 2-D
 
     this->_scale = 1.0F;
+    this->_smoothing_factor = 0.5F;
 
     fix_coordinate_system( this->_half_extents );
 
@@ -177,7 +177,7 @@ GL_Path GL_Pathfinder::find_path(GL_Point start_, GL_Point end_)
 
         for (int j = 0; j < 3; j++)
         {
-            currentPoint[j] = currentPoint[j] + PATH_SMOOTHING_FACTOR * (previousPoint[j] + nextPoint[j] - 2 * currentPoint[j]);
+            currentPoint[j] = currentPoint[j] + this->_smoothing_factor * (previousPoint[j] + nextPoint[j] - 2 * currentPoint[j]);
         }
     }
 
@@ -209,4 +209,9 @@ void GL_Pathfinder::set_path_max_polygons(size_t n)
 void GL_Pathfinder::set_navmesh_scale(float scale)
 {
     this->_scale = scale;
+}
+
+void GL_Pathfinder::set_smoothing_factor(float factor)
+{
+    this->_smoothing_factor = factor;
 }

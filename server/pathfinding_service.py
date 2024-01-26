@@ -36,6 +36,8 @@ class _PathfindingWorkerSlave(AbstractService):
 
         self.out_queue = mp.Queue(-1)   # using queue instead of pipe so we can use non-blocking polling
 
+    def set_smoothing(self, smoothing_factor: float):
+        self.pf.set_smoothing_factor(smoothing_factor)
 
     def new_path_available(self) -> bool:
         return not self.out_queue.empty()
@@ -114,7 +116,8 @@ class PathfindingService(AbstractService):
 
         {
             "endpoint": [x, y, z],
-            "distance_threshold": 200
+            "distance_threshold": 200,
+            "smoothing_factor": 0.5
         }
         """
         try:
@@ -136,6 +139,10 @@ class PathfindingService(AbstractService):
             self.distance_threshold = inputs["distance_threshold"]
             logger.info(f"changed distance_threshold to {self.distance_threshold}")
 
+        if "smoothing_factor" in inputs.keys():
+            self.worker.set_smoothing( inputs["smoothing_factor"] )
+            logger.info(f"changed smoothing_factor to {inputs['smoothing_factor']}")
+
 
     def distance_between_points(self, xy1: Tuple[float], xy2: Tuple[float]):
         # Using NumPy arrays to represent the points
@@ -148,10 +155,14 @@ class PathfindingService(AbstractService):
         return distance
 
     def determine_if_recalc_needed(self, curr_xy: Tuple[float]):
+        if len(self.path) == 0:
+            return
+
+        _, _, d = self.find_closest_point_on_path(curr_xy)
         # d = self.distance_between_points(curr_xy, self.xy_at_last_path_calc)
 
-        # if d > self.distance_threshold:
-        #     self.recalc_path.set()
+        if d > self.distance_threshold:
+            self.recalc_path.set()
 
         return
 
@@ -160,7 +171,7 @@ class PathfindingService(AbstractService):
             return 0.0  # Default heading if no path is available
 
         # Find the closest point on the path
-        closest_point, closest_index = self.find_closest_point_on_path((x, y))
+        closest_point, closest_index, _ = self.find_closest_point_on_path((x, y))
 
         # Calculate the tangent vector at the closest point
         tangent_vector = self.calc_tangent_vector(closest_index)
@@ -175,12 +186,13 @@ class PathfindingService(AbstractService):
 
     def find_closest_point_on_path(self, current_position):
         # Find the index of the closest point on the path
-        closest_index = np.argmin(
-            [self.distance_between_points(current_position, point) for point in self.path]
-        )
 
-        # Return the closest point and its index
-        return self.path[closest_index], closest_index
+        distances = [self.distance_between_points(current_position, point) for point in self.path]
+
+        closest_index = np.argmin(distances)
+
+        # Return the closest point and its index, and its distance from the current position
+        return self.path[closest_index], closest_index, distances[closest_index]
 
     def calc_tangent_vector(self, index):
         # Calculate the tangent vector at a given index on the path
@@ -209,15 +221,6 @@ class PathfindingService(AbstractService):
         self.initialize()
 
         logger.info("Pathfinding service started")
-
-        # Algorithm:
-        #
-        # 1. Calculate the path from the user's current position to the endpoint, store the user's current position.
-        # 2. If the user's position deviates from the stored position past a certain threshold, recalc the path.
-        #
-        # Some edgecases:
-        #
-        # 1. If the endpoint changes, recalc the path
 
         while (1):
             position_data: LocalizationService_OutData = in_conn.recv()     # type: ignore
@@ -254,4 +257,3 @@ class PathfindingService(AbstractService):
                 # Push to debug endpoint + app
                 OutboundDataService.push(outbound_data, is_debug_data=False)
                 OutboundDataService.push(outbound_data, is_debug_data=True)
-

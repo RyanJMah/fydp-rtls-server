@@ -68,6 +68,13 @@ public:
      * @param scale[in]     Scaling factor
      */
     void set_navmesh_scale(float scale);
+
+    /**
+     * @brief   Set the smoothing factor for the path, default is 0.5
+     * 
+     * @param factor[in]    Smoothing factor
+     */
+    void set_smoothing_factor(float factor);
     
 private:
     bool _is_initialized;
@@ -76,6 +83,7 @@ private:
     float _half_extents[3];
 
     float _scale;
+    float _smoothing_factor;
 
     dtPolyRef* _path;
     size_t     _path_max_len;

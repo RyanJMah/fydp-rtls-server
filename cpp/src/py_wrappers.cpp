@@ -17,5 +17,6 @@ PYBIND11_MODULE(lib_pathfinding, m) {
         .def("find_path",             &GL_Pathfinder::find_path)
         .def("set_agent_xyzradius",   &GL_Pathfinder::set_agent_xyz_radius)
         .def("set_path_max_polygons", &GL_Pathfinder::set_path_max_polygons)
-        .def("set_navmesh_scale",     &GL_Pathfinder::set_navmesh_scale);
+        .def("set_navmesh_scale",     &GL_Pathfinder::set_navmesh_scale)
+        .def("set_smoothing_factor",  &GL_Pathfinder::set_smoothing_factor);
 }
