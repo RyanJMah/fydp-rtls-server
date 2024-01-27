@@ -206,7 +206,7 @@ ax.set_ylim(0, FLOORPLAN_HEIGHT)  # Set the X-axis limits
 
 
 # Create the dot as a scatter plot
-dot1, = ax.plot([], [], 'ro', markersize=8)
+dot1, = ax.plot([], [], 'ro', markersize=8, zorder=9)
 # dot2, = ax.plot([], [], 'ro', markersize=8)
 
 # bottom left
@@ -224,7 +224,7 @@ table_dot3, = ax.plot([], [], 'bo', markersize=8)
 table_dot3.set_data( *TABLE_DOT3 )
 
 
-path_line = plt.Line2D([], [], color='g', linewidth=2)
+path_line = plt.Line2D([], [], color='g', linewidth=2, zorder=10)
 ax.add_line(path_line)
 
 # path_dot1 = plt.Circle([138, 138], 50, color='g', fill=False)
