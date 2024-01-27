@@ -15,6 +15,7 @@ from mqtt_client import MqttClient, MqttMsg
 from app_mqtt import SERVER_PATHFINDING_CONFIG_TOPIC
 
 from lpf import LowPassFilter
+from catmull_rom_splines import catmull_rom_chain
 
 from abstract_service import AbstractService
 from localization_service import LocalizationService_OutData
@@ -63,6 +64,10 @@ class _PathfindingWorkerSlave(AbstractService):
 
             # Not using the z
             path = [(p[0], p[1],) for p in path]
+
+            # Smooth the path via Catmull-Rom splines
+            path = catmull_rom_chain(path, points_per_joint=5)
+            # logger.info(f"Path length: {len(path)}")
 
             # Push to the main service
             self.out_queue.put(path)
@@ -143,7 +148,7 @@ class PathfindingService(AbstractService):
 
         if "perpendicular_distance_threshold" in inputs.keys():
             self.perpendicular_distance_threshold = inputs["perpendicular_distance_threshold"]
-            logger.info(f"changed distance_threshold to {self.distance_threshold}")
+            logger.info(f"changed distance_threshold to {self.perpendicular_distance_threshold}")
 
         if "total_distance_threshold" in inputs.keys():
             self.total_distance_threshold = inputs["total_distance_threshold"]
@@ -206,12 +211,16 @@ class PathfindingService(AbstractService):
             # Use the previous point to calc the tangent at the end of the path
             tangent_vector = np.array(self.path[index]) - np.array(self.path[index - 1])
 
-        else:
+        elif index == 0:
             # Use the next point to calc the tangent at the beginning of the path
             tangent_vector = np.array(self.path[index + 1]) - np.array(self.path[index])
 
+        else:
+            # Use the next and previous points to calc the tangent
+            tangent_vector = np.array(self.path[index + 1]) - np.array(self.path[index - 1])
+
         # Normalize the tangent vector
-        tangent_vector /= np.linalg.norm(tangent_vector)
+        # tangent_vector /= np.linalg.norm(tangent_vector)
 
         return tangent_vector
 

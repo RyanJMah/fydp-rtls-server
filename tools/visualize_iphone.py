@@ -163,20 +163,25 @@ def update_dot(frame):
     elif tag == "path":
         g_path = data
 
-        # clear the previous path dots
-        for p in g_path_ax_dots:
-            p.remove()
+        x = [p[0] for p in g_path]
+        y = [p[1] for p in g_path]
 
-        g_path_ax_dots.clear()
+        path_line.set_data(x, y)
 
-        for p in g_path:
-            x = p[0]
-            y = p[1]
+        # # clear the previous path dots
+        # for p in g_path_ax_dots:
+        #     p.remove()
 
-            path_dot, = ax.plot([], [], 'yo', markersize=8)
-            path_dot.set_data(x, y)
+        # g_path_ax_dots.clear()
 
-            g_path_ax_dots.append(path_dot)
+        # for p in g_path:
+        #     x = p[0]
+        #     y = p[1]
+
+        #     path_dot, = ax.plot([], [], 'yo', markersize=8)
+        #     path_dot.set_data(x, y)
+
+        #     g_path_ax_dots.append(path_dot)
 
     elif tag == "target_heading":
         target_heading = data
@@ -189,7 +194,7 @@ def update_dot(frame):
         path_line_x1 = g_x + line_length * np.cos(np.deg2rad(target_heading))
         path_line_y1 = g_y + line_length * np.sin(np.deg2rad(target_heading))
 
-        path_line.set_data([path_line_x0, path_line_x1], [path_line_y0, path_line_y1])
+        heading_line.set_data([path_line_x0, path_line_x1], [path_line_y0, path_line_y1])
 
 
 
@@ -224,8 +229,11 @@ table_dot3, = ax.plot([], [], 'bo', markersize=8)
 table_dot3.set_data( *TABLE_DOT3 )
 
 
-path_line = plt.Line2D([], [], color='g', linewidth=2, zorder=10)
+path_line = plt.Line2D([], [], color='y', linewidth=2)
 ax.add_line(path_line)
+
+heading_line = plt.Line2D([], [], color='g', linewidth=2, zorder=10)
+ax.add_line(heading_line)
 
 # path_dot1 = plt.Circle([138, 138], 50, color='g', fill=False)
 # ax.add_patch(path_dot1)
