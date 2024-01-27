@@ -110,8 +110,9 @@ class PathfindingService(AbstractService):
         ######################################################################################
 
         ######################################################################################
-        self.endpoint           = [0, 0, 0]
-        self.distance_threshold = 50   # cm
+        self.endpoint = [0, 0, 0]
+        self.perpendicular_distance_threshold = 50   # cm
+        self.total_distance_threshold         = 100  # cm
         ######################################################################################
 
 
@@ -140,9 +141,13 @@ class PathfindingService(AbstractService):
 
             self.recalc_path.set()
 
-        if "distance_threshold" in inputs.keys():
-            self.distance_threshold = inputs["distance_threshold"]
+        if "perpendicular_distance_threshold" in inputs.keys():
+            self.perpendicular_distance_threshold = inputs["perpendicular_distance_threshold"]
             logger.info(f"changed distance_threshold to {self.distance_threshold}")
+
+        if "total_distance_threshold" in inputs.keys():
+            self.total_distance_threshold = inputs["total_distance_threshold"]
+            logger.info(f"changed total_distance_threshold to {self.total_distance_threshold}")
 
         if "smoothing_factor" in inputs.keys():
             self.worker.set_smoothing( inputs["smoothing_factor"] )
@@ -160,21 +165,28 @@ class PathfindingService(AbstractService):
         return distance
 
     def determine_if_recalc_needed(self, curr_xy: Tuple[float]):
+        # Do nothing if the path is empty
         if len(self.path) == 0:
             return
 
+        # Recalc if perpendicular distance is greater than threshold
         try:
             d = self.calc_perpendicular_distance(curr_xy[0], curr_xy[1])
+
+            if d > self.perpendicular_distance_threshold:
+                self.recalc_path.set()
+                return
         
         except ZeroDivisionError as e:
             logger.error(f"ZeroDivisionError in calc_perpendicular_distance: {e}")
-            _, _, d = self.find_closest_point_on_path(curr_xy)
 
 
-        if d > self.distance_threshold:
+        # Recalc if the total distance is greater than threshold
+        _, _, d = self.find_closest_point_on_path(curr_xy)
+
+        if d > self.total_distance_threshold:
             self.recalc_path.set()
-
-        return
+            return
 
 
     def find_closest_point_on_path(self, current_position):
