@@ -111,8 +111,8 @@ class PathfindingService(AbstractService):
 
         ######################################################################################
         self.endpoint = [0, 0, 0]
-        self.perpendicular_distance_threshold = 50   # cm
-        self.total_distance_threshold         = 100  # cm
+        self.perpendicular_distance_threshold = 75   # cm
+        self.total_distance_threshold         = 125  # cm
         ######################################################################################
 
 
