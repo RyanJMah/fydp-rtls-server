@@ -1,4 +1,5 @@
 import numpy as np
+import orjson as json
 from typing import Dict, Tuple
 from numpy.typing import NDArray
 from dataclasses import dataclass
@@ -6,6 +7,9 @@ from dataclasses import dataclass
 import logs
 from gl_conf import GL_CONF
 from least_squares import weighted_linearized_lse
+from mqtt_client import MqttClient, MqttMsg
+from app_mqtt import SERVER_MANUAL_POSITION_CONTROL_TOPIC
+
 from abstract_service import AbstractService
 from data_ingestion_service import DIS_OutData
 from outbound_data_service import OutboundDataService, OutboundData
@@ -293,6 +297,61 @@ class LocalizationService(AbstractService):
         return K1,K2
 
 
+    def manual_control_mode(self):
+        """
+        For debugging purposes, we can manually control the position of the user.
+        """
+
+        def data_handler(client: MqttClient, msg: MqttMsg):
+            """
+            {
+                "dir": "up/down/left/right",
+                "speed": 1
+            }
+            """
+            
+            data = json.loads(msg.payload)
+
+            speed     = data["speed"]
+            direction = data["dir"]
+
+            if direction == "up":
+                self.loc_state.y += speed
+                self.out_data.y   = self.loc_state.y
+
+            elif direction == "down":
+                self.loc_state.y -= speed
+                self.out_data.y   = self.loc_state.y
+
+            elif direction == "left":
+                self.loc_state.x -= speed
+                self.out_data.x   = self.loc_state.x
+
+            elif direction == "right":
+                self.loc_state.x += speed
+                self.out_data.x    = self.loc_state.x
+
+            # Push data to debug endpoint
+            debug_endpoint_data = OutboundData( tag="loc_state",
+                                                data=self.loc_state )
+            OutboundDataService.push(debug_endpoint_data, is_debug_data=True)
+            
+        logger.info("Entering manual control mode...")
+
+        # Send initial position to app
+        debug_endpoint_data = OutboundData( tag="loc_state",
+                                            data=self.loc_state )
+        OutboundDataService.push(debug_endpoint_data, is_debug_data=True)
+
+
+        mqtt_client = MqttClient()
+        mqtt_client.connect(GL_CONF.broker_address, GL_CONF.broker_port)
+
+        mqtt_client.subscribe(SERVER_MANUAL_POSITION_CONTROL_TOPIC, data_handler)
+
+        mqtt_client.start_mainloop()  # blocks forever
+
+
     def main(self, in_conn, out_conn):
         assert(in_conn is not None)
         assert(out_conn is not None)
@@ -300,6 +359,10 @@ class LocalizationService(AbstractService):
         self.initialize()
 
         logger.info("Starting localization service...")
+
+        if GL_CONF.debug_manual_position_control:
+            # Run the manual control mode instead
+            self.manual_control_mode()
 
         while (1):
             anchor_data: DIS_OutData = self.in_conn.recv()     # type: ignore
@@ -336,11 +399,12 @@ class LocalizationService(AbstractService):
             kf_y = self.kf.x_m[1][0]
             kf_z = self.kf.x_m[2][0]
 
-            # Copy data to output variable
-            self.out_data.x         = kf_x
-            self.out_data.y         = kf_y
-            self.out_data.z         = kf_z
-            self.out_data.heading = -1    # TODO
+            if not GL_CONF.debug_manual_position_control:
+                # Copy data to output variable
+                self.out_data.x         = kf_x
+                self.out_data.y         = kf_y
+                self.out_data.z         = kf_z
+                self.out_data.heading = -1    # TODO
 
             # Send data to pathfinding service
             out_conn.send( self.out_data )
@@ -350,11 +414,12 @@ class LocalizationService(AbstractService):
                                      data=self.out_data )
             OutboundDataService.push(app_data, is_debug_data=False)
 
-            # Copy data to debug variable
-            self.loc_state.x         = kf_x
-            self.loc_state.y         = kf_y
-            self.loc_state.z         = kf_z
-            self.loc_state.heading = -1    # TODO
+            if not GL_CONF.debug_manual_position_control:
+                # Copy data to debug variable
+                self.loc_state.x         = kf_x
+                self.loc_state.y         = kf_y
+                self.loc_state.z         = kf_z
+                self.loc_state.heading = -1    # TODO
 
             # Push data to debug endpoint
             debug_endpoint_data = OutboundData( tag="loc_state",

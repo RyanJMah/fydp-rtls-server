@@ -47,6 +47,8 @@ class GuidingLiteConf:
 
     debug_endpoint: DebugEndpoint_Conf
 
+    debug_manual_position_control: bool
+
     update_period_secs: float
 
     num_anchors: int = field(init=False)
@@ -65,11 +67,12 @@ with open(AppPaths.GL_CONF_FILE, "r") as f:
     _gl_conf = json.load(f)
 
 GL_CONF = GuidingLiteConf(
-    broker_address             = _gl_conf["broker_address"],
-    broker_port                = _gl_conf["broker_port"],
-    navmesh_path               = os.path.join( os.path.dirname(AppPaths.GL_CONF_FILE), _gl_conf["navmesh_relative_path"] ),
-    navmesh_to_real_life_scale = _gl_conf["navmesh_to_real_life_scale"],
-    update_period_secs         = 1 / _gl_conf["global_update_frequency_Hz"],
-    anchors                    = GuidingLiteConf.anchors_from_dict(_gl_conf),
-    debug_endpoint             = DebugEndpoint_Conf.from_dict(_gl_conf["debug_endpoint"]),
+    broker_address                = _gl_conf["broker_address"],
+    broker_port                   = _gl_conf["broker_port"],
+    navmesh_path                  = os.path.join( os.path.dirname(AppPaths.GL_CONF_FILE), _gl_conf["navmesh_relative_path"] ),
+    navmesh_to_real_life_scale    = _gl_conf["navmesh_to_real_life_scale"],
+    update_period_secs            = 1 / _gl_conf["global_update_frequency_Hz"],
+    anchors                       = GuidingLiteConf.anchors_from_dict(_gl_conf),
+    debug_endpoint                = DebugEndpoint_Conf.from_dict(_gl_conf["debug_endpoint"]),
+    debug_manual_position_control = _gl_conf["debug_manual_position_control"],
 )

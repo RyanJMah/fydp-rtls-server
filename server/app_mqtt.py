@@ -12,8 +12,9 @@ IOS_BASE_TOPIC      = "gl/user/<uid>"
 IOS_HEARTBEAT_TOPIC = "gl/user/<uid>/heartbeat"
 IOS_DATA_TOPIC      = "gl/user/<uid>/data/<aid>"
 
-SERVER_HEARTBEAT_TOPIC          = "gl/server/heartbeat"
-SERVER_PATHFINDING_CONFIG_TOPIC = "gl/server/pathfinding/config"
+SERVER_HEARTBEAT_TOPIC               = "gl/server/heartbeat"
+SERVER_PATHFINDING_CONFIG_TOPIC      = "gl/server/pathfinding/config"
+SERVER_MANUAL_POSITION_CONTROL_TOPIC = "gl/server/manual_position_control"
 
 def insert_uid(topic: str, uid: str) -> str:
     return topic.replace("<uid>", uid)
