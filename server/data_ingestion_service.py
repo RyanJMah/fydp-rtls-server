@@ -19,7 +19,7 @@ from gl_conf import GL_CONF
 logger = logs.init_logger(__name__)
 
 
-DISTANCE_FILTER_TIME_CONSTANT = 0.05
+DISTANCE_FILTER_TIME_CONSTANT = 0.01
 ANGLE_FILTER_TIME_CONSTANT    = 1
 
 
