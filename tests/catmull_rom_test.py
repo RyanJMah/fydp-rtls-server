@@ -2,7 +2,7 @@ import time
 import matplotlib.pyplot as plt
 
 import test_paths
-from catmell_rom_splines import catmull_rom_chain
+from catmull_rom_splines import catmull_rom_chain
 
 
 if __name__ == "__main__":
