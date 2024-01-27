@@ -322,7 +322,9 @@ class PathfindingService(AbstractService):
 
             # Use the path to calculate the target heading
             if len(self.path) > 0:
+                # start = time.time()
                 target_heading = self.target_heading_filter.exec( self.calc_target_heading( x, y ) )
+                # logger.info(f"target_heading: {target_heading:.2f}, time taken: {time.time() - start:.3f}s")
 
                 outbound_data = OutboundData( tag="target_heading",
                                               data=target_heading )
