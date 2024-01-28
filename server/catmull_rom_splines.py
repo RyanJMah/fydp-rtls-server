@@ -71,7 +71,7 @@ def catmull_rom_spline(
     return points
 
 
-def catmull_rom_chain(points: List[Tuple[float, float]], points_per_joint: float = 10) -> list:
+def catmull_rom_chain(points: List[Tuple[float, float]], points_per_joint: float = 10, alpha: float = 0.0) -> list:
     """
     Calculate Catmull-Rom for a sequence of initial points and return the combined curve.
     :param points: Base points from which the quadruples for the algorithm are taken
@@ -109,5 +109,5 @@ def catmull_rom_chain(points: List[Tuple[float, float]], points_per_joint: float
     # num_points = calculate_num_points(points, points_per_cm)
     # print(f"num_points: {num_points}")
 
-    all_splines = (catmull_rom_spline(*pq, points_per_joint) for pq in point_quadruples)
+    all_splines = (catmull_rom_spline(*pq, points_per_joint, alpha) for pq in point_quadruples)
     return flatten(all_splines)
