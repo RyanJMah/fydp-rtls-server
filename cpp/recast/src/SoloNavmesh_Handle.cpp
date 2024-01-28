@@ -396,6 +396,9 @@ bool SoloNavmeshHandle::handleBuild()
         params.ch = m_cfg.ch;
         params.buildBvTree = true;
         
+        std::cout << "params.verCount = " << params.vertCount << std::endl;
+        std::cout << "params.verts = "    << params.verts << std::endl;
+
         if (!dtCreateNavMeshData(&params, &navData, &navDataSize))
         {
             m_ctx->log(RC_LOG_ERROR, "Could not build Detour navmesh.");
