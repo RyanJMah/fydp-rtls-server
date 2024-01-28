@@ -55,8 +55,11 @@ def _main():
     write_mesh_to_obj(mesh, obj_path)
 
     navmesh_path = AppPaths.get_navmesh(f"{basename}.nav")
-    cpp.generate_navmesh(0.5, 40, obj_path, navmesh_path)
-    # cpp.generate_navmesh(1, 75, obj_path, navmesh_path)
+
+    cpp.generate_solo_navmesh(0.3, 10, obj_path, navmesh_path)
+    
+    # cpp.generate_tiled_navmesh(0.5, 40, obj_path, navmesh_path)
+    # cpp.generate_tiled_navmesh(1, 75, obj_path, navmesh_path)
 
 if __name__ == "__main__":
     _main()

@@ -66,7 +66,7 @@ class _PathfindingWorkerSlave(AbstractService):
             path = [(p[0], p[1],) for p in path]
 
             # Smooth the path via Catmull-Rom splines
-            path = catmull_rom_chain(path, points_per_joint=5)
+            # path = catmull_rom_chain(path, points_per_joint=5)
             # logger.info(f"Path length: {len(path)}")
 
             # Push to the main service
@@ -264,6 +264,11 @@ class PathfindingService(AbstractService):
         if xp2 == xp1:
             # Handle the case where the line is vertical
             perpendicular_distance = np.abs(xu - xp1)
+            return perpendicular_distance
+
+        if yp2 == yp1:
+            # Handle the case where the line is horizontal
+            perpendicular_distance = np.abs(yu - yp1)
             return perpendicular_distance
 
         m  = (yp2 - yp1) / (xp2 - xp1)

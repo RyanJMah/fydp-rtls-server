@@ -212,6 +212,10 @@ dtNavMesh* Builder::loadAll(const char* path)
 
 	fclose(fp);
 
+    std::cout << "DETOUR: Loaded navmesh from " << path << std::endl;
+
+    m_navMesh = mesh;
+
 	return mesh;
 }
 

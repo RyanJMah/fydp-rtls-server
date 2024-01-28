@@ -21,6 +21,7 @@
 
 #include <iostream>
 #include "Recast.h"
+#include "DetourNavMeshQuery.h"
 
 /// These are just sample areas to use consistent values across the samples.
 /// The use should specify these base on his needs.
@@ -53,8 +54,8 @@ enum BuilderPartitionType
 class Builder
 {
 public:
-	class dtNavMesh* m_navMesh;
-	class dtNavMeshQuery* m_navQuery;
+	dtNavMesh* m_navMesh;
+	dtNavMeshQuery* m_navQuery;
 
 protected:
 	class InputGeom* m_geom;
@@ -81,13 +82,13 @@ protected:
 	
 	rcContext* m_ctx;
 
-	dtNavMesh* loadAll(const char* path);
-	void saveAll(const char* path, const dtNavMesh* mesh);
-
 public:
 	Builder();
 	virtual ~Builder();
 	
+	dtNavMesh* loadAll(const char* path);
+	void saveAll(const char* path, const dtNavMesh* mesh);
+
 	void setContext(rcContext* ctx) { m_ctx = ctx; }
 	
 	virtual void handleMeshChanged(class InputGeom* geom);

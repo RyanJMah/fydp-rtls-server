@@ -168,18 +168,18 @@ GL_Path GL_Pathfinder::find_path(GL_Point start_, GL_Point end_)
         ret[i][2] = this->_scale * xyz[2];
     }
 
-    // // Smooth the path using linear interpolation
-    for (int i = 1; i < path_len - 1; i++)
-    {
-        float* currentPoint = &ret[i][0];
-        float* previousPoint = &ret[i - 1][0];
-        float* nextPoint = &ret[i + 1][0];
+    // // // Smooth the path using linear interpolation
+    // for (int i = 1; i < path_len - 1; i++)
+    // {
+    //     float* currentPoint = &ret[i][0];
+    //     float* previousPoint = &ret[i - 1][0];
+    //     float* nextPoint = &ret[i + 1][0];
 
-        for (int j = 0; j < 3; j++)
-        {
-            currentPoint[j] = currentPoint[j] + this->_smoothing_factor * (previousPoint[j] + nextPoint[j] - 2 * currentPoint[j]);
-        }
-    }
+    //     for (int j = 0; j < 3; j++)
+    //     {
+    //         currentPoint[j] = currentPoint[j] + this->_smoothing_factor * (previousPoint[j] + nextPoint[j] - 2 * currentPoint[j]);
+    //     }
+    // }
 
 exit:
     if (err_code != DT_SUCCESS)

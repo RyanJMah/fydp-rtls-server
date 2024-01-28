@@ -9,7 +9,8 @@ namespace py = pybind11;
 PYBIND11_MODULE(lib_pathfinding, m) {
     m.doc() = "C++ Pathfinding Library"; // optional module docstring
 
-    m.def("generate_navmesh", &generate_navmesh, "Generate a navmesh given an OBJ file");
+    m.def("generate_tiled_navmesh", &generate_tiled_navmesh, "Generate a navmesh given an OBJ file");
+    m.def("generate_solo_navmesh",  &generate_solo_navmesh,  "Generate a navmesh given an OBJ file");
 
     py::class_<GL_Pathfinder>(m, "Pathfinder")
         .def(py::init<>())
