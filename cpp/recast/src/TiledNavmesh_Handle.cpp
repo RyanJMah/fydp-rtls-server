@@ -28,7 +28,7 @@
 #endif
 #include "InputGeom.h"
 #include "BaseBuilder.h"
-#include "Navmesh_Handle.h"
+#include "TiledNavmesh_Handle.h"
 #include "Recast.h"
 #include "DetourAssert.h"
 #include "DetourNavMesh.h"
@@ -278,7 +278,7 @@ struct RasterizationContext
     int ntiles;
 };
 
-int NavmeshHandle::rasterizeTileLayers(
+int TiledNavmeshHandle::rasterizeTileLayers(
                                const int tx, const int ty,
                                const rcConfig& cfg,
                                TileCacheData* tiles,
@@ -495,7 +495,7 @@ dtObstacleRef hitTestObstacle(const dtTileCache* tc, const float* sp, const floa
     return tc->getObstacleRef(obmin);
 }
     
-NavmeshHandle::NavmeshHandle() :
+TiledNavmeshHandle::TiledNavmeshHandle() :
     m_keepInterResults(false),
     m_tileCache(0),
     m_cacheBuildTimeMs(0),
@@ -515,14 +515,14 @@ NavmeshHandle::NavmeshHandle() :
     m_tmproc = new MeshProcess;
 }
 
-NavmeshHandle::~NavmeshHandle()
+TiledNavmeshHandle::~TiledNavmeshHandle()
 {
     dtFreeNavMesh(m_navMesh);
     m_navMesh = 0;
     dtFreeTileCache(m_tileCache);
 }
 
-void NavmeshHandle::handleMeshChanged(class InputGeom* geom)
+void TiledNavmeshHandle::handleMeshChanged(class InputGeom* geom)
 {
     Builder::handleMeshChanged(geom);
 
@@ -533,7 +533,7 @@ void NavmeshHandle::handleMeshChanged(class InputGeom* geom)
     m_navMesh = 0;
 }
 
-void NavmeshHandle::addTempObstacle(const float* pos)
+void TiledNavmeshHandle::addTempObstacle(const float* pos)
 {
     if (!m_tileCache)
         return;
@@ -543,7 +543,7 @@ void NavmeshHandle::addTempObstacle(const float* pos)
     m_tileCache->addObstacle(p, 1.0f, 2.0f, 0);
 }
 
-void NavmeshHandle::removeTempObstacle(const float* sp, const float* sq)
+void TiledNavmeshHandle::removeTempObstacle(const float* sp, const float* sq)
 {
     if (!m_tileCache)
         return;
@@ -551,7 +551,7 @@ void NavmeshHandle::removeTempObstacle(const float* sp, const float* sq)
     m_tileCache->removeObstacle(ref);
 }
 
-void NavmeshHandle::clearAllTempObstacles()
+void TiledNavmeshHandle::clearAllTempObstacles()
 {
     if (!m_tileCache)
         return;
@@ -563,7 +563,7 @@ void NavmeshHandle::clearAllTempObstacles()
     }
 }
 
-bool NavmeshHandle::handleBuild()
+bool TiledNavmeshHandle::handleBuild()
 {
     dtStatus status;
     
@@ -729,7 +729,7 @@ bool NavmeshHandle::handleBuild()
     return true;
 }
 
-void NavmeshHandle::handleUpdate(const float dt)
+void TiledNavmeshHandle::handleUpdate(const float dt)
 {
     if (!m_navMesh)
         return;
@@ -739,7 +739,7 @@ void NavmeshHandle::handleUpdate(const float dt)
     m_tileCache->update(dt, m_navMesh);
 }
 
-void NavmeshHandle::getTilePos(const float* pos, int& tx, int& ty)
+void TiledNavmeshHandle::getTilePos(const float* pos, int& tx, int& ty)
 {
     if (!m_geom) return;
     
@@ -768,7 +768,7 @@ struct TileCacheTileHeader
     int dataSize;
 };
 
-void NavmeshHandle::saveAll(const char* path)
+void TiledNavmeshHandle::saveAll(const char* path)
 {
     if (!m_tileCache) return;
     
@@ -808,7 +808,7 @@ void NavmeshHandle::saveAll(const char* path)
     fclose(fp);
 }
 
-void NavmeshHandle::loadAll(const char* path)
+void TiledNavmeshHandle::loadAll(const char* path)
 {
     FILE* fp = fopen(path, "rb");
     if (!fp) return;
@@ -908,11 +908,11 @@ void NavmeshHandle::loadAll(const char* path)
     fclose(fp);
 
     m_ctx->log( RC_LOG_PROGRESS,
-                "NavmeshHandle::loadAll - successfully loaded navmesh %s",
+                "TiledNavmeshHandle::loadAll - successfully loaded navmesh %s",
                 path );
 }
 
-void NavmeshHandle::handleSettings()
+void TiledNavmeshHandle::handleSettings()
 {
     if (m_geom)
     {
