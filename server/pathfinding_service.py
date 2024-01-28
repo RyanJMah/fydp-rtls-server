@@ -38,6 +38,8 @@ class _PathfindingWorkerSlave(AbstractService):
         self.pf.load_navmesh( GL_CONF.navmesh_path )
         self.pf.set_navmesh_scale( GL_CONF.navmesh_to_real_life_scale )
 
+        self.pf.set_smoothing_factor(0.5)
+
         self.out_queue = mp.Queue(-1)   # using queue instead of pipe so we can use non-blocking polling
 
     def set_smoothing(self, smoothing_factor: float):
@@ -66,7 +68,7 @@ class _PathfindingWorkerSlave(AbstractService):
             path = [(p[0], p[1],) for p in path]
 
             # Smooth the path via Catmull-Rom splines
-            path = catmull_rom_chain(path, points_per_joint=5)
+            # path = catmull_rom_chain(path, points_per_joint=4)
             # logger.info(f"Path length: {len(path)}")
 
             # Push to the main service
@@ -116,7 +118,7 @@ class PathfindingService(AbstractService):
 
         ######################################################################################
         self.endpoint = [0, 0, 0]
-        self.perpendicular_distance_threshold = 75   # cm
+        self.perpendicular_distance_threshold = 50   # cm
         self.total_distance_threshold         = 125  # cm
         ######################################################################################
 
@@ -128,7 +130,6 @@ class PathfindingService(AbstractService):
         {
             "endpoint": [x, y, z],
             "distance_threshold": 200,
-            "smoothing_factor": 0.5
         }
         """
         try:
@@ -153,10 +154,6 @@ class PathfindingService(AbstractService):
         if "total_distance_threshold" in inputs.keys():
             self.total_distance_threshold = inputs["total_distance_threshold"]
             logger.info(f"changed total_distance_threshold to {self.total_distance_threshold}")
-
-        if "smoothing_factor" in inputs.keys():
-            self.worker.set_smoothing( inputs["smoothing_factor"] )
-            logger.info(f"changed smoothing_factor to {inputs['smoothing_factor']}")
 
 
     def distance_between_points(self, xy1: Tuple[float], xy2: Tuple[float]):
@@ -265,6 +262,11 @@ class PathfindingService(AbstractService):
             # Handle the case where the line is vertical
             perpendicular_distance = np.abs(xu - xp1)
             return perpendicular_distance
+
+        if yp2 == yp1:
+            # Handle the case where the line is horizontal
+            perpendicular_distance = np.abs(yu - yp1)
+            return perpendicular_distance            
 
         m  = (yp2 - yp1) / (xp2 - xp1)
         b1 = yp1 - m*xp1
