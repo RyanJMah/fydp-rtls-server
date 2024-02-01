@@ -188,14 +188,17 @@ class PathfindingService(AbstractService):
 
         return distance
 
-    def determine_if_recalc_needed(self, curr_xy: Tuple[float]):
+    def determine_if_recalc_needed( self,
+                                    curr_xy: Tuple[float, float],
+                                    closest_index: int,
+                                    closest_point_distance: float ):
         # Do nothing if the path is empty
         if len(self.path) == 0:
             return
 
         # Recalc if perpendicular distance is greater than threshold
         try:
-            d = self.calc_perpendicular_distance(curr_xy[0], curr_xy[1])
+            d = self.calc_perpendicular_distance(curr_xy, closest_index)
 
             if d > self.perpendicular_distance_threshold:
                 self.recalc_path.set()
@@ -206,9 +209,7 @@ class PathfindingService(AbstractService):
 
 
         # Recalc if the total distance is greater than threshold
-        _, _, d = self.find_closest_point_on_path(curr_xy)
-
-        if d > self.total_distance_threshold:
+        if closest_point_distance > self.total_distance_threshold:
             self.recalc_path.set()
             return
 
@@ -253,29 +254,11 @@ class PathfindingService(AbstractService):
 
         return tangent_vector, point2, point1
 
-    def calc_tangent_angle(self, x, y):
-        if not self.path:
-            return 0.0  # Default heading if no path is available
 
-        # Find the closest point on the path
-        closest_point, closest_index, _ = self.find_closest_point_on_path((x, y))
+    def calc_perpendicular_distance(self, xy: Tuple[float, float], closest_index: int):
+        x, y = xy
 
-        # Calculate the tangent vector at the closest point
-        tangent_vector = self.calc_tangent_vector(closest_index)
-
-        # Convert the tangent vector to an angle (heading)
-        target_heading = np.arctan2(tangent_vector[1], tangent_vector[0])
-
-        # Convert the angle from radians to degrees
-        target_heading = np.degrees(target_heading)
-
-        return target_heading
-
-
-    def calc_perpendicular_distance(self, x, y):
         xu, yu = x, y   # user's current position
-
-        _, closest_index, _ = self.find_closest_point_on_path((x, y))
 
         if closest_index == len(self.path) - 1:
             # Use the previous point to calc the tangent at the end of the path
@@ -316,16 +299,17 @@ class PathfindingService(AbstractService):
         return perpendicular_distance
 
 
-    def calc_target_heading(self, x, y):
+    def calc_target_heading(self, xy: Tuple[float, float], closest_index: int):
         # target heading is the tangent angle + a steering term output
         # from the PID controller (to correct perpendicular distance error)
 
+        x, y = xy
+
         # Ideal heading is the tangent angle
-        closest_point, closest_index, _ = self.find_closest_point_on_path((x, y))
         tangent_vector, point2, point1  = self.calc_tangent_vector(closest_index)
 
         # Calculate the CTE (cross track error)
-        err = self.calc_perpendicular_distance(x, y)
+        err = self.calc_perpendicular_distance( xy, closest_index )
         
         # Calculate the steering term from the PID controller, tries to get the CTE to zero
         steering_angle = self.pid_controller.exec(err)
@@ -359,7 +343,6 @@ class PathfindingService(AbstractService):
             y = position_data.y
             # z = position_data.z
 
-            self.determine_if_recalc_needed( (x, y) )
 
             # Recalc the path if needed
             if self.recalc_path.is_set():
@@ -372,15 +355,21 @@ class PathfindingService(AbstractService):
                 # We've successfully recalcd the path, reset the event
                 self.recalc_path.clear()
 
+
             # Update from worker if there's a new path
             if self.worker.new_path_available():
                 self.path = self.worker.get_new_path()
 
+
             # Use the path to calculate the target heading
             if len(self.path) > 0:
+                closest_point, closest_index, d = self.find_closest_point_on_path( (x, y) )
+
+                self.determine_if_recalc_needed( (x, y), closest_index, d )
+
                 # start = time.time()
                 # target_heading = self.target_heading_filter.exec( self.calc_target_heading( x, y ) )
-                target_heading = self.calc_target_heading( x, y )
+                target_heading = self.target_heading_filter.exec( self.calc_target_heading( (x, y), closest_index ) )
                 # logger.info(f"target_heading: {target_heading:.2f}, time taken: {time.time() - start:.3f}s")
 
                 outbound_data = OutboundData( tag="target_heading",

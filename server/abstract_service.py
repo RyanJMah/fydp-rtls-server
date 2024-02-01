@@ -13,11 +13,7 @@ class AbstractService(ABC):
 
     def _supervisor(self, in_conn: Any, out_conn: Any):
         while (1):
-            try:
-                self.main(in_conn, out_conn)
-
-            except Exception as e:
-                print(f"REALLY BAD ERROR: SERVICE MAINLOOP CRASHED: {e}")
+            self.main(in_conn, out_conn)
 
     def start(self):
         self._process.start()
