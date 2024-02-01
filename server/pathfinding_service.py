@@ -15,6 +15,7 @@ from mqtt_client import MqttClient, MqttMsg
 from app_mqtt import SERVER_PATHFINDING_CONFIG_TOPIC
 
 from lpf import LowPassFilter
+from pid_controller import PIDController
 from catmull_rom_splines import catmull_rom_chain
 
 from abstract_service import AbstractService
@@ -114,6 +115,11 @@ class PathfindingService(AbstractService):
         self.path: List[ Tuple[float, float] ] = []
 
         self.target_heading_filter = LowPassFilter(tau=TARGET_HEADING_TIME_CONSTANT)
+
+        self.pid_controller = PIDController( kp = 0.01,
+                                             ki = 0.0,
+                                             kd = 0.0,
+                                             derivative_lpf_tau = 0.1 )
         ######################################################################################
 
         ######################################################################################
@@ -128,8 +134,12 @@ class PathfindingService(AbstractService):
         Every possible json input field
 
         {
-            "endpoint": [x, y, z],
-            "distance_threshold": 200,
+            "endpoint": [400, 200, 0],
+            "perpendicular_distance_threshold": 200,
+            "total_distance_threshold": 300,
+            "kp": 0.5,
+            "ki": 0.0,
+            "kd": 0.0
         }
         """
         try:
@@ -154,6 +164,18 @@ class PathfindingService(AbstractService):
         if "total_distance_threshold" in inputs.keys():
             self.total_distance_threshold = inputs["total_distance_threshold"]
             logger.info(f"changed total_distance_threshold to {self.total_distance_threshold}")
+
+        if "kp" in inputs.keys():
+            self.pid_controller.kp = inputs["kp"]
+            logger.info(f"changed kp to {self.pid_controller.kp}")
+
+        if "ki" in inputs.keys():
+            self.pid_controller.ki = inputs["ki"]
+            logger.info(f"changed ki to {self.pid_controller.ki}")
+        
+        if "kd" in inputs.keys():
+            self.pid_controller.kd = inputs["kd"]
+            logger.info(f"changed kd to {self.pid_controller.kd}")
 
 
     def distance_between_points(self, xy1: Tuple[float], xy2: Tuple[float]):
@@ -191,6 +213,7 @@ class PathfindingService(AbstractService):
             return
 
 
+    # TODO: reduce calls to this function by passing in the point as a parameter to functions which call it
     def find_closest_point_on_path(self, current_position):
         # Find the index of the closest point on the path
 
@@ -206,20 +229,29 @@ class PathfindingService(AbstractService):
 
         if index == len(self.path) - 1:
             # Use the previous point to calc the tangent at the end of the path
-            tangent_vector = np.array(self.path[index]) - np.array(self.path[index - 1])
+            point1 = np.array(self.path[index - 1])
+            point2 = np.array(self.path[index])
+
+            tangent_vector = np.array(point2) - np.array(point1)
 
         elif index == 0:
             # Use the next point to calc the tangent at the beginning of the path
-            tangent_vector = np.array(self.path[index + 1]) - np.array(self.path[index])
+            point1 = np.array(self.path[index])
+            point2 = np.array(self.path[index + 1])
+
+            tangent_vector = np.array(point2) - np.array(point1)
 
         else:
             # Use the next and previous points to calc the tangent
-            tangent_vector = np.array(self.path[index + 1]) - np.array(self.path[index - 1])
+            point1 = np.array(self.path[index - 1])
+            point2 = np.array(self.path[index + 1])
+
+            tangent_vector = np.array(point2) - np.array(point1)
 
         # Normalize the tangent vector
         # tangent_vector /= np.linalg.norm(tangent_vector)
 
-        return tangent_vector
+        return tangent_vector, point2, point1
 
     def calc_tangent_angle(self, x, y):
         if not self.path:
@@ -288,15 +320,28 @@ class PathfindingService(AbstractService):
         # target heading is the tangent angle + a steering term output
         # from the PID controller (to correct perpendicular distance error)
 
-        tangent_angle = self.calc_tangent_angle(x, y)
+        # Ideal heading is the tangent angle
+        closest_point, closest_index, _ = self.find_closest_point_on_path((x, y))
+        tangent_vector, point2, point1  = self.calc_tangent_vector(closest_index)
 
-        # # for now
-        # steering_term = 0
+        # Calculate the CTE (cross track error)
+        err = self.calc_perpendicular_distance(x, y)
+        
+        # Calculate the steering term from the PID controller, tries to get the CTE to zero
+        steering_angle = self.pid_controller.exec(err)
 
-        # target_heading = tangent_angle + steering_term
+        # Determine the sign of the steering term based on the sign of the cross-product
+        # of the tangent vector and the vector from the user's current position to the next point
+        sign = np.sign( np.cross(tangent_vector, np.array(point2) - np.array((x, y))) )
 
-        # return target_heading
-        return tangent_angle
+
+        # Convert the tangent vector to an angle (heading)
+        tangent_angle = np.arctan2(tangent_vector[1], tangent_vector[0])
+
+        # Add the steering term to the tangent angle
+        target_heading = tangent_angle + sign*steering_angle
+
+        return np.degrees( target_heading )
 
 
     def main(self, in_conn, out_conn):
@@ -334,7 +379,8 @@ class PathfindingService(AbstractService):
             # Use the path to calculate the target heading
             if len(self.path) > 0:
                 # start = time.time()
-                target_heading = self.target_heading_filter.exec( self.calc_target_heading( x, y ) )
+                # target_heading = self.target_heading_filter.exec( self.calc_target_heading( x, y ) )
+                target_heading = self.calc_target_heading( x, y )
                 # logger.info(f"target_heading: {target_heading:.2f}, time taken: {time.time() - start:.3f}s")
 
                 outbound_data = OutboundData( tag="target_heading",
