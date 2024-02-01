@@ -24,7 +24,7 @@ from outbound_data_service import OutboundDataService, OutboundData
 
 logger = logs.init_logger(__name__)
 
-TARGET_HEADING_TIME_CONSTANT = 0.15
+TARGET_HEADING_TIME_CONSTANT = 0.025
 
 class _PathfindingWorkerSlave(AbstractService):
     # Handles the expensive pathfinding calculations
@@ -118,14 +118,14 @@ class PathfindingService(AbstractService):
 
         self.pid_controller = PIDController( kp = 0.01,
                                              ki = 0.0,
-                                             kd = 0.0,
+                                             kd = 0.002,
                                              derivative_lpf_tau = 0.1 )
         ######################################################################################
 
         ######################################################################################
         self.endpoint = [0, 0, 0]
-        self.perpendicular_distance_threshold = 50   # cm
-        self.total_distance_threshold         = 125  # cm
+        self.perpendicular_distance_threshold = 100   # cm
+        self.total_distance_threshold         = 200  # cm
         ######################################################################################
 
 
@@ -368,8 +368,8 @@ class PathfindingService(AbstractService):
                 self.determine_if_recalc_needed( (x, y), closest_index, d )
 
                 # start = time.time()
-                # target_heading = self.target_heading_filter.exec( self.calc_target_heading( x, y ) )
                 target_heading = self.target_heading_filter.exec( self.calc_target_heading( (x, y), closest_index ) )
+                # target_heading = self.calc_target_heading( (x, y), closest_index )
                 # logger.info(f"target_heading: {target_heading:.2f}, time taken: {time.time() - start:.3f}s")
 
                 outbound_data = OutboundData( tag="target_heading",
