@@ -158,7 +158,7 @@ def update_dot(frame):
 
         dot1.set_data(x, y)  # Update the dot's position
 
-        label.set_text(f"X: {x:.2f}, Y: {y:.2f}, Z: {z:.2f}, Theta: {theta:.2f}")
+        label.set_text(f"X: {x:.2f}, Y: {y:.2f}")
 
     elif tag == "path":
         g_path = data
