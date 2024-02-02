@@ -267,7 +267,7 @@ ax.set_aspect("auto")
 label = ax.text(FLOORPLAN_WIDTH/2, FLOORPLAN_HEIGHT - 20, "", ha='center', va='center', fontsize=14, color='r')
 
 # Create the animation
-animation = FuncAnimation(fig, update_dot, frames=range(200), interval=5)
+animation = FuncAnimation(fig, update_dot, frames=range(200), interval=1)
 
 def run():
     plt.show()
