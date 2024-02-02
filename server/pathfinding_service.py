@@ -59,14 +59,29 @@ class _PathfindingWorkerSlave(AbstractService):
         while (1):
             start_xyz, end_xyz = in_conn.recv()     # type: ignore
 
-            path = self.pf.find_path( start_xyz, end_xyz )
+            # Hardcode the path for the purposes of the test
+            first_to_second_dot = np.linspace( (945, 240), (255, 240), 15 )
 
-            if len(path) == 0:
-                # try again
-                continue
+            second_to_third_dot = np.linspace( (255, 240), (255, 780), 15 )
+
+            third_to_fourth_dot = np.linspace( (255, 780), (945, 780), 15 )
+
+            fourth_to_first_dot = np.linspace( (945, 780), (945, 240), 15 )
+
+            path = np.concatenate( (first_to_second_dot,
+                                    second_to_third_dot,
+                                    third_to_fourth_dot,
+                                    fourth_to_first_dot) )
+
+
+            # path = self.pf.find_path( start_xyz, end_xyz )
+
+            # if len(path) == 0:
+            #     # try again
+            #     continue
 
             # Not using the z
-            path = [(p[0], p[1],) for p in path]
+            # path = [(p[0], p[1],) for p in path]
 
             # Smooth the path via Catmull-Rom splines
             # path = catmull_rom_chain(path, points_per_joint=4)

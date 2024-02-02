@@ -3,6 +3,8 @@ import sys
 import socket
 import threading
 import queue
+import csv
+import datetime
 import numpy as np
 import orjson as json
 import matplotlib.pyplot as plt
@@ -41,6 +43,18 @@ FLOORPLAN_HEIGHT = 1200
 # ANCHOR_2_COORDINATES = (0, 0, 277)
 # ANCHOR_3_COORDINATES = (123, 520, 263)
 
+g_csv_queue: queue.Queue = queue.Queue()
+
+CSV_FILENAME = f"server_output_{ datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S') }.csv"
+CSV_HEADER = [
+    "timestamp",
+    "x",
+    "y",
+    "target_heading"
+]
+
+g_start_timestamp = time.time()
+
 def connect_to_server():
     while (1):
         try:
@@ -77,6 +91,7 @@ g_y = 0
 # Function to update the position of the dot in the plot
 def update_dot(frame):
     global sock
+    global g_csv_queue
     global g_path, g_path_ax_dots
     global g_x, g_y
 
@@ -94,6 +109,8 @@ def update_dot(frame):
 
     tag  = data["tag"]
     data = data["data"]
+
+    timestamp = time.time() - g_start_timestamp
 
     if tag == "loc_state":
         data = LocalizationService_State(**data)
@@ -160,6 +177,15 @@ def update_dot(frame):
 
         label.set_text(f"X: {x:.2f}, Y: {y:.2f}")
 
+        g_csv_queue.put(
+            [
+                round(timestamp, 3),
+                x,
+                y,
+                None
+            ]
+        )
+
     elif tag == "path":
         g_path = data
 
@@ -195,6 +221,32 @@ def update_dot(frame):
         path_line_y1 = g_y + line_length * np.sin(np.deg2rad(target_heading))
 
         heading_line.set_data([path_line_x0, path_line_x1], [path_line_y0, path_line_y1])
+
+        g_csv_queue.put(
+            [
+                round(timestamp, 3),
+                None,
+                None,
+                target_heading
+            ]
+        )
+
+
+def csv_writer_thread():
+    global g_csv_queue
+
+    csv_file = open(CSV_FILENAME, "w")
+
+    csv_writer = csv.writer( csv_file,
+                             delimiter=",",
+                             quotechar='"',
+                             quoting=csv.QUOTE_MINIMAL )
+
+    csv_writer.writerow(CSV_HEADER)
+
+    while (1):
+        row = g_csv_queue.get()
+        csv_writer.writerow(row)
 
 
 
@@ -268,6 +320,9 @@ label = ax.text(FLOORPLAN_WIDTH/2, FLOORPLAN_HEIGHT - 20, "", ha='center', va='c
 
 # Create the animation
 animation = FuncAnimation(fig, update_dot, frames=range(200), interval=1)
+
+t = threading.Thread(target=csv_writer_thread)
+t.start()
 
 def run():
     plt.show()
