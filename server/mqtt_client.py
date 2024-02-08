@@ -187,3 +187,7 @@ class MqttClient():
 
     def stop_mainloop(self):
         self._mqtt.loop_stop()
+
+
+    def disconnect(self):
+        self._mqtt.disconnect()

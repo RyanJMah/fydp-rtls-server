@@ -2,6 +2,11 @@ import sys
 import multiprocessing as mp
 
 import logs
+
+from gl_conf import GL_CONF, GL_CONF_JSON
+from mqtt_client import MqttClient
+from app_mqtt import SERVER_METADATA_TOPIC
+
 from heartbeat_service import HeartbeatService
 from outbound_data_service import OutboundDataService
 from data_ingestion_service import DataIngestionService
@@ -10,12 +15,30 @@ from pathfinding_service import PathfindingService
 
 logger = logs.init_logger(__name__)
 
+def publish_metadata():
+    mqtt_client = MqttClient()
+
+    mqtt_client.connect(GL_CONF.broker_address, GL_CONF.broker_port)
+    mqtt_client.start_mainloop()
+
+    # publish metadata as retained message
+    mqtt_client.publish(SERVER_METADATA_TOPIC, GL_CONF_JSON, retain=True)
+
+    logger.info("Metadata service exiting...")
+
+    mqtt_client.disconnect()
+    mqtt_client.stop_mainloop()
+
+
 def main():
     # First thing, start the queued logs handler
     log_service = logs.LogQueueingService( in_conn=None, out_conn=None )
     log_service.start()
 
     logger.info("Starting rtls server...")
+
+    # publish metadata to broker
+    publish_metadata()
 
     try:
         # start outbound data service

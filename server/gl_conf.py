@@ -66,6 +66,10 @@ class GuidingLiteConf:
 with open(AppPaths.GL_CONF_FILE, "r") as f:
     _gl_conf = json.load(f)
 
+
+# dump back as json string, removes comments
+GL_CONF_JSON = json.dumps(_gl_conf)
+
 GL_CONF = GuidingLiteConf(
     broker_address                = _gl_conf["broker_address"],
     broker_port                   = _gl_conf["broker_port"],
