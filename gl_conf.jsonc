@@ -3,7 +3,9 @@
     "broker_port": 1883,
 
     "navmesh_relative_path": "resources/navmeshes/e7_2nd_floor_reduced.nav",
-    "navmesh_to_real_life_scale": 0.9163987138263665,
+
+    // real_life = floorplan * scale
+    "floorplan_png_to_real_life_scale": 0.9163987138263665,
 
     // The floor tiles are 30cm x 60cm
     //

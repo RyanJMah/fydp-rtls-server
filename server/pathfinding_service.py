@@ -37,7 +37,7 @@ class _PathfindingWorkerSlave(AbstractService):
         self.pf = cpp.Pathfinder()
 
         self.pf.load_navmesh( GL_CONF.navmesh_path )
-        self.pf.set_navmesh_scale( GL_CONF.navmesh_to_real_life_scale )
+        self.pf.set_navmesh_scale( GL_CONF.floorplan_png_to_real_life_scale )
 
         self.pf.set_smoothing_factor(0.5)
 
