@@ -41,7 +41,7 @@ class GuidingLiteConf:
     broker_port: int
 
     navmesh_path: str
-    floorplan_png_to_real_life_scale: float
+    real_life_to_floorplan_png_scale: float
 
     anchors: Dict[int, AnchorConf]
 
@@ -74,7 +74,7 @@ GL_CONF = GuidingLiteConf(
     broker_address                   = _gl_conf["broker_address"],
     broker_port                      = _gl_conf["broker_port"],
     navmesh_path                     = os.path.join( os.path.dirname(AppPaths.GL_CONF_FILE), _gl_conf["navmesh_relative_path"] ),
-    floorplan_png_to_real_life_scale = _gl_conf["floorplan_png_to_real_life_scale"],
+    real_life_to_floorplan_png_scale = _gl_conf["real_life_to_floorplan_png_scale"],
     update_period_secs               = 1 / _gl_conf["global_update_frequency_Hz"],
     anchors                          = GuidingLiteConf.anchors_from_dict(_gl_conf),
     debug_endpoint                   = DebugEndpoint_Conf.from_dict(_gl_conf["debug_endpoint"]),
