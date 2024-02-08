@@ -184,7 +184,7 @@ def update_dot(frame):
         #     g_path_ax_dots.append(path_dot)
 
     elif tag == "target_heading":
-        target_heading = data
+        target_heading = data["val"]
 
         # Draw line from the user's current position to some point in the direction of the target heading
         path_line_x0 = g_x

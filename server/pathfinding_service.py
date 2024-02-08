@@ -373,7 +373,7 @@ class PathfindingService(AbstractService):
                 # logger.info(f"target_heading: {target_heading:.2f}, time taken: {time.time() - start:.3f}s")
 
                 outbound_data = OutboundData( tag="target_heading",
-                                              data=target_heading )
+                                              data={"val": target_heading} )
 
                 # Push to debug endpoint + app
                 OutboundDataService.push(outbound_data, is_debug_data=False)
