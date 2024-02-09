@@ -133,7 +133,7 @@ def cli(csv_path: str, uid: int, allow_pausing: bool) -> None:
                                       int(row["elevation_deg"]),
                                       int(row["los"]) )
 
-            mqtt_client.publish( f"gl/user/{uid}/data/{row['aid']}", bytes(data) )
+            mqtt_client.publish( f"gl/user/{uid}/data/anchor/{row['aid']}", bytes(data) )
 
         else:
             logger.error(f"unknown telemetry type: {row['type']}")

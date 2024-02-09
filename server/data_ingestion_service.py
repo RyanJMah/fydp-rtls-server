@@ -7,8 +7,10 @@ import logs
 from app_mqtt import (
     AnchorTelemetryData,
     IOS_TelemetryData,
+    IOS_HeadingData,
     ANCHOR_DATA_TOPIC,
-    IOS_DATA_TOPIC
+    IOS_DATA_TOPIC,
+    IOS_HEADING_TOPIC
 )
 from mqtt_client import MqttClient, MqttMsg
 from abstract_service import AbstractService
@@ -48,6 +50,8 @@ class AnchorRangingState:
 class DIS_OutData:
     anchors: Dict[int, AnchorRangingState] = field( default_factory = lambda: {i: AnchorRangingState() for i in range(GL_CONF.num_anchors)} )
 
+    imu_heading: float = 0.0
+
 
 class DataIngestionService(AbstractService):
     def initialize(self):
@@ -63,6 +67,7 @@ class DataIngestionService(AbstractService):
         self.mqtt_client.connect(GL_CONF.broker_address, GL_CONF.broker_port)
 
         self.mqtt_client.subscribe(ANCHOR_DATA_TOPIC, self.anchor_data_handler)
+        self.mqtt_client.subscribe(IOS_HEADING_TOPIC, self.ios_heading_handler)
         self.mqtt_client.subscribe(IOS_DATA_TOPIC, self.ios_data_handler)
 
 
@@ -74,10 +79,20 @@ class DataIngestionService(AbstractService):
 
         pass
 
+    def ios_heading_handler(self, client: MqttClient, msg: MqttMsg, uid: int):
+        try:
+            data = IOS_HeadingData.from_buffer_copy(msg.payload)
+
+        except Exception as e:
+            logger.error(f"Failed to parse IOS_HeadingData: {e}")
+            return
+
+        self.out_data.imu_heading = data.heading
 
     def ios_data_handler(self, client: MqttClient, msg: MqttMsg, uid: int, aid:int):
         try:
             data = IOS_TelemetryData.from_buffer_copy(msg.payload)
+
         except Exception as e:
             logger.error(f"Failed to parse IOS_TelemetryData: {e}")
             return

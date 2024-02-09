@@ -10,7 +10,8 @@ ANCHOR_DFU_TOPIC         = "gl/anchor/<aid>/config"
 
 IOS_BASE_TOPIC      = "gl/user/<uid>"
 IOS_HEARTBEAT_TOPIC = "gl/user/<uid>/heartbeat"
-IOS_DATA_TOPIC      = "gl/user/<uid>/data/<aid>"
+IOS_HEADING_TOPIC   = "gl/user/<uid>/data/heading"
+IOS_DATA_TOPIC      = "gl/user/<uid>/data/anchor/<aid>"
 
 SERVER_HEARTBEAT_TOPIC               = "gl/server/heartbeat"
 SERVER_PATHFINDING_CONFIG_TOPIC      = "gl/server/pathfinding/config"
@@ -41,3 +42,6 @@ class IOS_TelemetryData(Struct):
                  ("azimuth_deg",   c_int16),
                  ("elevation_deg", c_int16),
                  ("los",           c_uint8) ]
+
+class IOS_HeadingData(Struct):
+    _fields_ = [ ("heading",   c_float) ]
