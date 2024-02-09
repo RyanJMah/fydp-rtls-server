@@ -116,10 +116,15 @@ class PathfindingService(AbstractService):
 
         self.target_heading_filter = LowPassFilter(tau=TARGET_HEADING_TIME_CONSTANT)
 
-        self.pid_controller = PIDController( kp = 0.01,
-                                             ki = 0.0,
-                                             kd = 0.002,
-                                             derivative_lpf_tau = 0.1 )
+        self.target_heading_pid = PIDController( kp = 0.01,
+                                                 ki = 0.0,
+                                                 kd = 0.002,
+                                                 derivative_lpf_tau = 0.1 )
+
+        self.haptics_pid = PIDController( kp = 0.01,
+                                          ki = 0.0,
+                                          kd = 0.002,
+                                          derivative_lpf_tau = 0.1 )
         ######################################################################################
 
         ######################################################################################
@@ -164,18 +169,6 @@ class PathfindingService(AbstractService):
         if "total_distance_threshold" in inputs.keys():
             self.total_distance_threshold = inputs["total_distance_threshold"]
             logger.info(f"changed total_distance_threshold to {self.total_distance_threshold}")
-
-        if "kp" in inputs.keys():
-            self.pid_controller.kp = inputs["kp"]
-            logger.info(f"changed kp to {self.pid_controller.kp}")
-
-        if "ki" in inputs.keys():
-            self.pid_controller.ki = inputs["ki"]
-            logger.info(f"changed ki to {self.pid_controller.ki}")
-        
-        if "kd" in inputs.keys():
-            self.pid_controller.kd = inputs["kd"]
-            logger.info(f"changed kd to {self.pid_controller.kd}")
 
 
     def distance_between_points(self, xy1: Tuple[float], xy2: Tuple[float]):
@@ -312,7 +305,7 @@ class PathfindingService(AbstractService):
         err = self.calc_perpendicular_distance( xy, closest_index )
         
         # Calculate the steering term from the PID controller, tries to get the CTE to zero
-        steering_angle = self.pid_controller.exec(err)
+        steering_angle = self.target_heading_pid.exec(err)
 
         # Determine the sign of the steering term based on the sign of the cross-product
         # of the tangent vector and the vector from the user's current position to the next point

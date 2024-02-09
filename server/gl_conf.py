@@ -40,6 +40,9 @@ class GuidingLiteConf:
     broker_address: str
     broker_port: int
 
+    ios_magnetometer_offset: float
+    ios_magnetometer_multiplier: float
+
     navmesh_path: str
     real_life_to_floorplan_png_scale: float
 
@@ -73,6 +76,8 @@ GL_CONF_JSON = json.dumps(_gl_conf)
 GL_CONF = GuidingLiteConf(
     broker_address                   = _gl_conf["broker_address"],
     broker_port                      = _gl_conf["broker_port"],
+    ios_magnetometer_offset          = _gl_conf["ios_magnetometer_offset"],
+    ios_magnetometer_multiplier      = 1.0 if not _gl_conf["reverse_magnetometer_polarity"] else -1.0,
     navmesh_path                     = os.path.join( os.path.dirname(AppPaths.GL_CONF_FILE), _gl_conf["navmesh_relative_path"] ),
     real_life_to_floorplan_png_scale = _gl_conf["real_life_to_floorplan_png_scale"],
     update_period_secs               = 1 / _gl_conf["global_update_frequency_Hz"],

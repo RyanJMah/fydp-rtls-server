@@ -365,9 +365,11 @@ class LocalizationService(AbstractService):
             self.manual_control_mode()
 
         while (1):
-            anchor_data: DIS_OutData = self.in_conn.recv()     # type: ignore
+            dis_data: DIS_OutData = self.in_conn.recv()     # type: ignore
 
-            anchors = anchor_data.anchors
+            anchors = dis_data.anchors
+
+            heading = (GL_CONF.ios_magnetometer_multiplier * dis_data.imu_heading) + GL_CONF.ios_magnetometer_offset
 
             # Assign to local state
             self.loc_state.r0   = anchors[0].r
@@ -401,10 +403,11 @@ class LocalizationService(AbstractService):
 
             if not GL_CONF.debug_manual_position_control:
                 # Copy data to output variable
-                self.out_data.x         = kf_x
-                self.out_data.y         = kf_y
-                self.out_data.z         = kf_z
-                self.out_data.heading = -1    # TODO
+                self.out_data.x       = kf_x
+                self.out_data.y       = kf_y
+                self.out_data.z       = kf_z
+
+            self.out_data.heading = heading
 
             # Send data to pathfinding service
             out_conn.send( self.out_data )
@@ -416,10 +419,11 @@ class LocalizationService(AbstractService):
 
             if not GL_CONF.debug_manual_position_control:
                 # Copy data to debug variable
-                self.loc_state.x         = kf_x
-                self.loc_state.y         = kf_y
-                self.loc_state.z         = kf_z
-                self.loc_state.heading = -1    # TODO
+                self.loc_state.x       = kf_x
+                self.loc_state.y       = kf_y
+                self.loc_state.z       = kf_z
+
+            self.loc_state.heading = heading
 
             # Push data to debug endpoint
             debug_endpoint_data = OutboundData( tag="loc_state",
