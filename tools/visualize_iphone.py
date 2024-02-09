@@ -161,7 +161,7 @@ def update_dot(frame):
         label.set_text(f"X: {x:.2f}, Y: {y:.2f}")
 
     elif tag == "path":
-        g_path = data
+        g_path = data["val"]
 
         x = [p[0] for p in g_path]
         y = [p[1] for p in g_path]

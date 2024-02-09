@@ -77,7 +77,7 @@ class _PathfindingWorkerSlave(AbstractService):
 
             # Push to application and debug endpoint
             outbound_data = OutboundData( tag="path",
-                                          data=path )
+                                          data={"val": path} )
 
             OutboundDataService.push(outbound_data, is_debug_data=False)
             OutboundDataService.push(outbound_data, is_debug_data=True)
