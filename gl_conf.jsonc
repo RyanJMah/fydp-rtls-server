@@ -102,5 +102,5 @@
 
     "debug_manual_position_control": false,
 
-    "global_update_frequency_Hz": 8
+    "global_update_frequency_Hz": 10
 }
