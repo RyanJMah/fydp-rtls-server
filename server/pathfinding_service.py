@@ -3,6 +3,7 @@ import json
 import threading
 import numpy as np
 import multiprocessing as mp
+from dataclasses import dataclass
 from typing import Tuple, List
 
 import logs
@@ -25,6 +26,13 @@ from outbound_data_service import OutboundDataService, OutboundData
 logger = logs.init_logger(__name__)
 
 TARGET_HEADING_TIME_CONSTANT = 0.025
+
+@dataclass
+class HapticsOptions:
+    intensity: float
+    sharpness: float
+    heartbeat: bool
+    done:      bool
 
 class _PathfindingWorkerSlave(AbstractService):
     # Handles the expensive pathfinding calculations
@@ -292,7 +300,7 @@ class PathfindingService(AbstractService):
         return perpendicular_distance
 
 
-    def calc_target_heading(self, xy: Tuple[float, float], closest_index: int):
+    def calc_target_heading(self, xy: Tuple[float, float], closest_index: int) -> float:
         # target heading is the tangent angle + a steering term output
         # from the PID controller (to correct perpendicular distance error)
 
@@ -321,6 +329,11 @@ class PathfindingService(AbstractService):
         return np.degrees( target_heading )
 
 
+    def calc_haptics_options(self, target_heading: float, curr_heading: float) -> HapticsOptions:
+        # TODO
+        return HapticsOptions(intensity=0.75, sharpness=0.75, heartbeat=False, done=False)
+
+
     def main(self, in_conn, out_conn):
         assert(in_conn is not None)
         # assert(out_conn is not None)
@@ -332,9 +345,9 @@ class PathfindingService(AbstractService):
         while (1):
             position_data: LocalizationService_OutData = in_conn.recv()     # type: ignore
 
-            x = position_data.x
-            y = position_data.y
-            # z = position_data.z
+            x       = position_data.x
+            y       = position_data.y
+            heading = position_data.heading
 
 
             # Recalc the path if needed
@@ -365,9 +378,17 @@ class PathfindingService(AbstractService):
                 # target_heading = self.calc_target_heading( (x, y), closest_index )
                 # logger.info(f"target_heading: {target_heading:.2f}, time taken: {time.time() - start:.3f}s")
 
+                haptics_options = self.calc_haptics_options( target_heading, heading )
+
+                # Push target heading
                 outbound_data = OutboundData( tag="target_heading",
                                               data={"val": target_heading} )
 
-                # Push to debug endpoint + app
                 OutboundDataService.push(outbound_data, is_debug_data=False)
                 OutboundDataService.push(outbound_data, is_debug_data=True)
+
+                # Push haptics options
+                outbound_data = OutboundData( tag="haptics_options",
+                                              data=haptics_options )
+
+                OutboundDataService.push(outbound_data, is_debug_data=False)
