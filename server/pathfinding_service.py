@@ -26,7 +26,7 @@ from outbound_data_service import OutboundDataService, OutboundData
 logger = logs.init_logger(__name__)
 
 TARGET_HEADING_TIME_CONSTANT = 0.025
-TARGET_HEADING_ERROR_DEADZONE = 25 # degrees
+TARGET_HEADING_ERROR_DEADZONE = 15 # degrees
 
 DESTINATION_ACCEPTANCE_RADIUS = 50 # cm
 
