@@ -30,7 +30,6 @@ TARGET_HEADING_TIME_CONSTANT = 0.025
 @dataclass
 class HapticsOptions:
     intensity: float
-    sharpness: float
     heartbeat: bool
     done:      bool
 
