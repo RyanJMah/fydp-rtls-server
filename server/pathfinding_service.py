@@ -26,7 +26,9 @@ from outbound_data_service import OutboundDataService, OutboundData
 logger = logs.init_logger(__name__)
 
 TARGET_HEADING_TIME_CONSTANT = 0.025
-TARGET_HEADING_ERROR_DEADZONE = 3 # degrees
+TARGET_HEADING_ERROR_DEADZONE = 25 # degrees
+
+DESTINATION_ACCEPTANCE_RADIUS = 50 # cm
 
 @dataclass
 class HapticsOptions:
@@ -329,15 +331,29 @@ class PathfindingService(AbstractService):
         return np.degrees( target_heading )
 
 
-    def calc_haptics_options(self, target_heading: float, curr_heading: float) -> HapticsOptions:
+    def calc_haptics_options( self,
+                              target_heading: float,
+                              curr_heading: float,
+                              curr_xy: Tuple[float, float] ) -> HapticsOptions:
+
         err = abs(target_heading - curr_heading)
 
         # Calculate the intensity of the haptic feedback
         intensity = self.haptics_pid.exec(err)
 
+        # Map intensity to [0.1, 1.0] using a sigmoid function
+        intensity = 0.9 / (1 + np.exp(-intensity)) + 0.1
+
+        # If the error is within the deadzone, heartbeat
+        heartbeat = True if err < TARGET_HEADING_ERROR_DEADZONE else False
+
+        # Done if the user is within the destination acceptance radius
+        xyz = (curr_xy[0], curr_xy[1], 0)
+        done = True if self.distance_between_points(xyz, self.endpoint) < DESTINATION_ACCEPTANCE_RADIUS else False
+
         return HapticsOptions( intensity = intensity,
-                               heartbeat = False,
-                               done      = False )
+                               heartbeat = heartbeat,
+                               done      = done )
 
 
     def main(self, in_conn, out_conn):
@@ -384,7 +400,7 @@ class PathfindingService(AbstractService):
                 # target_heading = self.calc_target_heading( (x, y), closest_index )
                 # logger.info(f"target_heading: {target_heading:.2f}, time taken: {time.time() - start:.3f}s")
 
-                haptics_options = self.calc_haptics_options( target_heading, heading )
+                haptics_options = self.calc_haptics_options( target_heading, heading, (x, y) )
 
                 # Push target heading
                 outbound_data = OutboundData( tag="target_heading",
