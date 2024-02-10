@@ -26,6 +26,7 @@ from outbound_data_service import OutboundDataService, OutboundData
 logger = logs.init_logger(__name__)
 
 TARGET_HEADING_TIME_CONSTANT = 0.025
+TARGET_HEADING_ERROR_DEADZONE = 3 # degrees
 
 @dataclass
 class HapticsOptions:
@@ -329,8 +330,14 @@ class PathfindingService(AbstractService):
 
 
     def calc_haptics_options(self, target_heading: float, curr_heading: float) -> HapticsOptions:
-        # TODO
-        return HapticsOptions(intensity=0.75, sharpness=0.75, heartbeat=False, done=False)
+        err = abs(target_heading - curr_heading)
+
+        # Calculate the intensity of the haptic feedback
+        intensity = self.haptics_pid.exec(err)
+
+        return HapticsOptions( intensity = intensity,
+                               heartbeat = False,
+                               done      = False )
 
 
     def main(self, in_conn, out_conn):
