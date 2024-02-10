@@ -351,6 +351,17 @@ class PathfindingService(AbstractService):
         xyz = (curr_xy[0], curr_xy[1], 0)
         done = True if self.distance_between_points(xyz, self.endpoint) < DESTINATION_ACCEPTANCE_RADIUS else False
 
+        # This is a bad place to put this, but I'm lazy
+        if done:
+            # reset the path
+            self.path = []
+
+            # send empty path to the application
+            outbound_data = OutboundData( tag="path",
+                                          data={"val": []} )
+            OutboundDataService.push(outbound_data, is_debug_data=False)
+            
+
         return HapticsOptions( intensity = intensity,
                                heartbeat = heartbeat,
                                done      = done )
