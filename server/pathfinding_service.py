@@ -131,7 +131,7 @@ class PathfindingService(AbstractService):
                                                  kd = 0.002,
                                                  derivative_lpf_tau = 0.1 )
 
-        self.haptics_pid = PIDController( kp = 0.01,
+        self.haptics_pid = PIDController( kp = 0.0135,
                                           ki = 0.0,
                                           kd = 0.002,
                                           derivative_lpf_tau = 0.1 )
@@ -340,9 +340,6 @@ class PathfindingService(AbstractService):
 
         # Calculate the intensity of the haptic feedback
         intensity = self.haptics_pid.exec(err)
-
-        # Map intensity to [0.1, 1.0] using a sigmoid function
-        intensity = 0.9 / (1 + np.exp(-intensity)) + 0.1
 
         # If the error is within the deadzone, heartbeat
         heartbeat = True if err < TARGET_HEADING_ERROR_DEADZONE else False
