@@ -135,6 +135,12 @@ class PathfindingService(AbstractService):
                                           ki = 0.0,
                                           kd = 0.002,
                                           derivative_lpf_tau = 0.1 )
+
+        # DO NOT CHANGE Kp EVER
+        self.user_arrow_pid = PIDController( kp = 1,
+                                             ki = 0.0,
+                                             kd = 0.002,
+                                             derivative_lpf_tau = 0.1 )
         ######################################################################################
 
         ######################################################################################
@@ -325,6 +331,9 @@ class PathfindingService(AbstractService):
         # Convert the tangent vector to an angle (heading)
         tangent_angle = np.arctan2(tangent_vector[1], tangent_vector[0])
 
+        if tangent_angle < 0:
+            tangent_angle += 2*np.pi
+
         # Add the steering term to the tangent angle
         target_heading = tangent_angle + sign*steering_angle
 
@@ -362,6 +371,20 @@ class PathfindingService(AbstractService):
         return HapticsOptions( intensity = intensity,
                                heartbeat = heartbeat,
                                done      = done )
+
+    def calc_user_arrow_direction(self, target_heading: float, curr_heading: float) -> float:
+        # Calculate the direction of the user arrow
+
+        err = target_heading - curr_heading
+
+
+        # Calculate the intensity of the user arrow
+        steering = self.user_arrow_pid.exec(err)
+
+        logger.info(f"target_heading: {target_heading:.2f}, curr_heading: {curr_heading:.2f}, err: {err:.2f}, steering: {steering:.2f}")
+
+        return steering
+
 
 
     def main(self, in_conn, out_conn):
@@ -410,15 +433,24 @@ class PathfindingService(AbstractService):
 
                 haptics_options = self.calc_haptics_options( target_heading, heading, (x, y) )
 
+
+                user_arrow = self.calc_user_arrow_direction( target_heading, heading )
+
+
                 # Push target heading
                 outbound_data = OutboundData( tag="target_heading",
                                               data={"val": target_heading} )
 
-                OutboundDataService.push(outbound_data, is_debug_data=False)
                 OutboundDataService.push(outbound_data, is_debug_data=True)
 
                 # Push haptics options
                 outbound_data = OutboundData( tag="haptics_options",
                                               data=haptics_options )
 
+                OutboundDataService.push(outbound_data, is_debug_data=False)
+
+                # Push user arrow
+                outbound_data = OutboundData( tag="user_arrow",
+                                              data={"val": user_arrow} )
+                
                 OutboundDataService.push(outbound_data, is_debug_data=False)

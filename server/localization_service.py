@@ -371,6 +371,9 @@ class LocalizationService(AbstractService):
 
             heading = (GL_CONF.ios_magnetometer_multiplier * dis_data.imu_heading) + GL_CONF.ios_magnetometer_offset
 
+            if heading < 0:
+                heading += 360
+
             # Assign to local state
             self.loc_state.r0   = anchors[0].r
             self.loc_state.r1   = anchors[1].r

@@ -2,7 +2,7 @@
     "broker_address": "localhost",
     "broker_port": 1883,
 
-    "ios_magnetometer_offset": 180,
+    "ios_magnetometer_offset": 90,
     "reverse_magnetometer_polarity": true,
 
     "navmesh_relative_path": "resources/navmeshes/e7_2nd_floor_reduced.nav",
@@ -103,7 +103,7 @@
         "enabled": true
     },
 
-    "debug_manual_position_control": true,
+    "debug_manual_position_control": false,
 
     "global_update_frequency_Hz": 20
 }
