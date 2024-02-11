@@ -5,10 +5,10 @@
     "ios_magnetometer_offset": 70,
     "reverse_magnetometer_polarity": true,
 
-    "navmesh_relative_path": "resources/navmeshes/e7_2nd_floor_reduced.nav",
+    "navmesh_relative_path": "resources/navmeshes/symposium_area_no_tables.nav",
 
     // real_life = png * scale
-    "real_life_to_floorplan_png_scale": 0.9163987138263665,
+    "real_life_to_floorplan_png_scale": 1.3892617449375388 ,
 
     // The floor tiles are 30cm x 60cm
     //
@@ -26,19 +26,19 @@
         {
             "id": 1,
             "x": 1125,
-            "y": 960,
+            "y": 570,
             "z": 179
         },
         {
             "id": 2,
             "x": 0,
-            "y": 1200,
+            "y": 810,
             "z": 185
         },
         {
             "id": 3,
             "x": 1125,
-            "y": 130,
+            "y": 0,
             "z": 179
         }
     ],
