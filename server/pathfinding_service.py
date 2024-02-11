@@ -381,7 +381,7 @@ class PathfindingService(AbstractService):
         # Calculate the intensity of the user arrow
         steering = self.user_arrow_pid.exec(err)
 
-        logger.info(f"target_heading: {target_heading:.2f}, curr_heading: {curr_heading:.2f}, err: {err:.2f}, steering: {steering:.2f}")
+        # logger.info(f"target_heading: {target_heading:.2f}, curr_heading: {curr_heading:.2f}, err: {err:.2f}, steering: {steering:.2f}")
 
         return steering
 
