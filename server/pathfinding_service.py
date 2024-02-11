@@ -131,7 +131,7 @@ class PathfindingService(AbstractService):
                                                  kd = 0.002,
                                                  derivative_lpf_tau = 0.1 )
 
-        self.haptics_pid = PIDController( kp = 0.0135,
+        self.haptics_pid = PIDController( kp = 0.01,
                                           ki = 0.0,
                                           kd = 0.002,
                                           derivative_lpf_tau = 0.1 )
@@ -369,7 +369,7 @@ class PathfindingService(AbstractService):
             
 
         return HapticsOptions( intensity = intensity,
-                               heartbeat = heartbeat,
+                               heartbeat = False,
                                done      = done )
 
     def calc_user_arrow_direction(self, target_heading: float, curr_heading: float) -> float:

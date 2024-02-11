@@ -100,7 +100,7 @@
     "debug_endpoint": {
         "host": "0.0.0.0",
         "port": 6969,
-        "enabled": true
+        "enabled": false
     },
 
     "debug_manual_position_control": false,
