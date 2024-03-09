@@ -21,20 +21,24 @@ RECTANGLES = [
     
     Rectangle( bl_corner=(200, 200),
                width=50,
-               height=100 )
+               height=100 ),
+
+    Rectangle( bl_corner=(300, 300),
+               width=150,
+               height=150 )
 ]
 
 def draw_rectangle_on_image( img: Image,
-                             bottom_left_corner,
-                             width,
-                             height,
-                             thickness=5,
-                             rectangle_color="black" ):
+                             bl_corner: Tuple[int, int],
+                             width: int,
+                             height: int,
+                             thickness: int = 5,
+                             rectangle_color: str = "black" ):
     """
     Draws a rectangle on an image with the coordinate system starting at the bottom left.
 
     :param img: The image to draw the rectangle on.
-    :param bottom_left_corner: A tuple (x, y) specifying the bottom left corner of the rectangle in the adjusted coordinate system.
+    :param bl_corner: A tuple (x, y) specifying the bottom left corner of the rectangle in the adjusted coordinate system.
     :param width: The width of the rectangle.
     :param height: The height of the rectangle.
     :param rectangle_color: Color of the rectangle outline.
@@ -44,10 +48,10 @@ def draw_rectangle_on_image( img: Image,
     img_width, img_height = img.size
 
     # Adjust the y-coordinate from bottom-left origin to top-left origin
-    adjusted_y = img_height - bottom_left_corner[1]
+    adjusted_y = img_height - bl_corner[1]
 
     # Calculate the rectangle coordinates in PIL coordinates
-    top_left_corner = (bottom_left_corner[0], adjusted_y - height)
+    top_left_corner = (bl_corner[0], adjusted_y - height)
     bottom_right_corner = (top_left_corner[0] + width, adjusted_y)
 
     # Initialize the drawing context
