@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import Tuple
 
 import includes
-from app_paths import AppPaths
+from app_paths import AppPaths  # type: ignore
 
 @dataclass
 class Rectangle:
