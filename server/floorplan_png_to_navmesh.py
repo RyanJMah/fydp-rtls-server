@@ -16,12 +16,11 @@ def png_to_heightmap(png_path: str) -> Image:
     return img
 
 def heightmap_to_mesh(heightmap: Image) -> meshio.Mesh:
-    tin = Delatin(
-            np.array(heightmap),
-            width=heightmap.width,
-            height=heightmap.height,
-            base_height=BASE_HEIGHT,
-            invert=True )
+    tin = Delatin( np.array(heightmap),
+                   width=heightmap.width,
+                   height=heightmap.height,
+                   base_height=BASE_HEIGHT,
+                   invert=True )
     vertices, triangles = tin.vertices, tin.triangles
 
     cells = [("triangle", triangles)]
