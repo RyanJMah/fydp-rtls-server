@@ -20,8 +20,8 @@ RECTANGLES = [
                height=50 ),
     
     Rectangle( bl_corner=(200, 200),
-                width=50,
-                height=100 )
+               width=50,
+               height=100 )
 ]
 
 def draw_rectangle_on_image( img: Image,
