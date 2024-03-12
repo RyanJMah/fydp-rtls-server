@@ -13,19 +13,68 @@ class Rectangle:
     width:     int
     height:    int
 
+rectangleWidth = 120
+rectangleHeight = 100
+
+row1_y = 100
+row2_y = 500
+row3_y = 900
+row4_y = 1300
+
+col1_x = 50
+col2_x = 200
+col3_x = 450
+col4_x = 600
 
 RECTANGLES = [
-    Rectangle( bl_corner=(50, 150),
-               width=100,
-               height=50 ),
-    
-    Rectangle( bl_corner=(200, 200),
-               width=50,
-               height=100 ),
-
-    Rectangle( bl_corner=(300, 300),
-               width=150,
-               height=150 )
+    Rectangle( bl_corner=(col1_x, row1_y),
+               width=rectangleWidth,
+               height=rectangleHeight ),
+    Rectangle( bl_corner=(col2_x, row1_y),
+               width=rectangleWidth,
+               height=rectangleHeight ),
+    Rectangle( bl_corner=(col3_x, row1_y),
+               width=rectangleWidth,
+               height=rectangleHeight ),
+    Rectangle( bl_corner=(col4_x, row1_y),
+               width=rectangleWidth,
+               height=rectangleHeight ),
+    Rectangle( bl_corner=(col1_x, row2_y),
+               width=rectangleWidth,
+               height=rectangleHeight ),
+    Rectangle( bl_corner=(col2_x, row2_y),
+               width=rectangleWidth,
+               height=rectangleHeight ),
+    Rectangle( bl_corner=(col3_x, row2_y),
+               width=rectangleWidth,
+               height=rectangleHeight ),
+    Rectangle( bl_corner=(col4_x, row2_y),
+               width=rectangleWidth,
+               height=rectangleHeight ),
+    Rectangle( bl_corner=(col1_x, row3_y),
+               width=rectangleWidth,
+               height=rectangleHeight ),
+    Rectangle( bl_corner=(col2_x, row3_y),
+               width=rectangleWidth,
+               height=rectangleHeight ),
+    Rectangle( bl_corner=(col3_x, row3_y),
+               width=rectangleWidth,
+               height=rectangleHeight ),
+    Rectangle( bl_corner=(col4_x, row3_y),
+               width=rectangleWidth,
+               height=rectangleHeight ),
+    Rectangle( bl_corner=(col1_x, row4_y),
+               width=rectangleWidth,
+               height=rectangleHeight ),
+    Rectangle( bl_corner=(col2_x, row4_y),
+               width=rectangleWidth,
+               height=rectangleHeight ),
+    Rectangle( bl_corner=(col3_x, row4_y),
+               width=rectangleWidth,
+               height=rectangleHeight ),
+    Rectangle( bl_corner=(col4_x, row4_y),
+               width=rectangleWidth,
+               height=rectangleHeight )
 ]
 
 def draw_rectangle_on_image( img: Image,
