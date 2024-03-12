@@ -329,7 +329,18 @@ class PathfindingService(AbstractService):
 
 
         # Convert the tangent vector to an angle (heading)
-        tangent_angle = np.arctan2(tangent_vector[1], tangent_vector[0])
+
+        # Handle the case where tangent vector is horizontal (use an epsilon)
+        if abs(tangent_vector[0]) < 1e-2:
+            tangent_angle = np.pi/2 if tangent_vector[1] > 0 else -np.pi/2
+        
+        # Handle the case where tangent vector is vertical
+        elif abs(tangent_vector[1]) < 1e-2:
+            # can't include np.pi in the if statement because of floating point error
+            tangent_angle = 0 if tangent_vector[0] > 0 else np.pi
+
+        else:
+            tangent_angle = np.arctan2(tangent_vector[1], tangent_vector[0])
 
         if tangent_angle < 0:
             tangent_angle += 2*np.pi
@@ -344,6 +355,13 @@ class PathfindingService(AbstractService):
                               target_heading: float,
                               curr_heading: float,
                               curr_xy: Tuple[float, float] ) -> HapticsOptions:
+
+        # unwrap curr_heading so that its -180 to 180
+        if curr_heading - target_heading > 180:
+            curr_heading -= 360
+        elif curr_heading - target_heading < -180:
+            curr_heading += 360
+
 
         err = abs(target_heading - curr_heading)
 
