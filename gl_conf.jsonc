@@ -5,7 +5,7 @@
     "ios_magnetometer_offset": 70,
     "reverse_magnetometer_polarity": true,
 
-    "navmesh_relative_path": "resources/navmeshes/symposium_area_no_tables.nav",
+    "navmesh_relative_path": "resources/navmeshes/symposium_space_rect.nav",
 
     // real_life = png * scale
     "real_life_to_floorplan_png_scale": 1.3892617449375388,
