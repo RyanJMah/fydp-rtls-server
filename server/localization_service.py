@@ -141,7 +141,7 @@ class LocalizationService(AbstractService):
 
     def select_critical_anchor(self):
         # hardcoded for now, want to assign based on NLOS probabilities in the future
-        self.loc_state.critical_anchor = 2
+        self.loc_state.critical_anchor = 1
 
     
     def assign_anchor_weights(self):
