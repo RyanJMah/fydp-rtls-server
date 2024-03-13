@@ -28,7 +28,7 @@ logger = logs.init_logger(__name__)
 TARGET_HEADING_TIME_CONSTANT = 0.025
 TARGET_HEADING_ERROR_DEADZONE = 15 # degrees
 
-DESTINATION_ACCEPTANCE_RADIUS = 75 # cm
+DESTINATION_ACCEPTANCE_RADIUS = 150 # cm
 
 @dataclass
 class HapticsOptions:
